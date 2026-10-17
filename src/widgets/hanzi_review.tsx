@@ -42,13 +42,15 @@ function HanziReview() {
   if (!state) return null;
   // Stable exercise context prevents answer-side state updates from reloading/resetting the attempt.
   return <BoundExercise key={state.context.key} context={state.context} settings={state.settings} repository={repository}
+    assetRoot={plugin.rootURL}
     isCurrent={(allowRevealed) => stillCurrent(plugin, state.context.cardId, allowRevealed)} />;
 }
-function BoundExercise({ context, settings, repository, isCurrent }: {
+function BoundExercise({ context, settings, repository, isCurrent, assetRoot }: {
   context: ReviewContext; settings: Settings; repository: MasteryRepository; isCurrent(allowRevealed?: boolean): Promise<boolean>;
+  assetRoot?: string;
 }) {
   const stable = useRef(context);
   return <ReviewExercise context={stable.current} settings={settings} repository={repository} revealed={context.revealed}
-    isCurrent={isCurrent} />;
+    isCurrent={isCurrent} assetRoot={assetRoot} />;
 }
 renderWidget(HanziReview);

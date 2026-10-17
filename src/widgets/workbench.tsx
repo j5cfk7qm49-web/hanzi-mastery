@@ -46,7 +46,7 @@ function Workbench() {
     if (simplified) characters(simplified);
     if (!meaning.trim() || /\p{Script=Han}/u.test(meaning)) throw new Error('Use an English prompt without Chinese characters.');
     // Validate availability before creating anything.
-    await Promise.all([...chars, ...Array.from(simplified)].map(loadCharacter));
+    await Promise.all([...chars, ...Array.from(simplified)].map(c => loadCharacter(c, plugin.rootURL)));
     let id = created.current;
     if (!id) {
       const vocab: Vocabulary = { version: 2, traditional, ...(simplified ? { simplified } : {}), pinyin,
@@ -68,7 +68,7 @@ function Workbench() {
   });
   const startPractice = () => run(async () => {
     const chars = characters(settings.script === 'simplified' ? simplified : traditional);
-    const data = await Promise.all(chars.map(loadCharacter)); setPractice({ chars, data }); setIndex(0);
+    const data = await Promise.all(chars.map(c => loadCharacter(c, plugin.rootURL))); setPractice({ chars, data }); setIndex(0);
   });
   return <section className="hm">
     <header><h1>Hanzi Mastery workbench</h1><span className="hm-badge">Authoring & practice</span></header>

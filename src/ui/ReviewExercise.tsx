@@ -10,10 +10,11 @@ import { WriterCanvas } from './WriterCanvas';
 export interface ExerciseContext { cardId: string; vocabularyId: string; chars: string[]; prompt: string }
 export interface ExerciseProps {
   context: ExerciseContext; settings: Settings; repository: MasteryRepository;
+  assetRoot?: string;
   revealed: boolean; isCurrent(allowRevealed?: boolean): Promise<boolean>;
 }
 interface Outcome { character: string; result: Result; attempt: Attempt }
-export function ReviewExercise({ context, settings, repository, revealed, isCurrent }: ExerciseProps) {
+export function ReviewExercise({ context, settings, repository, revealed, isCurrent, assetRoot }: ExerciseProps) {
   const [loaded, setLoaded] = useState<{ data: CharacterJson[]; progress: Mastery[] }>();
   const [error, setError] = useState(''), [reload, setReload] = useState(0);
   const [mode, setMode] = useState<'ready' | 'test' | 'learn' | 'result'>('ready');
@@ -34,7 +35,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   useEffect(() => {
     let cancelled = false; setLoaded(undefined); setError('');
     void Promise.all([
-      Promise.all(context.chars.map(loadCharacter)),
+      Promise.all(context.chars.map(c => loadCharacter(c, assetRoot))),
       Promise.all(context.chars.map(c => repository.load(context.vocabularyId, c))),
     ]).then(([data, progress]) => { if (!cancelled) setLoaded({ data, progress }); })
       .catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : 'Unable to load writing exercise.'); });

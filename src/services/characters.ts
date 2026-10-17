@@ -18,7 +18,7 @@ export function validateCharacterData(raw: unknown): CharacterJson {
   }
   return d;
 }
-export async function loadCharacter(character: string): Promise<CharacterJson> {
+export async function loadCharacter(character: string, assetRoot = window.location.href): Promise<CharacterJson> {
   if (!/^\p{Script=Han}$/u.test(character)) throw new Error('Invalid character selection.');
   if (CHARACTER_OVERRIDES[character]) return validateCharacterData(CHARACTER_OVERRIDES[character].data);
   if (core[character]) return validateCharacterData(core[character]);
@@ -26,7 +26,7 @@ export async function loadCharacter(character: string): Promise<CharacterJson> {
   const abort = new AbortController();
   const timeout = setTimeout(() => abort.abort(), 12000);
   try {
-    const url = new URL(`data/${character.codePointAt(0)!.toString(16)}.json`, window.location.href);
+    const url = new URL(`data/${character.codePointAt(0)!.toString(16)}.json`, assetRoot);
     const response = await fetch(url, { signal: abort.signal, cache: 'force-cache' });
     if (!response.ok) throw new Error('Unavailable');
     const d = validateCharacterData(await response.json());
