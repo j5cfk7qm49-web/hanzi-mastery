@@ -1,7 +1,7 @@
 {
   "name": "hanzi-mastery-remnote",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Traditional-first adaptive handwriting reviews for RemNote",
   "license": "MIT",
   "engines": {
@@ -37,7 +37,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "vitest run",
-    "test:browser": "playwright test",
+    "test:browser": "npm run build:preview && playwright test",
     "check": "npm run check-types && npm test",
     "build": "remnote-plugin validate && webpack --mode production && node scripts/package.mjs",
     "dev": "npm run build && node scripts/serve.mjs",

@@ -12,10 +12,11 @@ export interface ExerciseContext { cardId: string; vocabularyId: string; chars: 
 export interface ExerciseProps {
   context: ExerciseContext; settings: Settings; repository: MasteryRepository;
   assetRoot?: string;
+  suspended?: boolean;
   revealed: boolean; isCurrent(allowRevealed?: boolean): Promise<boolean>;
 }
 interface Outcome { character: string; result: Result; attempt: Attempt }
-export function ReviewExercise({ context, settings, repository, revealed, isCurrent, assetRoot }: ExerciseProps) {
+export function ReviewExercise({ context, settings, repository, revealed, isCurrent, assetRoot, suspended = false }: ExerciseProps) {
   const [loaded, setLoaded] = useState<{ data: CharacterJson[]; progress: Mastery[] }>();
   const [error, setError] = useState(''), [reload, setReload] = useState(0);
   const [mode, setMode] = useState<'ready' | 'test' | 'learn' | 'result'>('ready');
@@ -28,12 +29,15 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   const [grade, setGrade] = useState<Grade>('Again');
   const [diagnostics, setDiagnostics] = useState<ReturnType<typeof geometryFeedback>[]>([]);
   const [inputNotice, setInputNotice] = useState('');
+  const [engineProblem, setEngineProblem] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [, tickAccidentDeadline] = useState(0);
   const active = useRef(false), live = useRef(true), saving = useRef(false);
   const id = useRef(crypto.randomUUID()), completedAt = useRef(0);
   const checkCurrent = useRef(isCurrent); checkCurrent.current = isCurrent;
   const revealedRef = useRef(revealed); revealedRef.current = revealed;
   const startGuard = useRef(false);
+  const controlVersion = useRef(0);
   useEffect(() => { live.current = true; return () => { live.current = false; active.current = false; }; }, []);
   useEffect(() => {
     let cancelled = false; setLoaded(undefined); setError('');
@@ -45,43 +49,52 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
     return () => { cancelled = true; active.current = false; };
   }, [context, repository, reload]);
   const update = (next: Attempt) => { attemptRef.current = next; setAttempt(next); };
-  const summarize = (list: Outcome[]) => {
+  const summarize = (list: Outcome[], practice = false) => {
+    controlVersion.current++;
     active.current = false; completedAt.current = Date.now();
-    outcomesRef.current = list; setOutcomes(list); setMode('result');
+    outcomesRef.current = list; setOutcomes(list); setMode(practice ? 'learn' : 'result');
+    setEngineProblem(false); setError('');
+    if (practice) { setIndex(0); setVersion(v => v+1); }
     const passed = list.length === context.chars.length && list.every(o => o.result.passed);
     setGrade(!passed ? 'Again' : list.some(o => o.result.suggestedGrade === 'Hard') ? 'Hard' : 'Good');
   };
-  const finish = (failure?: RecallFailure) => {
+  const finish = (failure?: RecallFailure, practice = false) => {
     if (!active.current || !loaded || !attemptRef.current) return;
     const current = failure ? failRecall(attemptRef.current, failure) : attemptRef.current;
     update(current);
     const level = loaded.progress[index].level;
     const result = gradeAttempt(current, level, settings.thresholds[level]);
     const next = [...outcomesRef.current, { character: context.chars[index], attempt: current, result }];
-    if (failure || index === context.chars.length-1) summarize(next);
+    if (failure || index === context.chars.length-1) summarize(next, practice);
     else {
       outcomesRef.current = next; setOutcomes(next);
+      setInputNotice(''); setDiagnostics([]);
       setIndex(index+1); update(newAttempt(loaded.data[index+1].strokes.length)); setVersion(v => v+1);
     }
   };
   useEffect(() => { if (revealed && active.current) finish('answer-revealed'); }, [revealed]);
   const start = async () => {
-    if (!loaded || startGuard.current) return;
-    startGuard.current = true;
+    if (!loaded || suspended || startGuard.current) return;
+    startGuard.current = true; setChecking(true);
+    const token = ++controlVersion.current;
     try {
-      if (revealedRef.current || !await checkCurrent.current(false)) {
+      const eligible = !revealedRef.current && await checkCurrent.current(false);
+      if (!live.current || token !== controlVersion.current) return;
+      if (!eligible || revealedRef.current) {
         setError('Testing is unavailable after answer reveal, during lookback, or after changing cards. Use guided practice.'); return;
       }
-      if (!live.current || revealedRef.current) return;
+      setIndex(0); outcomesRef.current = []; setOutcomes([]); setDiagnostics([]); setInputNotice('');
+      setEngineProblem(false); setSaveState('idle'); id.current = crypto.randomUUID();
       update(newAttempt(loaded.data[0].strokes.length)); active.current = true;
       setMode('test'); setError(''); setVersion(v => v+1);
-    } catch { if (live.current) setError('The current review could not be verified. Testing is blocked.'); }
-    finally { startGuard.current = false; }
+    } catch { if (live.current && token === controlVersion.current) setError('The current review could not be verified. Testing is blocked.'); }
+    finally { startGuard.current = false; if (live.current) setChecking(false); }
   };
   const stroke = (data: StrokeData, type: 'accepted' | 'rejected') => {
-    if (!active.current || !attemptRef.current || data.character !== context.chars[index]) return;
+    if (!active.current || suspended || engineProblem || !attemptRef.current || data.character !== context.chars[index]) return;
     if (revealedRef.current) { finish('answer-revealed'); return; }
     const next = addStroke(attemptRef.current, data.strokeNum, type);
+    if (next === attemptRef.current) return;
     setInputNotice('');
     update(next);
     if (type === 'accepted' && settings.geometryFeedback && loaded) {
@@ -102,7 +115,8 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
         if (!old || (old.result.passed && !o.result.passed) || (old.result.passed === o.result.passed && o.result.accuracy < old.result.accuracy)) unique.set(o.character, o);
       }
       for (const o of unique.values()) {
-        if (!live.current) return;
+        // Once verified, finish this explicit-ID batch even if navigation unmounts the widget.
+        // It only saves plugin mastery; it never submits a native review rating.
         await repository.save(context.vocabularyId, o.character, { id: id.current + ':' + o.character,
           at: completedAt.current, cardId: context.cardId, character: o.character, result: o.result, attempt: o.attempt, source: 'test' }, settings);
       }
@@ -110,10 +124,26 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
     } catch (e) { if (live.current) { setSaveState('failed'); setError(e instanceof Error ? e.message : 'Mastery could not be saved. Retry before leaving this card.'); } }
     finally { saving.current = false; }
   };
-  useEffect(() => { if (mode === 'result' && saveState === 'idle') void save(); }, [mode]);
+  useEffect(() => { if ((mode === 'result' || mode === 'learn') && outcomes.length && saveState === 'idle') void save(); }, [mode]);
   const guided = () => {
-    if (active.current) { finish('guided-practice'); return; }
-    setMode('learn'); setIndex(0); setVersion(v => v+1);
+    controlVersion.current++;
+    if (active.current) { finish('guided-practice', true); return; }
+    setMode('learn'); setIndex(0); setEngineProblem(false); setVersion(v => v+1);
+  };
+  const retryEngine = async () => {
+    if (suspended || startGuard.current) return;
+    startGuard.current = true; setChecking(true);
+    const token = ++controlVersion.current;
+    try {
+      const eligible = mode !== 'test' || (!revealedRef.current && await checkCurrent.current(false));
+      if (!live.current || token !== controlVersion.current) return;
+      if (!eligible || (mode === 'test' && revealedRef.current)) {
+        setError('This test cannot resume on a revealed or different card. End the test or use guided practice.');
+        return;
+      }
+      if (live.current) { setEngineProblem(false); setError(''); setVersion(v => v+1); }
+    } catch { if (live.current && token === controlVersion.current) setError('The current review could not be verified. Your stroke record is preserved.'); }
+    finally { startGuard.current = false; if (live.current) setChecking(false); }
   };
   const resultVisible = outcomes.length > 0 && (mode === 'result' || mode === 'learn');
   const passed = outcomes.length === context.chars.length && outcomes.every(o => o.result.passed);
@@ -134,33 +164,40 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
     <div className="hm-meta"><span>{LEVEL_NAMES[currentLevel]} · required {Math.round(settings.thresholds[currentLevel]*100)}%</span>
       <span>Character {index+1} / {context.chars.length}</span><span>{settings.script === 'traditional' ? 'Traditional' : 'Simplified'}</span></div>
     {error && <div role="alert" className="hm-error">{error}</div>}
+    {suspended && <p role="status" className="hm-error">Waiting for RemNote to confirm the current card. Writing is paused; your stroke record is preserved.</p>}
     {!loaded && !error && <p role="status">Loading stroke data and mastery…</p>}
     {!loaded && error && <button onClick={() => setReload(v => v+1)}>Retry loading</button>}
     {loaded && mode === 'ready' && <>
       <p>Recall every stroke independently. Corrections reduce first-attempt accuracy. A forgotten stroke or answer reveal fails the test.</p>
-      <p className="hm-muted"><small>Stroke sequences use Hanzi Writer data and can differ from Taiwan MOE standards. This version is not MOE-certified.</small></p>
-      <div className="hm-actions"><button className="hm-primary" disabled={revealed} onClick={() => void start()}>Begin test</button>
+      <details><summary>Stroke standards and scoring</summary><p className="hm-muted">Stroke sequences use Hanzi Writer data and can differ from Taiwan MOE standards. This version is not MOE-certified. First-attempt accuracy measures recognizer acceptance, not penmanship precision.</p></details>
+      <div className="hm-actions"><button className="hm-primary" disabled={revealed || suspended || checking} onClick={() => void start()}>{checking ? 'Checking current card…' : 'Begin test'}</button>
       <button onClick={guided}>Guided practice only</button></div>
       {revealed && <p className="hm-muted">The native answer is already visible. Practice is available; testing is disabled.</p>}
     </>}
+    {mode === 'test' && attempt && currentScore && <>
+      <div className="hm-score" aria-live="polite"><strong>Current first-attempt accuracy: {currentScore.firstAttempts} / {attempt.totalStrokes} ({Math.round(currentScore.accuracy*100)}%)</strong>
+        <span>{attempt.events.filter(e => e.type === 'accepted').length} / {attempt.totalStrokes} strokes · {currentScore.mistakes} rejected attempts</span></div>
+      <progress value={attempt.events.filter(e => e.type === 'accepted').length} max={attempt.totalStrokes} aria-label="Completed strokes" />
+      <div className="hm-actions"><button className="hm-danger" onClick={() => finish('forgotten-stroke')}>I forgot a stroke — end test</button>
+        <button onClick={guided}>End test for guided practice</button></div>
+    </>}
     {loaded && (mode === 'test' || mode === 'learn') && <>
+      {mode === 'learn' && outcomes.length > 0 && <p className="hm-preserved-result">Original writing test: <b>{passed ? 'Passed' : 'Failed'}</b>. Practice does not change this result.</p>}
       {mode === 'learn' && <p className="hm-muted">Practice does not advance mastery or submit an SRS grade. Target: {context.chars[index]}</p>}
-      <WriterCanvas character={context.chars[index]} data={loaded.data[index]} mode={mode} active settings={settings} generation={version}
+      {engineProblem && <button disabled={suspended || checking} onClick={() => void retryEngine()}>Retry writing canvas</button>}
+      {!engineProblem && <WriterCanvas character={context.chars[index]} data={loaded.data[index]} mode={mode} active={!suspended} settings={settings} generation={version}
+        resumeStrokeNum={mode === 'test' ? attempt?.events.filter(e => e.type === 'accepted').length : 0}
         onCorrect={d => stroke(d, 'accepted')} onMistake={d => stroke(d, 'rejected')}
         onComplete={() => { if (attemptRef.current?.completed) finish(); }}
         onInputCancelled={() => setInputNotice('The device interrupted this contact. Retry the current stroke; completed strokes and recorded errors are preserved.')}
-        onError={() => { active.current = false; setMode('ready'); setError('The handwriting engine could not start. No result was graded.'); }} />
+        onError={() => { setEngineProblem(true); setError('The handwriting engine stopped. Retry the canvas to continue; completed strokes and recorded errors are preserved.'); }} />}
       {mode === 'learn' && context.chars.length > 1 && <button onClick={() => { setIndex(i => (i+1)%context.chars.length); setVersion(v => v+1); }}>Next practice character</button>}
     </>}
     {mode === 'test' && attempt && currentScore && <>
       {inputNotice && <p role="status">{inputNotice}</p>}
-      <progress value={attempt.events.filter(e => e.type === 'accepted').length} max={attempt.totalStrokes} aria-label="Completed strokes" />
-      <p aria-live="polite">{attempt.events.filter(e => e.type === 'accepted').length} / {attempt.totalStrokes} strokes · {currentScore.mistakes} rejected attempts</p>
-      <p>Current first-attempt accuracy: {currentScore.firstAttempts} / {attempt.totalStrokes} ({Math.round(currentScore.accuracy*100)}%). Unfinished strokes are pending.</p>
-      <div className="hm-actions"><button className="hm-danger" onClick={() => finish('forgotten-stroke')}>I forgot a stroke — end test</button>
-        <button disabled={!accidentAvailable} onClick={() => update(markLastAccidental(attemptRef.current!, settings.accidentLimit))}>Last input was accidental</button>
-        <button onClick={guided}>End test for guided practice</button></div>
-      <small>Accident correction applies only to the latest rejected input within 8 seconds, before drawing again. Limit {settings.accidentLimit} per character. Original errors stay in the record.</small>
+      <button disabled={!accidentAvailable || suspended} onClick={() => update(markLastAccidental(attemptRef.current!, settings.accidentLimit))}>Last input was accidental</button>
+      <details><summary>Accuracy and accidental input</summary><p>Unfinished strokes are pending. A correctly recalled stroke counts on its first accepted attempt; independent corrections lower accuracy.</p>
+        <p>Accident correction applies only to the latest rejected input within 8 seconds, before drawing again. Limit {settings.accidentLimit} per character. Original errors stay in the record.</p></details>
     </>}
     {resultVisible && <div className={`hm-result ${passed ? 'hm-pass' : 'hm-fail'}`} role="status">
       <h2>{passed ? 'Passed this writing test' : 'Writing test failed'}</h2>

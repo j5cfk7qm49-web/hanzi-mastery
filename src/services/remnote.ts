@@ -2,7 +2,7 @@ import { AppEvents, WidgetLocation, type RNPlugin } from '@remnote/plugin-sdk';
 import { WRITING_POWERUP, SCHEMA_SLOT, parseWritingSchema, selectScript, characters, type WritingSchema } from '../core/schema';
 import type { Settings } from '../core/config';
 import type { ExerciseContext } from '../ui/ReviewExercise';
-export interface ReviewContext extends ExerciseContext { key: string; revealed: boolean }
+export interface ReviewContext extends ExerciseContext { key: string; revealed: boolean; reviewAt: number }
 export async function readReviewContext(plugin: RNPlugin, settings: Settings): Promise<ReviewContext | null> {
   let phase = 'widget context';
   try {
@@ -24,13 +24,15 @@ export async function readReviewContext(plugin: RNPlugin, settings: Settings): P
     phase = 'answer visibility';
     const lastReviewAt = (card.repetitionHistory || []).reduce((at, r) => Math.max(at, r.date), 0);
     return { cardId: card._id, vocabularyId: schema.vocabularyId, chars: characters(target), prompt: schema.prompt,
-      key: `${card._id}:${lastReviewAt}:${target}:${JSON.stringify(settings)}`,
+      key: `${card._id}:${lastReviewAt}:${target}:${JSON.stringify(settings)}`, reviewAt: lastReviewAt,
       revealed: widget.revealed || await plugin.queue.hasRevealedAnswer() };
   } catch { throw new Error(`Hanzi Mastery could not read ${phase}. Testing is blocked; check the card configuration or host API support.`); }
 }
-export async function stillCurrent(plugin: RNPlugin, cardId: string, allowRevealed = true): Promise<boolean> {
+export async function stillCurrent(plugin: RNPlugin, cardId: string, allowRevealed = true, reviewAt?: number): Promise<boolean> {
   const card = await plugin.queue.getCurrentCard();
-  return card?._id === cardId && card.type === 'forward' && !await plugin.queue.inLookbackMode() && (allowRevealed || !await plugin.queue.hasRevealedAnswer());
+  const currentReviewAt = (card?.repetitionHistory || []).reduce((at, r) => Math.max(at, r.date), 0);
+  return card?._id === cardId && (reviewAt === undefined || currentReviewAt === reviewAt) &&
+    card.type === 'forward' && !await plugin.queue.inLookbackMode() && (allowRevealed || !await plugin.queue.hasRevealedAnswer());
 }
 export function subscribeReview(plugin: RNPlugin, refresh: () => void, reveal: (cardId?: string) => void): () => void {
   const key = `hm-${crypto.randomUUID()}`;

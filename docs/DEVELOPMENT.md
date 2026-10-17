@@ -13,7 +13,7 @@ npm run test:browser
 
 `npm run dev` builds and serves the actual RemNote bundles at `http://localhost:8080`. Rebuild after source edits. It uses a small loopback-only static server, avoiding the vulnerable development-proxy dependency chain encountered during the audit. `npm audit` reported no vulnerabilities after that change. Production React 17.0.2 matches the current RemNote SDK peer contract.
 
-`webpack.preview.cjs` and `e2e/harness.tsx` are **test tooling only**. They build to ignored `preview-dist`, simulate RemNote queue flags and persist to browser localStorage. They are never included in the plugin ZIP. Browser tests draw actual Hanzi Writer median paths with mouse input and exercise touch-event cancellation. These synthetic reference paths establish engine/data integration, not human penmanship accuracy or hardware stylus quality.
+`webpack.preview.cjs` and `e2e/harness.tsx` are **test tooling only**. They build to ignored `preview-dist`, simulate RemNote queue flags and persist to browser localStorage. They are never included in the plugin ZIP. `npm run test:browser` always rebuilds this harness first, preventing stale bundles from passing or failing against new tests. Browser tests draw actual Hanzi Writer median paths with mouse input and exercise touch-event cancellation, host reconnection during a word and auditable accidental input. These synthetic reference paths establish engine/data integration, not human penmanship accuracy or hardware stylus quality.
 
 ## Source map
 

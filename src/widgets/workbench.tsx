@@ -7,13 +7,14 @@ import { loadCharacter } from '../services/characters';
 import type { CharacterJson } from 'hanzi-writer';
 import { WriterCanvas } from '../ui/WriterCanvas';
 import '../ui/styles.css';
-function Workbench() {
+export function Workbench() {
   const plugin = usePlugin();
   const [traditional, setTraditional] = useState(''), [simplified, setSimplified] = useState('');
   const [pinyin, setPinyin] = useState(''), [meaning, setMeaning] = useState('');
   const [category, setCategory] = useState(''), [source, setSource] = useState('Manual');
   const [vocabId, setVocabId] = useState(''), [status, setStatus] = useState(''), [error, setError] = useState('');
   const [busy, setBusy] = useState(false), guard = useRef(false), created = useRef('');
+  const [initializing, setInitializing] = useState(true);
   const pendingCard = useRef(''), needsVocabularySetup = useRef(true);
   const [createdCard, setCreatedCard] = useState('');
   const [settings, setSettings] = useState(DEFAULT_SETTINGS), [settingsText, setSettingsText] = useState('');
@@ -36,11 +37,12 @@ function Workbench() {
           setCategory(v.categories.join('; ')); setSource(v.source); setStatus('Using the focused vocabulary entry.');
         }
       } catch { if (live) setError('Could not load saved settings or vocabulary metadata. No data has been changed.'); }
+      finally { if (live) setInitializing(false); }
     })();
     return () => { live = false; };
   }, [plugin]);
   const run = async (task: () => Promise<void>) => {
-    if (guard.current) return; guard.current = true; setBusy(true); setError('');
+    if (initializing || guard.current) return; guard.current = true; setBusy(true); setError('');
     try { await task(); } catch (e) { setError(e instanceof Error ? e.message : 'Operation failed.'); }
     finally { guard.current = false; setBusy(false); }
   };
@@ -66,7 +68,7 @@ function Workbench() {
       const rem = await plugin.rem.findOne(id);
       if (!rem) throw new Error('The new vocabulary entry is unavailable.');
       await rem.setParent(collection);
-      await rem.setText([traditional + ' — ' + pinyin + ' — ' + meaning]);
+      await rem.setText([[traditional, pinyin.trim(), meaning.trim()].filter(Boolean).join(' — ')]);
       await rem.addPowerup(VOCAB_POWERUP);
       await rem.setPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT, [JSON.stringify(vocab)]);
       needsVocabularySetup.current = false;
@@ -86,28 +88,33 @@ function Workbench() {
     <p>Create a writing card with a hidden target and an English prompt. Practice here never changes tested mastery.</p>
     {error && <p role="alert" className="hm-error">{error}</p>}
     {status && <p role="status">{status}</p>}
+    {initializing && <p role="status">Loading settings and vocabulary…</p>}
+    <fieldset className="hm-form" disabled={busy || initializing || !!createdCard}>
     <label>Traditional characters <input value={traditional} onChange={e => { setTraditional(e.target.value); setPractice(undefined); }} disabled={!!vocabId} /></label>
     <label>Optional explicit Simplified form <input value={simplified} onChange={e => setSimplified(e.target.value)} disabled={!!vocabId} /></label>
     <label>Pinyin (optional; included in writing prompt) <input value={pinyin} onChange={e => setPinyin(e.target.value)} /></label>
     <label>English meaning / writing prompt <input value={meaning} onChange={e => setMeaning(e.target.value)} /></label>
     <label>Categories, separated by semicolons <input value={category} onChange={e => setCategory(e.target.value)} disabled={!!vocabId} /></label>
     <label>Source <input value={source} onChange={e => setSource(e.target.value)} disabled={!!vocabId} /></label>
-    <div className="hm-actions"><button className="hm-primary" disabled={busy || !!createdCard} onClick={() => void create()}>Create linked writing card</button>
-      <button disabled={busy} onClick={() => void startPractice()}>Practice selected characters</button></div>
-    {createdCard && <button className="hm-primary" onClick={() => void run(async () => {
+    </fieldset>
+    <div className="hm-actions"><button className="hm-primary" disabled={busy || initializing || !!createdCard} onClick={() => void create()}>Create linked writing card</button>
+      <button disabled={busy || initializing} onClick={() => void startPractice()}>Practice selected characters</button></div>
+    {createdCard && <button className="hm-primary" disabled={busy} onClick={() => void run(async () => {
       const rem = await plugin.rem.findOne(createdCard);
       if (!rem) throw new Error('The created card could not be opened.');
       await plugin.window.openRem(rem); await plugin.widget.closePopup();
     })}>Open created writing card</button>}
-    {practice && <><h2>Practice: {practice.chars[index]}</h2><WriterCanvas character={practice.chars[index]} data={practice.data[index]} mode="learn" active settings={settings} generation={index}
+    {practice && <><h2>Practice: {practice.chars[index]}</h2><WriterCanvas key={settings.animationSpeed} character={practice.chars[index]} data={practice.data[index]} mode="learn" active settings={settings} generation={index}
       onCorrect={() => {}} onMistake={() => {}} onComplete={() => {}} onError={() => setError('Practice canvas could not start.')} />
       <button onClick={() => setIndex(i => (i+1)%practice.chars.length)}>Next character</button>
       <p><a href={`plecoapi://x-callback-url/s?q=${encodeURIComponent(practice.chars[index])}`}>Look up in Pleco</a> · <a href="https://stroke-order.learningweb.moe.edu.tw/" target="_blank" rel="noreferrer">Taiwan MOE stroke reference</a></p></>}
     <details><summary>Settings</summary><p>Thresholds are fractions. Recognition leniency is separate from first-attempt accuracy. Settings apply to the next loaded card.</p>
-      <label>Settings JSON <textarea rows={18} value={settingsText} onChange={e => setSettingsText(e.target.value)} /></label>
-      <button disabled={busy} onClick={() => void run(async () => {
+      <label>Settings JSON <textarea disabled={busy || initializing} rows={18} value={settingsText} onChange={e => setSettingsText(e.target.value)} /></label>
+      <button disabled={busy || initializing} onClick={() => void run(async () => {
         const next = parseSettings(JSON.parse(settingsText)); await plugin.storage.setSynced(SETTINGS_KEY, next);
-        const confirmed = parseSettings(await plugin.storage.getSynced(SETTINGS_KEY)); setSettings(confirmed); setStatus('Settings saved.');
+        const confirmed = parseSettings(await plugin.storage.getSynced(SETTINGS_KEY));
+        if (JSON.stringify(confirmed) !== JSON.stringify(next)) throw new Error('Settings save was not confirmed. Your edits are preserved; retry before closing.');
+        setSettings(confirmed); setStatus('Settings saved and read back.');
       })}>Save settings</button></details>
   </section>;
 }

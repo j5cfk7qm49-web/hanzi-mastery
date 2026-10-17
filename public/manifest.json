@@ -4,7 +4,7 @@
   "name": "Hanzi Mastery",
   "author": "Hanzi Mastery contributors",
   "repoUrl": "https://github.com/j5cfk7qm49-web/hanzi-mastery",
-  "version": { "major": 0, "minor": 2, "patch": 0 },
+  "version": { "major": 0, "minor": 2, "patch": 1 },
   "theme": [], "enableOnMobile": true, "requestNative": false, "unlisted": true,
   "description": "Traditional-first handwriting reviews with independent recall, progressive mastery and locally bundled stroke data. RemNote controls scheduling.",
   "requiredScopes": [{ "type": "All", "level": "ReadCreateModify" }]

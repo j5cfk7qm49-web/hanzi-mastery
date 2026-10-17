@@ -24,8 +24,13 @@ body { margin: 0; }
 .hm label { display: block; margin: 10px 0; }
 .hm input:not([type=checkbox]), .hm textarea, .hm select { display: block; width: 100%; min-height: 44px; padding: 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: inherit; }
 .hm textarea { min-height: 100px; }
+.hm .hm-form { border: 0; margin: 0; padding: 0; min-width: 0; }
 .hm details { margin-top: 18px; } .hm summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
 .hm progress { width: 100%; height: 8px; accent-color: #147d72; }
+.hm-score { display: flex; flex-direction: column; gap: 3px; font-size: 13px; margin: 8px 0; }
+.hm-score span { color: var(--muted); }
+.hm-preserved-result { padding: 10px; border-left: 3px solid #b34e37; background: var(--panel); }
+.hm .hm-canvas[aria-busy=true] { pointer-events: none; }
 @media (prefers-color-scheme: dark) {
  .hm { --muted: #a3b5ba; --border: #415157; --panel: #202e34; color: #e4eef0; background: #17242a; }
  .hm .hm-badge { background: #244940; color: #a8e4d3; }

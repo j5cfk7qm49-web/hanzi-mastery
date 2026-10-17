@@ -1,13 +1,14 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 const chars=Array.from('學國書語聽體愛');
-async function draw(page:Page,ch:string){
+async function draw(page:Page,ch:string,start=0,end?:number){
   const data=JSON.parse(await readFile(`node_modules/hanzi-writer-data/${ch}.json`,'utf8')) as {medians:number[][][]};
   const canvas=page.getByRole('application',{name:'Chinese handwriting canvas'});
   await expect(canvas).toHaveAttribute('aria-busy','false');
+  await canvas.scrollIntoViewIfNeeded();
   const box=await canvas.locator('svg').boundingBox(); if(!box)throw new Error('Missing SVG');
   const scale=(box.width-32)/1024, xOffset=(box.width-1024*scale)/2, yOffset=(box.height-1024*scale)/2;
-  for(const median of data.medians){
+  for(const median of data.medians.slice(start,end)){
     // Character space: y=900 is the top of the nominal em square.
     const points=median.map(([x,y])=>({x:box.x+xOffset+x*scale,y:box.y+yOffset+(900-y)*scale}));
     await page.mouse.move(points[0].x,points[0].y);await page.mouse.down();
@@ -39,6 +40,7 @@ test('real Hanzi Writer accepts seven Traditional median paths and resets betwee
 test('touch trajectory reaches the engine; OS cancellation preserves completed strokes',async({page})=>{
   await page.goto('/');await page.getByRole('button',{name:'Begin test'}).click();
   const canvas=page.getByRole('application');await expect(canvas).toHaveAttribute('aria-busy','false');
+  await canvas.scrollIntoViewIfNeeded();
   const data=JSON.parse(await readFile('node_modules/hanzi-writer-data/學.json','utf8'));
   await canvas.evaluate((element,median:number[][])=>{
     const svg=element.querySelector('svg')!,box=svg.getBoundingClientRect(),scale=(box.width-32)/1024;
@@ -64,4 +66,35 @@ test('reveal causes failure and guided practice preserves it; layout fits a phon
   await page.getByRole('button',{name:'Practice with hints and animation'}).click();
   await expect(page.getByRole('button',{name:'Animate strokes'})).toBeVisible();
   await expect(page.getByText('Writing test failed')).toBeVisible();
+});
+
+test('multi-character test resumes its accepted prefix after host connection loss',async({page})=>{
+  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('/');await page.getByLabel('Demo card').selectOption('7');
+  await page.getByRole('button',{name:'Begin test'}).click();await draw(page,'學');
+  await expect(page.getByText('Character 2 / 2')).toBeVisible();await draw(page,'國',0,1);
+  await page.getByRole('button',{name:'Simulate host connection loss'}).click();
+  await expect(page.getByText(/Writing is paused/)).toBeVisible();
+  await page.getByRole('button',{name:'Restore host connection'}).click();
+  await draw(page,'國',1);await expect(page.getByText('Passed this writing test')).toBeVisible();
+  await expect(page.getByText('Writing mastery saved and read back.')).toBeVisible();
+  expect(errors).toEqual([]);
+  const records=await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('hm:v2:writing:')).map(k=>JSON.parse(localStorage.getItem(k)!)));
+  expect(records).toHaveLength(2);expect(records.every(r=>r.history[0].result.accuracy===1)).toBe(true);
+});
+
+test('declared accidental contact retains the original rejected stroke and raw score',async({page})=>{
+  await page.goto('/');await page.getByRole('button',{name:'Begin test'}).click();
+  const canvas=page.getByRole('application');await expect(canvas).toHaveAttribute('aria-busy','false');
+  await canvas.scrollIntoViewIfNeeded();
+  const box=await canvas.locator('svg').boundingBox();if(!box)throw new Error('Missing SVG');
+  await page.mouse.move(box.x+box.width*.85,box.y+box.height*.9);await page.mouse.down();
+  await page.mouse.move(box.x+box.width*.95,box.y+box.height*.95,{steps:3});await page.mouse.up();
+  await expect(page.getByText('0 / 16 strokes · 1 rejected attempts')).toBeVisible();
+  await page.getByRole('button',{name:'Last input was accidental'}).click();await draw(page,'學');
+  await expect(page.getByText('Writing mastery saved and read back.')).toBeVisible();
+  await expect(page.getByText(/raw 94%, 1 declared accident/)).toBeVisible();
+  const record=await page.evaluate(()=>JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>k.startsWith('hm:v2:writing:'))!)!).history[0]);
+  expect(record.attempt.events[0]).toMatchObject({type:'rejected',accidental:true});
+  expect(record.result.accuracy).toBe(1);expect(record.result.rawAccuracy).toBe(15/16);
 });

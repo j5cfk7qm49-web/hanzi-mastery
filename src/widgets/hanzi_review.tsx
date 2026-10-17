@@ -6,7 +6,7 @@ import { MasteryRepository } from '../services/persistence';
 import { readReviewContext, stillCurrent, subscribeReview, type ReviewContext } from '../services/remnote';
 import { ReviewExercise } from '../ui/ReviewExercise';
 import '../ui/styles.css';
-function HanziReview() {
+export function HanziReview() {
   const plugin = usePlugin();
   const [state, setState] = useState<{ context: ReviewContext; settings: Settings }>();
   const [error, setError] = useState('');
@@ -24,9 +24,16 @@ function HanziReview() {
           const context = await readReviewContext(plugin, settings);
           if (!live) return;
           current.current = context || undefined; setError('');
-          setState(old => !context ? undefined : old?.context.key === context.key && old.context.revealed === context.revealed ? old : { context, settings });
+          setState(old => {
+            if (!context) return undefined;
+            // A reveal is irreversible within this review, including briefly stale host reads.
+            if (old?.context.key === context.key) {
+              if (old.context.revealed || !context.revealed) return old;
+            }
+            return { context, settings };
+          });
         } while (dirty && live);
-      } catch (e) { if (live) { current.current = undefined; setState(undefined); setError(e instanceof Error ? e.message : 'Hanzi Mastery could not read this review.'); } }
+      } catch { if (live) setError('The current RemNote review could not be confirmed. Retrying automatically.'); }
       finally { running = false; }
     };
     const unsubscribe = subscribeReview(plugin, () => { void refresh(); }, cardId => {
@@ -38,19 +45,20 @@ function HanziReview() {
     const interval = window.setInterval(() => void refresh(), 750);
     return () => { live = false; window.clearInterval(interval); unsubscribe(); };
   }, [plugin]);
-  if (error) return <div className="hm"><p role="alert" className="hm-error">{error}</p></div>;
-  if (!state) return null;
+  if (!state) return error ? <div className="hm"><p role="alert" className="hm-error">{error}</p></div> : null;
   // Stable exercise context prevents answer-side state updates from reloading/resetting the attempt.
   return <BoundExercise key={state.context.key} context={state.context} settings={state.settings} repository={repository}
+    suspended={!!error}
     assetRoot={plugin.rootURL}
-    isCurrent={(allowRevealed) => stillCurrent(plugin, state.context.cardId, allowRevealed)} />;
+    isCurrent={(allowRevealed) => stillCurrent(plugin, state.context.cardId, allowRevealed, state.context.reviewAt)} />;
 }
-function BoundExercise({ context, settings, repository, isCurrent, assetRoot }: {
+function BoundExercise({ context, settings, repository, isCurrent, assetRoot, suspended }: {
   context: ReviewContext; settings: Settings; repository: MasteryRepository; isCurrent(allowRevealed?: boolean): Promise<boolean>;
   assetRoot?: string;
+  suspended?: boolean;
 }) {
   const stable = useRef(context);
   return <ReviewExercise context={stable.current} settings={settings} repository={repository} revealed={context.revealed}
-    isCurrent={isCurrent} assetRoot={assetRoot} />;
+    isCurrent={isCurrent} assetRoot={assetRoot} suspended={suspended} />;
 }
 renderWidget(HanziReview);

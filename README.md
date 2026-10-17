@@ -1,8 +1,8 @@
-# Hanzi Mastery 0.2.0 — RemNote handwriting MVP
+# Hanzi Mastery 0.2.1 — RemNote handwriting MVP
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
-The plugin builds reproducibly, passes 47 unit/component/adapter/import tests and 6 Chromium/WebKit browser tests, and has been loaded and exercised in **RemNote Desktop**. This is a pre-release: iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
+The plugin builds reproducibly, passes 59 unit/component/adapter/import tests and 10 Chromium/WebKit browser tests, and has been loaded and exercised in **RemNote Desktop**. This is a pre-release: iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
 
 ## Get started
 
@@ -17,7 +17,7 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. Run **Hanzi Mastery: create writing card / practice / settings** from the command menu (`Ctrl+/` on the verified Windows desktop). Enter an exact Traditional target and an English prompt, create the card, open it, and use RemNote's native practice action. Cards and vocabulary are siblings under a neutral **Hanzi Mastery** document.
 
-The compiled upload archive is **`release/HanziMastery-0.2.0-plugin.zip`**. The separately named source ZIP contains development files. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. It passes the official SDK validator and archive checks. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.2.1-plugin.zip`**. The separately named source ZIP contains development files. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. It passes the official SDK validator and archive checks. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
 
 ## What works
 
@@ -26,6 +26,7 @@ The compiled upload archive is **`release/HanziMastery-0.2.0-plugin.zip`**. The 
 - First-attempt stroke correctness, remembered-but-misdrawn corrections, limited auditable accidental-input recovery, and mandatory failure on forgotten strokes or premature answer reveal.
 - Beginner/Developing/Proficient/Mastered thresholds of 60/75/90/95%, configurable spaced promotion, gentle regression and preserved peak. Same-session practice cannot inflate mastery.
 - Guided learning with outlines, animation and retries, preserving the original failed result.
+- Interrupted-engine and temporary host-connection recovery preserve completed strokes and mistakes. One-click guided practice keeps and saves the original failure.
 - Synced mastery storage with retry IDs and read-back confirmation. Suggested native grade and advisory override; native RemNote controls remain intact.
 - Optional experimental path geometry feedback, excluded from pass/fail.
 - Tested Pleco text and mapped CSV/TSV converters. Categories/provenance are retained; existing SRS history is not modified.

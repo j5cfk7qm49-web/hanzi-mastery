@@ -17,6 +17,8 @@ Thresholds are snapshots of the level at the start of the attempt. A result that
 
 **I forgot a stroke**, ending a test for guided practice, or revealing the native answer before completing the test causes automatic failure, regardless of accuracy or level. Unfinished strokes cannot produce a pass. A failed result remains visible when guided practice begins. Practice-only mode never writes tested mastery and never submits a RemNote grade.
 
+A temporary host-read failure pauses writing without resetting the attempt. When RemNote confirms the same review again, the canvas resumes at the next unfinished stroke. A handwriting-engine error offers a canvas retry with the same stroke ledger, including mistakes. Neither recovery grants a clean second attempt. Revealing the answer while paused still fails the test. The review identity includes the last native repetition timestamp, so a later presentation of the same card cannot reuse an older attempt.
+
 ## Accidental-input policy
 
 By default, one rejected input per character may be declared accidental. It must be the latest input, within eight seconds, before the next drawing attempt and before completion. The declaration only excludes that specific event from the adjusted first-attempt calculation. Original rejection events, raw accuracy and accident count remain auditable in the UI/history model. Earlier genuine rejections on the same stroke continue to count. This is a limited learner declaration, not proof that an event was accidental; it cannot undo assistance or a forgotten stroke. Set `accidentLimit: 0` to disable it.
@@ -41,3 +43,5 @@ Records retain the latest 200 tests, their accepted/rejected stroke-event ledger
 A clean Beginner pass does not imply effortless recall. The plugin never automatically suggests Easy. The default native labels verified in desktop RemNote are **Again = Forgot**, **Hard = Partially recalled**, **Good = Recalled with effort**, and **Easy = Easily recalled**. Labels can be customized. The on-screen selector is an advisory override; the user must click the native RemNote rating. It does not rewrite the measured writing outcome. No queue grading API or repetition-history update is called in this release.
 
 Synced storage is read back before the UI reports a save. Failed/ambiguous saves can be retried with the same unique test ID. Writes serialize within a widget process, but the SDK offers no atomic cross-device merge. Avoid simultaneous offline testing of the same entry on two devices. Export backups are planned; no prototype v0.1 mastery is silently migrated.
+
+Once a completed result passes its current-review check, all its explicit per-character writes continue even if React unmounts the exercise. Closing the iframe/app can still interrupt that work; there is no durable pending-save outbox yet. Wait for **Writing mastery saved and read back** before selecting the next native rating. No save path submits a RemNote grade.

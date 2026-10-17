@@ -48,7 +48,9 @@ for (const [name, [content]] of Object.entries(files)) if (name.endsWith('.js'))
 const zip = zipSync(files, { level: 9 });
 const extracted = unzipSync(zip);
 assert.equal(Object.keys(extracted).length, Object.keys(files).length);
-assert.equal(JSON.parse(new TextDecoder().decode(extracted['manifest.json'])).version.minor, 2);
+const manifest = JSON.parse(new TextDecoder().decode(extracted['manifest.json']));
+assert.equal([manifest.version.major, manifest.version.minor, manifest.version.patch].join('.'), pkg.version,
+  'Upload manifest and package.json versions must match');
 await mkdir('release', { recursive: true });
 const output = `release/HanziMastery-${pkg.version}-plugin.zip`;
 await writeFile(output, zip);

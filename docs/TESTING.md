@@ -1,8 +1,8 @@
-# Verification report — 2026-10-16
+# Verification report — 2026-10-17
 
 ## Automated checks
 
-Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **47 unit/component/adapter/import tests pass** (6 test files). **6 browser tests pass** across Chromium desktop and phone-sized WebKit.
+Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **59 unit/component/adapter/import tests pass** (8 test files). **10 browser tests pass** across Chromium desktop and phone-sized WebKit.
 
 | Requirement | Evidence |
 | --- | --- |
@@ -16,6 +16,8 @@ Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **47 unit/component
 | H: lifecycle | Stale callbacks ignored, cancellation/unmount cleanup, multi-character sequencing, wrong-card save blocked, real native rating transition resets the widget. |
 
 Other coverage includes load failure/retry, invalid settings, corrupt storage, write failure/read-back ambiguity, new repository instances, same-process concurrent writes, learning-only behavior, hidden targets in question DOM, no auto hints/forced acceptance, local asset root, script-form selection, geometry diagnostics, documented Pleco text/CSV mapping and safe card authoring.
+
+The v0.2.1 regression pass adds engine-error recovery on the second character without erasing earlier errors, host read failure/pause/reconnect without unmounting the attempt, irreversible answer reveal despite stale reads, repeated-character worst-result deduplication, completing a verified save batch across React unmount, same-card/new-review rejection, authoring fields locked during async validation, settings read-back mismatch and one-click practice/failure saving. Real-engine browser cases additionally complete a word across simulated host interruption and verify adjusted versus raw accuracy after a declared accident. The browser harness rebuilds automatically before every run.
 
 Browser tests use real Hanzi Writer and JSON data. The queue host is simulated. Reference paths are generated input, not samples of human writing. Touch tests dispatch synthetic touch-shaped events because WebKit does not expose a constructible `Touch` in this automation environment; they check event handling/cancellation, not physical touchscreen/Pencil behavior. Browser reload verifies stored test-event ledgers and progress survive a new page session.
 
@@ -37,12 +39,15 @@ The live test caught and fixed two SDK integration issues missed by mocks: trans
 
 The isolated test entries are named **Hanzi Mastery acceptance test: study/country**. The earlier study entry was created before neutral-document organization was added; the country entry is under Hanzi Mastery. Pre-existing notes/cards were not edited. One native Forgot rating was applied only to the isolated country test card. Test artifacts remain available for inspection.
 
+On 2026-10-17 the v0.2.1 developer build was exercised again on the isolated country card: compact first-attempt feedback and test-ending controls render above the canvas; one click enters guided practice, preserves a prominent original-failure message, and confirms the synced failure save/read-back. This pass exited without submitting another native SRS rating.
+
 ## Still unverified
 
 - ZIP upload/marketplace approval and hosted installation. Developer loading is verified; SDK ZIP validation is a separate packaging check.
 - Complete human-drawn characters and all seven characters inside the live desktop host. Real-engine full reference-path completion was verified in the standalone browser tests.
 - Physical iPhone/iPad, RemNote iOS, Apple Pencil, palm rejection, rotation and app resume.
 - Real multi-device sync, simultaneous offline writes, app restart persistence and cold offline plugin/asset loading.
+- Recovery of an unsaved result after the host destroys its iframe or the app closes; no durable pending-save outbox exists.
 - Complete Taiwan MOE order/shape compliance and calibrated geometric handwriting grading.
 
 ## Manual continuation checklist

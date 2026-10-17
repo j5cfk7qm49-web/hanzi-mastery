@@ -5,7 +5,7 @@ import { DEFAULT_SETTINGS } from '../src/core/config';
 const schema={version:2 as const,skill:'writing' as const,vocabularyId:'v',traditional:'學',prompt:'study'};
 function host() {
   const rem={hasPowerup:async()=>true,getPowerupProperty:async()=>JSON.stringify(schema)};
-  const card={_id:'c',remId:'r',type:'forward',getRem:async()=>({_id:'r',text:['ordinary answer data']})};
+  const card={_id:'c',remId:'r',type:'forward',repetitionHistory:[] as {date:number}[],getRem:async()=>({_id:'r',text:['ordinary answer data']})};
   const api={rem:{findOne:vi.fn(async()=>rem)},queue:{getCurrentCard:vi.fn(async()=>card),hasRevealedAnswer:async()=>false,inLookbackMode:async()=>false},
     widget:{getWidgetContext:async()=>({cardId:'c',remId:'r',revealed:false})},event:{addListener:vi.fn(),removeListener:vi.fn()}};
   return {api,plugin:api as unknown as RNPlugin};
@@ -23,6 +23,12 @@ it('rejects stale widget context, backwards cards and lookback',async()=>{
 it('removes subscriptions on unmount and never replaces native controls',()=>{
   const {plugin,api}=host();const unsubscribe=subscribeReview(plugin,()=>{},()=>{});
   expect(api.event.addListener).toHaveBeenCalledTimes(4);unsubscribe();expect(api.event.removeListener).toHaveBeenCalledTimes(4);
+});
+it('blocks stale work when the same card is presented again after a native rating',async()=>{
+  const {plugin,api}=host();expect(await stillCurrent(plugin,'c',true,0)).toBe(true);
+  const card=await api.queue.getCurrentCard();card.repetitionHistory.push({date:123});
+  expect(await stillCurrent(plugin,'c',true,0)).toBe(false);
+  expect(await readReviewContext(plugin,DEFAULT_SETTINGS)).toMatchObject({reviewAt:123});
 });
 it('creates a forward-only card with a safe front, a real back and hidden structured linkage',async()=>{
   const rem={_id:'new',setText:vi.fn(),setBackText:vi.fn(),setPracticeDirection:vi.fn(),addPowerup:vi.fn(),setPowerupProperty:vi.fn()};
