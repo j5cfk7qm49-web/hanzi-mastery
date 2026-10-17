@@ -26,7 +26,7 @@ function HanziReview() {
           current.current = context || undefined; setError('');
           setState(old => !context ? undefined : old?.context.key === context.key && old.context.revealed === context.revealed ? old : { context, settings });
         } while (dirty && live);
-      } catch { if (live) { current.current = undefined; setState(undefined); setError('Hanzi Mastery could not read this review or its settings. Check the card configuration, then retry.'); } }
+      } catch (e) { if (live) { current.current = undefined; setState(undefined); setError(e instanceof Error ? e.message : 'Hanzi Mastery could not read this review.'); } }
       finally { running = false; }
     };
     const unsubscribe = subscribeReview(plugin, () => { void refresh(); }, cardId => {

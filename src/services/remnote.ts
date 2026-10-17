@@ -6,25 +6,26 @@ export interface ReviewContext extends ExerciseContext { key: string; revealed: 
 export async function readReviewContext(plugin: RNPlugin, settings: Settings): Promise<ReviewContext | null> {
   let phase = 'widget context';
   try {
-  const widget = await plugin.widget.getWidgetContext<WidgetLocation.FlashcardUnder>();
-  phase = 'current card';
-  const card = await plugin.queue.getCurrentCard();
-  if (!card || card.type !== 'forward' || widget.cardId !== card._id || widget.remId !== card.remId) return null;
-  phase = 'card Rem';
-  // SDK 0.0.46's Card.getRem returns unwrapped data at runtime despite its declared type.
-  const rem = await plugin.rem.findOne(card.remId);
-  phase = 'writing Powerup';
-  if (!rem || !await rem.hasPowerup(WRITING_POWERUP)) return null;
-  phase = 'writing metadata';
-  const schema = parseWritingSchema(await rem.getPowerupProperty(WRITING_POWERUP, SCHEMA_SLOT));
-  phase = 'script selection';
-  const target = selectScript(schema, settings.script);
-  phase = 'lookback state';
-  if (await plugin.queue.inLookbackMode()) return null;
-  phase = 'answer visibility';
-  return { cardId: card._id, vocabularyId: schema.vocabularyId, chars: characters(target), prompt: schema.prompt,
-    key: `${card._id}:${Math.max(0, ...(card.repetitionHistory || []).map(r => r.date))}:${target}:${JSON.stringify(settings)}`,
-    revealed: widget.revealed || await plugin.queue.hasRevealedAnswer() };
+    const widget = await plugin.widget.getWidgetContext<WidgetLocation.FlashcardUnder>();
+    phase = 'current card';
+    const card = await plugin.queue.getCurrentCard();
+    if (!card || card.type !== 'forward' || widget.cardId !== card._id || widget.remId !== card.remId) return null;
+    phase = 'card Rem';
+    // SDK 0.0.46's Card.getRem returns unwrapped data at runtime despite its declared type.
+    const rem = await plugin.rem.findOne(card.remId);
+    phase = 'writing Powerup';
+    if (!rem || !await rem.hasPowerup(WRITING_POWERUP)) return null;
+    phase = 'writing metadata';
+    const schema = parseWritingSchema(await rem.getPowerupProperty(WRITING_POWERUP, SCHEMA_SLOT));
+    phase = 'script selection';
+    const target = selectScript(schema, settings.script);
+    phase = 'lookback state';
+    if (await plugin.queue.inLookbackMode()) return null;
+    phase = 'answer visibility';
+    const lastReviewAt = (card.repetitionHistory || []).reduce((at, r) => Math.max(at, r.date), 0);
+    return { cardId: card._id, vocabularyId: schema.vocabularyId, chars: characters(target), prompt: schema.prompt,
+      key: `${card._id}:${lastReviewAt}:${target}:${JSON.stringify(settings)}`,
+      revealed: widget.revealed || await plugin.queue.hasRevealedAnswer() };
   } catch { throw new Error(`Hanzi Mastery could not read ${phase}. Testing is blocked; check the card configuration or host API support.`); }
 }
 export async function stillCurrent(plugin: RNPlugin, cardId: string, allowRevealed = true): Promise<boolean> {
