@@ -1,0 +1,35 @@
+:root { color-scheme: light dark; font-family: system-ui, -apple-system, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.hm { --muted: #52666f; --border: #d4e0e3; --panel: #f5f9f9; color: #213c43; background: #fff; padding: 16px; max-width: 640px; margin: auto; font-size: 15px; line-height: 1.45; }
+.hm h1,.hm h2,.hm p { margin: 0 0 10px; }
+.hm h1 { font-size: 20px; } .hm h2 { font-size: 17px; }
+.hm header { display: flex; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.hm .hm-badge { border-radius: 12px; background: #e4f3ef; color: #146457; padding: 4px 10px; font-size: 13px; }
+.hm .hm-meta { display: flex; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin: 8px 0 12px; }
+.hm button, .hm select, .hm input, .hm textarea { font: inherit; }
+.hm button { min-height: 44px; padding: 9px 13px; border: 1px solid var(--border); background: var(--panel); color: inherit; border-radius: 8px; cursor: pointer; }
+.hm button:disabled { opacity: .5; cursor: default; }
+.hm button:focus-visible,.hm input:focus-visible,.hm textarea:focus-visible,.hm select:focus-visible { outline: 3px solid #339e95; outline-offset: 2px; }
+.hm .hm-primary { background: #147d72; border-color: #147d72; color: white; }
+.hm .hm-danger { border-color: #c47b6c; color: #993f2c; }
+.hm-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.hm-canvas-shell { width: 100%; text-align: center; margin: 14px auto; }
+.hm-canvas { display: inline-block; max-width: 100%; border: 1px solid var(--border); border-radius: 8px; background: linear-gradient(90deg,transparent calc(50% - .5px),#dce6e8 50%,transparent calc(50% + .5px)), linear-gradient(transparent calc(50% - .5px),#dce6e8 50%,transparent calc(50% + .5px)); touch-action: none; user-select: none; -webkit-user-select: none; }
+.hm-canvas svg { display: block; touch-action: none; max-width: 100%; }
+.hm .hm-muted, .hm small { color: var(--muted); }
+.hm .hm-result { padding: 14px; border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; background: var(--panel); }
+.hm .hm-pass { border-left: 4px solid #147d72; } .hm .hm-fail { border-left: 4px solid #b34e37; }
+.hm .hm-error { padding: 12px; background: #fff1e8; color: #893c24; border-radius: 8px; margin: 12px 0; }
+.hm label { display: block; margin: 10px 0; }
+.hm input:not([type=checkbox]), .hm textarea, .hm select { display: block; width: 100%; min-height: 44px; padding: 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: inherit; }
+.hm textarea { min-height: 100px; }
+.hm details { margin-top: 18px; } .hm summary { cursor: pointer; min-height: 44px; padding: 10px 0; }
+.hm progress { width: 100%; height: 8px; accent-color: #147d72; }
+@media (prefers-color-scheme: dark) {
+ .hm { --muted: #a3b5ba; --border: #415157; --panel: #202e34; color: #e4eef0; background: #17242a; }
+ .hm .hm-badge { background: #244940; color: #a8e4d3; }
+ .hm .hm-danger { color: #f3b9a9; } .hm .hm-error { background: #402e25; color: #ffd7bd; }
+ .hm-canvas { background-color: #e9f1ef; }
+}
+@media (max-width: 360px) { .hm { padding: 10px; } .hm-actions button { flex: 1 1 100%; } }

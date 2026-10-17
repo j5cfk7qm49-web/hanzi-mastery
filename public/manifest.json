@@ -3,7 +3,7 @@
   "id": "hanzi_mastery_handwriting_v1",
   "name": "Hanzi Mastery",
   "author": "Hanzi Mastery contributors",
-  "repoUrl": "file:///C:/Users/lettuce/Documents/Codex/Chinese",
+  "repoUrl": "https://github.com/j5cfk7qm49-web/hanzi-mastery",
   "version": { "major": 0, "minor": 2, "patch": 0 },
   "theme": [], "enableOnMobile": true, "requestNative": false, "unlisted": true,
   "description": "Traditional-first handwriting reviews with independent recall, progressive mastery and locally bundled stroke data. RemNote controls scheduling.",
