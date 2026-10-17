@@ -14,7 +14,7 @@
 
 ## Implemented but requiring live acceptance
 
-SDK host registration, actual card creation, queue event timing, host widget mount/unmount behavior, native answer controls, real persistent/device sync and installation. The browser harness exercises the real Hanzi Writer engine but simulates RemNote's host. No signed-in RemNote host or iOS device was available at the time of this verification. Phone-sized WebKit is not RemNote iOS or Apple Pencil verification.
+Developer installation, registration, actual card creation, correct-card loading, real accepted/rejected mouse strokes, forgotten/early-reveal failures, save read-back, guided practice, native rating controls and native review transition were verified in signed-in RemNote Desktop. Hosted ZIP installation, exhaustive lifecycle timing, app-restart/multi-device sync and iOS still need acceptance. The browser harness exercises the real Hanzi Writer engine but simulates RemNote's host. Phone-sized WebKit is not RemNote iOS or Apple Pencil verification.
 
 ## Partial or deferred
 
@@ -28,7 +28,7 @@ SDK host registration, actual card creation, queue event timing, host widget mou
 
 ## Prioritized next work
 
-1. Live RemNote desktop acceptance: install developer plugin and upload ZIP, create neutral writing folder, review all seven characters and a word, reveal early, navigate rapidly, retry saves, restart app, inspect actual native rating behavior. Then iPhone/iPad with Pencil/finger, palm rejection, rotation, scroll/input cancellation and interrupted network tests.
+1. Finish desktop acceptance with hosted ZIP installation, complete human-written characters and a word, rapid navigation, retry/restart/offline tests and inspection of actual saved native history. Developer loading and the principal failure/rating flow already pass. Then test iPhone/iPad with Pencil/finger, palm rejection, rotation, scroll/input cancellation and interrupted network.
 2. Independently audit Taiwanese sequences/glyphs for frequent TOCFL characters. Ship lawful order-only overrides where possible and a licensed Taiwan vector pack where needed, with per-character tests and visible data provenance.
 3. Harden result persistence against host iframe replacement and concurrent cross-device edits, add user-visible history/backup/repair tools, and validate automatic rating submission only if it can preserve native controls and exactly-once behavior.
 4. Calibrate geometry on phone/tablet samples and real learner handwriting. Evaluate spatial proportion, placement and direction separately; retain device-size tolerance. Do not call recognizer acceptance penmanship quality.
