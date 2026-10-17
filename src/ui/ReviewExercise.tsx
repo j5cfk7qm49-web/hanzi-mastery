@@ -100,7 +100,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
       for (const o of unique.values()) {
         if (!live.current) return;
         await repository.save(context.vocabularyId, o.character, { id: id.current + ':' + o.character,
-          at: completedAt.current, cardId: context.cardId, character: o.character, result: o.result, source: 'test' }, settings);
+          at: completedAt.current, cardId: context.cardId, character: o.character, result: o.result, attempt: o.attempt, source: 'test' }, settings);
       }
       if (live.current) setSaveState('saved');
     } catch (e) { if (live.current) { setSaveState('failed'); setError(e instanceof Error ? e.message : 'Mastery could not be saved. Retry before leaving this card.'); } }
@@ -128,6 +128,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
     {!loaded && error && <button onClick={() => setReload(v => v+1)}>Retry loading</button>}
     {loaded && mode === 'ready' && <>
       <p>Recall every stroke independently. Corrections reduce first-attempt accuracy. A forgotten stroke or answer reveal fails the test.</p>
+      <p className="hm-muted"><small>Stroke sequences use Hanzi Writer data and can differ from Taiwan MOE standards. This version is not MOE-certified.</small></p>
       <div className="hm-actions"><button className="hm-primary" disabled={revealed} onClick={() => void start()}>Begin test</button>
       <button onClick={guided}>Guided practice only</button></div>
       {revealed && <p className="hm-muted">The native answer is already visible. Practice is available; testing is disabled.</p>}

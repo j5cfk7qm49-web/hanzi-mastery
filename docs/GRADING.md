@@ -27,7 +27,7 @@ At most one test per character and vocabulary entry can qualify on a UTC date, w
 
 Passed qualifying tests increment the current level's success count. Failed qualifying tests increment a consecutive-failure count; a subsequent qualifying pass clears that failure count. Three qualifying failures lower one level by default, preserving historical peak. Earlier success count is retained until promotion/regression. Same-session repeats are logged but do not advance or regress mastery. Repeated characters in one word are saved once, using the worst result. A word passes only if every component passes its own threshold; a strong easy character cannot mask a weak difficult one.
 
-Records retain the latest 200 test summaries and lifetime attempt count. Per-character mastery is scoped to the shared vocabulary entry, so related skill cards share it without creating duplicate vocabulary records. The same character in two unrelated vocabulary entries has separate progress in this version.
+Records retain the latest 200 tests, their accepted/rejected stroke-event ledgers (including accident declarations), result snapshots, and lifetime attempt count. Raw coordinate paths are used transiently for optional diagnostics and are not retained. Per-character mastery is scoped to the shared vocabulary entry, so related skill cards share it without creating duplicate vocabulary records. The same character in two unrelated vocabulary entries has separate progress in this version.
 
 ## RemNote ratings
 

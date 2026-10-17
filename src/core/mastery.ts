@@ -1,7 +1,8 @@
 import { DEFAULT_SETTINGS, type Level, type Settings } from './config';
-import type { Result } from './attempt';
+import type { Result, Attempt } from './attempt';
 export interface ReviewRecord {
   id: string; at: number; cardId: string; character: string; result: Result; source: 'test';
+  attempt?: Attempt;
 }
 export interface Mastery {
   version: 2; level: Level; peak: Level; stagePasses: number; failureStreak: number;

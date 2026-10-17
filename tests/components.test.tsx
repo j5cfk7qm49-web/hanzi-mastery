@@ -54,6 +54,7 @@ describe('review UI and engine lifecycle',()=>{
     const {store}=setup();await begin();await complete();
     expect(await screen.findByText('Passed this writing test')).toBeTruthy();
     await screen.findByText('Writing mastery saved and read back.');expect(store.setSynced).toHaveBeenCalledTimes(1);
+    expect(store.setSynced.mock.calls[0][1]).toHaveProperty('history.0.attempt.events');
     fireEvent.click(screen.getByRole('button',{name:'Practice with hints and animation'}));
     await waitFor(()=>expect(mocks.quiz!.showHintAfterMisses).toBe(2));
     expect(screen.getByText('Passed this writing test')).toBeTruthy();expect(store.setSynced).toHaveBeenCalledTimes(1);
