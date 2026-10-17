@@ -7,6 +7,7 @@ export interface WriterCanvasProps {
   settings: Settings; generation: number;
   onCorrect(data: StrokeData): void; onMistake(data: StrokeData): void;
   onComplete(): void; onError(): void;
+  onInputCancelled?(): void;
 }
 export function WriterCanvas(props: WriterCanvasProps) {
   const canvas = useRef<HTMLDivElement>(null), shell = useRef<HTMLDivElement>(null);
@@ -15,6 +16,7 @@ export function WriterCanvas(props: WriterCanvasProps) {
   const [ready, setReady] = useState(false);
   const [practiceVersion, setPracticeVersion] = useState(0);
   const operation = useRef(0);
+  const recoverInput = useRef<() => void>(() => {});
   useEffect(() => {
     const node = canvas.current!;
     let live = true;
@@ -30,6 +32,7 @@ export function WriterCanvas(props: WriterCanvasProps) {
     });
     const engine = writer.current;
     engine.cancelQuiz();
+    let accepted = 0, quizToken = 0;
     const valid = () => live && token === operation.current;
     void (async () => {
       try {
@@ -41,17 +44,28 @@ export function WriterCanvas(props: WriterCanvasProps) {
         else await engine.hideOutline({ duration: 0 });
         if (!valid()) return;
         setReady(true);
-        if (props.active) await engine.quiz({
+        const beginQuiz = () => {
+          const currentQuiz = ++quizToken;
+          return engine.quiz({
           leniency: learning ? 1.4 : (CHARACTER_OVERRIDES[props.character]?.leniency ?? props.settings.leniency),
           showHintAfterMisses: learning ? 2 : false, markStrokeCorrectAfterMisses: false,
           acceptBackwardsStrokes: false, highlightOnComplete: learning,
-          onMistake: data => { if (valid() && !learning) latest.current.onMistake(data); },
-          onCorrectStroke: data => { if (valid() && !learning) latest.current.onCorrect(data); },
-          onComplete: () => { if (valid() && !learning) latest.current.onComplete(); },
-        });
+          quizStartStrokeNum: accepted,
+          onMistake: data => { if (valid() && currentQuiz === quizToken && !learning) latest.current.onMistake(data); },
+          onCorrectStroke: data => { if (valid() && currentQuiz === quizToken) { accepted = data.strokeNum+1; if (!learning) latest.current.onCorrect(data); } },
+          onComplete: () => { if (valid() && currentQuiz === quizToken && !learning) latest.current.onComplete(); },
+        }); };
+        recoverInput.current = () => {
+          if (!valid() || accepted >= props.data.strokes.length) return;
+          engine.cancelQuiz();
+          // Restore only the strokes already completed, using the public quiz start option.
+          void beginQuiz().catch(() => { if (valid()) latest.current.onError(); });
+          latest.current.onInputCancelled?.();
+        };
+        if (props.active) await beginQuiz();
       } catch { if (valid()) latest.current.onError(); }
     })();
-    return () => { live = false; operation.current++; engine.cancelQuiz(); };
+    return () => { live = false; operation.current++; recoverInput.current = () => {}; engine.cancelQuiz(); };
   }, [props.character, props.data, props.mode, props.active, props.generation, practiceVersion]);
   useEffect(() => {
     const resize = () => {
@@ -63,6 +77,12 @@ export function WriterCanvas(props: WriterCanvasProps) {
     if (shell.current) observer?.observe(shell.current);
     return () => observer?.disconnect();
   }, [props.settings.canvasSize]);
+  useEffect(() => {
+    const node = canvas.current!;
+    const cancel = () => recoverInput.current();
+    node.addEventListener('touchcancel', cancel);
+    return () => node.removeEventListener('touchcancel', cancel);
+  }, []);
   return <div ref={shell} className="hm-canvas-shell">
     <div ref={canvas} className="hm-canvas" role="application" aria-label="Chinese handwriting canvas" aria-busy={!ready} />
     {!ready && <p role="status">Preparing writing canvas…</p>}

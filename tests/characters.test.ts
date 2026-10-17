@@ -28,3 +28,10 @@ it('geometry diagnostic retains placement and length, independent of input point
   expect(geometryFeedback([{x:0,y:102},{x:1024,y:102}],ref)!.trajectoryError).toBeCloseTo(.099609);
   expect(geometryFeedback([{x:0,y:0},{x:512,y:0}],ref)!.lengthRatio).toBe(.5);
 });
+it('loads optional Simplified data via the documented plugin asset root without conversion', async () => {
+  const raw={strokes:['M 0 0 L 1 1'],medians:[[[0,0],[1,1]]]};
+  const request=vi.spyOn(globalThis,'fetch').mockResolvedValueOnce({ok:true,json:async()=>raw} as Response);
+  expect(await loadCharacter('学','https://plugins.example/hanzi/')).toEqual(raw);
+  expect(String(request.mock.calls[0][0])).toBe('https://plugins.example/hanzi/data/5b66.json');
+  request.mockRestore();
+});

@@ -104,6 +104,13 @@ describe('review UI and engine lifecycle',()=>{
     const {view,store}=setup();await begin();const old=mocks.quiz!;view.unmount();
     act(()=>old.onComplete!({character:'學',totalMistakes:0}));expect(mocks.cancel).toHaveBeenCalled();expect(store.setSynced).not.toHaveBeenCalled();
   });
+  it('recovers from OS touch cancellation without erasing previously recorded strokes or errors',async()=>{
+    setup();await begin();stroke(0);stroke(1,'rejected');
+    fireEvent(screen.getByRole('application'),new Event('touchcancel',{bubbles:true}));
+    await waitFor(()=>expect(mocks.quiz!.quizStartStrokeNum).toBe(1));
+    expect(screen.getByText('1 / 10 strokes · 1 rejected attempts')).toBeTruthy();
+    expect(screen.getByText(/device interrupted this contact/)).toBeTruthy();
+  });
   it('does not save on a different current card',async()=>{
     let valid=true;const {store}=setup({isCurrent:async()=>valid});await begin();valid=false;await complete();
     await screen.findByRole('button',{name:'Retry mastery save'});expect(store.setSynced).not.toHaveBeenCalled();

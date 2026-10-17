@@ -1,7 +1,8 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-const root = path.resolve('dist');
+const root = path.resolve(process.argv[2] || 'dist');
+const port = Number(process.argv[3] || 8080);
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.txt': 'text/plain' };
 http.createServer(async (req, res) => {
   try {
@@ -12,4 +13,4 @@ http.createServer(async (req, res) => {
     res.setHeader('Content-Type', mime[path.extname(file)] || 'application/octet-stream');
     res.end(await readFile(file));
   } catch { res.statusCode = 404; res.end('Not found'); }
-}).listen(8080, '127.0.0.1', () => console.log('Hanzi Mastery dev assets: http://localhost:8080'));
+}).listen(port, '127.0.0.1', () => console.log(`Hanzi Mastery assets: http://localhost:${port}`));

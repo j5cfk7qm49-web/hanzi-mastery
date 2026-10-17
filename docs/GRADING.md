@@ -38,6 +38,6 @@ Records retain the latest 200 tests, their accepted/rejected stroke-event ledger
 | Independent pass at 90%+ with no corrections/accidents | Good |
 | Learner explicitly judges recall effortless | Easy may be selected manually |
 
-A clean Beginner pass does not imply effortless recall. The plugin never automatically suggests Easy. The on-screen selector is an advisory override; the user must click the native RemNote rating. It does not rewrite the measured writing outcome. No queue grading API or repetition-history update is called in this release.
+A clean Beginner pass does not imply effortless recall. The plugin never automatically suggests Easy. The default native labels verified in desktop RemNote are **Again = Forgot**, **Hard = Partially recalled**, **Good = Recalled with effort**, and **Easy = Easily recalled**. Labels can be customized. The on-screen selector is an advisory override; the user must click the native RemNote rating. It does not rewrite the measured writing outcome. No queue grading API or repetition-history update is called in this release.
 
 Synced storage is read back before the UI reports a save. Failed/ambiguous saves can be retried with the same unique test ID. Writes serialize within a widget process, but the SDK offers no atomic cross-device merge. Avoid simultaneous offline testing of the same entry on two devices. Export backups are planned; no prototype v0.1 mastery is silently migrated.

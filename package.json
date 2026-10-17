@@ -41,6 +41,7 @@
     "check": "npm run check-types && npm test",
     "build": "remnote-plugin validate && webpack --mode production && node scripts/package.mjs",
     "dev": "npm run build && node scripts/serve.mjs",
-    "import": "tsx scripts/import.ts"
+    "import": "tsx scripts/import.ts",
+    "build:preview": "webpack --config webpack.preview.cjs"
   }
 }

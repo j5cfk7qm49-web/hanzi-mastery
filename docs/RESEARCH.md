@@ -39,4 +39,8 @@ Bundle character JSON from hanzi-writer-data 2.0.1 and its complete Arphic licen
 
 ## Validation boundary
 
-Compile/type checks, core tests, component tests and browser engine tests can run here. They do not prove actual RemNote installation, cross-device synchronization, iOS WebView/Pencil handling or MOE compliance. Those need explicit host/device checks. No existing knowledge-base content is changed during development.
+Compile/type checks, core tests, component tests and browser engine tests can run here. They do not prove cross-device synchronization, iOS WebView/Pencil handling or MOE compliance. After the user opened RemNote Desktop, developer-plugin activation and authoring were tested in the live host; see TESTING.md for the final scope. Pre-existing knowledge-base content is untouched; isolated new test entries are clearly named.
+
+The live host test exposed `app.transaction` returning without the local callback-populated ID being available. Authoring now awaits individual documented SDK writes, caches draft IDs for retry, and keeps a draft's practice direction disabled until its metadata is complete. It does not rely on that host callback behavior or claim atomic multi-Rem authoring.
+
+SDK 0.0.46's published `Card.getRem()` implementation returns the raw API response, although its declaration promises a Rem object. Live testing exposed the missing methods. The review adapter uses `plugin.rem.findOne(card.remId)` to obtain the documented wrapper instead. Its constructor also leaves `lastRepetitionTime` unassigned, so lifecycle identity derives from repetition-history dates rather than relying on that field.

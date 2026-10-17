@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { renderWidget, usePlugin, WidgetLocation } from '@remnote/plugin-sdk';
 import { DEFAULT_SETTINGS, parseSettings, type Settings } from '../core/config';
-import { characters, SETTINGS_KEY, VOCAB_POWERUP, SCHEMA_SLOT, type Vocabulary } from '../core/schema';
-import { createWritingCard } from '../services/remnote';
+import { characters, parseWritingSchema, SETTINGS_KEY, VOCAB_POWERUP, SCHEMA_SLOT, type Vocabulary } from '../core/schema';
+import { createWritingCard, ensureCollection } from '../services/remnote';
 import { loadCharacter } from '../services/characters';
 import type { CharacterJson } from 'hanzi-writer';
 import { WriterCanvas } from '../ui/WriterCanvas';
@@ -14,6 +14,8 @@ function Workbench() {
   const [category, setCategory] = useState(''), [source, setSource] = useState('Manual');
   const [vocabId, setVocabId] = useState(''), [status, setStatus] = useState(''), [error, setError] = useState('');
   const [busy, setBusy] = useState(false), guard = useRef(false), created = useRef('');
+  const pendingCard = useRef(''), needsVocabularySetup = useRef(true);
+  const [createdCard, setCreatedCard] = useState('');
   const [settings, setSettings] = useState(DEFAULT_SETTINGS), [settingsText, setSettingsText] = useState('');
   const [practice, setPractice] = useState<{ chars: string[]; data: CharacterJson[] }>();
   const [index, setIndex] = useState(0);
@@ -29,6 +31,7 @@ function Workbench() {
           const v = JSON.parse(await rem.getPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT)) as Vocabulary;
           if (!live) return;
           characters(v.traditional); setVocabId(rem._id); created.current = rem._id;
+          needsVocabularySetup.current = false;
           setTraditional(v.traditional); setSimplified(v.simplified || ''); setPinyin(v.pinyin); setMeaning(v.meanings.join('; '));
           setCategory(v.categories.join('; ')); setSource(v.source); setStatus('Using the focused vocabulary entry.');
         }
@@ -45,33 +48,41 @@ function Workbench() {
     const chars = characters(traditional);
     if (simplified) characters(simplified);
     if (!meaning.trim() || /\p{Script=Han}/u.test(meaning)) throw new Error('Use an English prompt without Chinese characters.');
+    parseWritingSchema(JSON.stringify({ version:2, skill:'writing', vocabularyId:'pending', traditional,
+      ...(simplified ? {simplified} : {}), prompt: meaning.trim() + (pinyin.trim() ? ` (${pinyin.trim()})` : '') }));
     // Validate availability before creating anything.
     await Promise.all([...chars, ...Array.from(simplified)].map(c => loadCharacter(c, plugin.rootURL)));
+    const collection = await ensureCollection(plugin);
     let id = created.current;
     if (!id) {
+      const rem = await plugin.rem.createRem();
+      if (!rem) throw new Error('RemNote could not create the vocabulary entry.');
+      id = rem._id; created.current = id; setVocabId(id);
+    }
+    if (needsVocabularySetup.current) {
       const vocab: Vocabulary = { version: 2, traditional, ...(simplified ? { simplified } : {}), pinyin,
         meanings: meaning.split(';').map(s => s.trim()).filter(Boolean), source,
         categories: category.split(';').map(s => s.trim()).filter(Boolean) };
-      await plugin.app.transaction(async () => {
-        const rem = await plugin.rem.createRem();
-        if (!rem) throw new Error('RemNote could not create the vocabulary entry.');
-        id = rem._id;
-        await rem.setText([traditional + ' — ' + pinyin + ' — ' + meaning]);
-        await rem.addPowerup(VOCAB_POWERUP);
-        await rem.setPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT, [JSON.stringify(vocab)]);
-      });
-      created.current = id; setVocabId(id);
+      const rem = await plugin.rem.findOne(id);
+      if (!rem) throw new Error('The new vocabulary entry is unavailable.');
+      await rem.setParent(collection);
+      await rem.setText([traditional + ' — ' + pinyin + ' — ' + meaning]);
+      await rem.addPowerup(VOCAB_POWERUP);
+      await rem.setPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT, [JSON.stringify(vocab)]);
+      needsVocabularySetup.current = false;
     }
     const cardId = await createWritingCard(plugin, { version: 2, skill: 'writing', vocabularyId: id, traditional,
-      ...(simplified ? { simplified } : {}), prompt: meaning.trim() + (pinyin.trim() ? ` (${pinyin.trim()})` : '') });
-    setStatus(`Created a forward writing card (${cardId}). It is separate from the vocabulary entry to avoid revealing an ancestor title. Review it in RemNote's queue.`);
+      ...(simplified ? { simplified } : {}), prompt: meaning.trim() + (pinyin.trim() ? ` (${pinyin.trim()})` : '') },
+      { parentId: collection, resumeId: pendingCard.current || undefined, onCreate: newId => { pendingCard.current = newId; } });
+    setCreatedCard(cardId);
+    setStatus('Created a forward writing card in the Hanzi Mastery document. Open it and use RemNote’s native practice action.');
   });
   const startPractice = () => run(async () => {
     const chars = characters(settings.script === 'simplified' ? simplified : traditional);
     const data = await Promise.all(chars.map(c => loadCharacter(c, plugin.rootURL))); setPractice({ chars, data }); setIndex(0);
   });
   return <section className="hm">
-    <header><h1>Hanzi Mastery workbench</h1><span className="hm-badge">Authoring & practice</span></header>
+    <header><h1>Hanzi Mastery workbench</h1><button onClick={() => void plugin.widget.closePopup()}>Close</button></header>
     <p>Create a writing card with a hidden target and an English prompt. Practice here never changes tested mastery.</p>
     {error && <p role="alert" className="hm-error">{error}</p>}
     {status && <p role="status">{status}</p>}
@@ -81,8 +92,13 @@ function Workbench() {
     <label>English meaning / writing prompt <input value={meaning} onChange={e => setMeaning(e.target.value)} /></label>
     <label>Categories, separated by semicolons <input value={category} onChange={e => setCategory(e.target.value)} disabled={!!vocabId} /></label>
     <label>Source <input value={source} onChange={e => setSource(e.target.value)} disabled={!!vocabId} /></label>
-    <div className="hm-actions"><button className="hm-primary" disabled={busy} onClick={() => void create()}>Create linked writing card</button>
+    <div className="hm-actions"><button className="hm-primary" disabled={busy || !!createdCard} onClick={() => void create()}>Create linked writing card</button>
       <button disabled={busy} onClick={() => void startPractice()}>Practice selected characters</button></div>
+    {createdCard && <button className="hm-primary" onClick={() => void run(async () => {
+      const rem = await plugin.rem.findOne(createdCard);
+      if (!rem) throw new Error('The created card could not be opened.');
+      await plugin.window.openRem(rem); await plugin.widget.closePopup();
+    })}>Open created writing card</button>}
     {practice && <><h2>Practice: {practice.chars[index]}</h2><WriterCanvas character={practice.chars[index]} data={practice.data[index]} mode="learn" active settings={settings} generation={index}
       onCorrect={() => {}} onMistake={() => {}} onComplete={() => {}} onError={() => setError('Practice canvas could not start.')} />
       <button onClick={() => setIndex(i => (i+1)%practice.chars.length)}>Next character</button>

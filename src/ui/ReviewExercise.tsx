@@ -7,6 +7,7 @@ import { geometryFeedback } from '../core/geometry';
 import { MasteryRepository } from '../services/persistence';
 import { loadCharacter } from '../services/characters';
 import { WriterCanvas } from './WriterCanvas';
+const NATIVE_GRADE_LABEL: Record<Grade, string> = { Again:'Forgot', Hard:'Partially recalled', Good:'Recalled with effort', Easy:'Easily recalled' };
 export interface ExerciseContext { cardId: string; vocabularyId: string; chars: string[]; prompt: string }
 export interface ExerciseProps {
   context: ExerciseContext; settings: Settings; repository: MasteryRepository;
@@ -26,6 +27,8 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [grade, setGrade] = useState<Grade>('Again');
   const [diagnostics, setDiagnostics] = useState<ReturnType<typeof geometryFeedback>[]>([]);
+  const [inputNotice, setInputNotice] = useState('');
+  const [, tickAccidentDeadline] = useState(0);
   const active = useRef(false), live = useRef(true), saving = useRef(false);
   const id = useRef(crypto.randomUUID()), completedAt = useRef(0);
   const checkCurrent = useRef(isCurrent); checkCurrent.current = isCurrent;
@@ -79,6 +82,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
     if (!active.current || !attemptRef.current || data.character !== context.chars[index]) return;
     if (revealedRef.current) { finish('answer-revealed'); return; }
     const next = addStroke(attemptRef.current, data.strokeNum, type);
+    setInputNotice('');
     update(next);
     if (type === 'accepted' && settings.geometryFeedback && loaded) {
       const feedback = geometryFeedback(data.drawnPath.points, loaded.data[index].medians[data.strokeNum]);
@@ -116,7 +120,13 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   const currentLevel = loaded?.progress[index].level || 0;
   const currentScore = attempt && gradeAttempt(attempt, currentLevel, settings.thresholds[currentLevel]);
   const last = attempt?.events.at(-1);
+  useEffect(() => {
+    if (!last || last.type !== 'rejected' || last.accidental) return;
+    const timer = window.setTimeout(() => tickAccidentDeadline(v => v+1), Math.max(0, 8001 - (Date.now()-last.at)));
+    return () => window.clearTimeout(timer);
+  }, [last?.id, last?.accidental]);
   const accidentAvailable = mode === 'test' && last?.type === 'rejected' && !last.accidental && !attempt?.completed &&
+    Date.now()-last.at <= 8000 &&
     (attempt?.events.filter(e => e.accidental).length || 0) < settings.accidentLimit;
   return <section className="hm" aria-label="Hanzi Mastery handwriting review">
     <header><h1>Hanzi Mastery</h1><span className="hm-badge">{mode === 'learn' ? 'Guided practice' : 'Writing review'}</span></header>
@@ -138,10 +148,12 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
       <WriterCanvas character={context.chars[index]} data={loaded.data[index]} mode={mode} active settings={settings} generation={version}
         onCorrect={d => stroke(d, 'accepted')} onMistake={d => stroke(d, 'rejected')}
         onComplete={() => { if (attemptRef.current?.completed) finish(); }}
+        onInputCancelled={() => setInputNotice('The device interrupted this contact. Retry the current stroke; completed strokes and recorded errors are preserved.')}
         onError={() => { active.current = false; setMode('ready'); setError('The handwriting engine could not start. No result was graded.'); }} />
       {mode === 'learn' && context.chars.length > 1 && <button onClick={() => { setIndex(i => (i+1)%context.chars.length); setVersion(v => v+1); }}>Next practice character</button>}
     </>}
     {mode === 'test' && attempt && currentScore && <>
+      {inputNotice && <p role="status">{inputNotice}</p>}
       <progress value={attempt.events.filter(e => e.type === 'accepted').length} max={attempt.totalStrokes} aria-label="Completed strokes" />
       <p aria-live="polite">{attempt.events.filter(e => e.type === 'accepted').length} / {attempt.totalStrokes} strokes · {currentScore.mistakes} rejected attempts</p>
       <p>Current first-attempt accuracy: {currentScore.firstAttempts} / {attempt.totalStrokes} ({Math.round(currentScore.accuracy*100)}%). Unfinished strokes are pending.</p>
@@ -156,8 +168,8 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
         {o.result.accidents > 0 && ` · raw ${Math.round(o.result.rawAccuracy*100)}%, ${o.result.accidents} declared accident(s)`}
         {o.result.failure && ` · ${o.result.failure.replaceAll('-', ' ')}`}</p>)}
       <p>Suggested RemNote rating: <b>{!passed ? 'Again' : outcomes.some(o => o.result.suggestedGrade === 'Hard') ? 'Hard' : 'Good'}</b></p>
-      <label>Your rating choice <select value={grade} onChange={e => setGrade(e.target.value as Grade)}>{(['Again','Hard','Good','Easy'] as Grade[]).map(g => <option key={g}>{g}</option>)}</select></label>
-      <p className="hm-muted">Select <b>{grade}</b> with RemNote’s native rating controls. This selector records your intention on screen; it does not submit a rating or alter this writing result.</p>
+      <label>Your rating choice <select value={grade} onChange={e => setGrade(e.target.value as Grade)}>{(['Again','Hard','Good','Easy'] as Grade[]).map(g => <option key={g} value={g}>{g} — {NATIVE_GRADE_LABEL[g]}</option>)}</select></label>
+      <p className="hm-muted">Choose <b>{grade} / {NATIVE_GRADE_LABEL[grade]}</b> with RemNote’s native rating controls (labels may be customized). This selector does not submit a rating or alter this writing result.</p>
       <p>{saveState === 'saved' ? 'Writing mastery saved and read back.' : saveState === 'saving' ? 'Saving writing mastery…' : 'Writing mastery has not been saved.'}</p>
       {saveState === 'failed' && <button onClick={() => void save()}>Retry mastery save</button>}
       {mode === 'result' && <button onClick={guided}>Practice with hints and animation</button>}
