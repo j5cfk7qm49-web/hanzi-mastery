@@ -19,6 +19,7 @@ export function WriterCanvas(props: WriterCanvasProps) {
   const [ready, setReady] = useState(false);
   const [practiceVersion, setPracticeVersion] = useState(0);
   const operation = useRef(0);
+  const canvasWidth = useRef(0);
   const recoverInput = useRef<() => void>(() => {});
   useEffect(() => {
     const node = canvas.current!;
@@ -75,7 +76,14 @@ export function WriterCanvas(props: WriterCanvasProps) {
   }, [props.character, props.data, props.mode, props.active, props.generation, practiceVersion, props.settings.leniency]);
   useEffect(() => {
     const resize = () => {
-      const width = Math.max(180, Math.min(props.settings.canvasSize, shell.current?.clientWidth || 280));
+      const node = shell.current;
+      const style = node && window.getComputedStyle(node);
+      const gutters = style ? (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0) : 0;
+      // Reserve the canvas border and scroll margins instead of squeezing its SVG with CSS.
+      const available = (node?.clientWidth || 280) - gutters - 2;
+      const width = Math.max(1, Math.min(props.settings.canvasSize, available));
+      if (width === canvasWidth.current) return;
+      canvasWidth.current = width;
       writer.current?.updateDimensions({ width, height: width, padding: 16 });
     };
     resize();
@@ -93,15 +101,28 @@ export function WriterCanvas(props: WriterCanvasProps) {
     // Scroll through the browser's normal ancestors, including the host queue pane.
     // This keeps the whole drawing surface reachable after starting or resuming.
     if (!ready || !props.active) return;
-    const revealCanvas = () => canvas.current?.scrollIntoView?.({ block: 'nearest' });
+    const revealCanvas = () => (canvas.current?.closest('.hm-writing-stage') || shell.current)?.scrollIntoView?.({ block: 'nearest' });
     revealCanvas();
     // The SDK sends a ResizeObserver message to the host asynchronously.
     const settled = window.setTimeout(revealCanvas, 300);
-    return () => window.clearTimeout(settled);
+    // Never move the surface under a finger/Pencil or override a user's scroll gesture.
+    const stopAutoScroll = () => window.clearTimeout(settled);
+    document.addEventListener('touchstart', stopAutoScroll, { capture: true, passive: true });
+    document.addEventListener('mousedown', stopAutoScroll, true);
+    document.addEventListener('pointerdown', stopAutoScroll, true);
+    document.addEventListener('wheel', stopAutoScroll, { capture: true, passive: true });
+    return () => {
+      window.clearTimeout(settled);
+      document.removeEventListener('touchstart', stopAutoScroll, true);
+      document.removeEventListener('mousedown', stopAutoScroll, true);
+      document.removeEventListener('pointerdown', stopAutoScroll, true);
+      document.removeEventListener('wheel', stopAutoScroll, true);
+    };
   }, [ready, props.active, props.generation]);
   return <div ref={shell} className="hm-canvas-shell">
     <div ref={canvas} className="hm-canvas" role="application" aria-label="Chinese handwriting canvas" aria-busy={!ready} />
     {!ready && <p role="status">Preparing writing canvas…</p>}
+    <p className="hm-scroll-hint">Draw in the square. Swipe beside it to scroll.</p>
     {props.mode === 'learn' && <div className="hm-actions">
       <button disabled={!ready || !props.active} onClick={() => { recoverInput.current = () => {}; writer.current?.cancelQuiz(); void writer.current?.animateCharacter().catch(() => latest.current.onError()); }}>Animate strokes</button>
       <button disabled={!ready} onClick={() => setPracticeVersion(v => v+1)}>Practice again</button>

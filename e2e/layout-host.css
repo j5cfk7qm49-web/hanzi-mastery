@@ -1,0 +1,7 @@
+.hm-layout-host { height: 100vh; height: 100dvh; width: 100%; margin: auto; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; background: #e9edf1; color: #213c43; font: 15px/1.4 system-ui, sans-serif; }
+.hm-layout-toolbar { padding: max(12px, env(safe-area-inset-top, 0px)) 16px 12px; background: #dfe6ec; min-height: 48px; }
+.hm-layout-scroll { overflow-y: auto; min-height: 0; overflow-x: hidden; }
+.hm-layout-question { padding: 12px 16px; margin: 0; }
+.hm-layout-scroll iframe { display: block; width: 100%; border: 0; }
+.hm-layout-native { display: flex; gap: 8px; padding: 8px 12px max(8px, env(safe-area-inset-bottom, 0px)); background: #dfe6ec; }
+.hm-layout-native button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 8px 4px; border: 1px solid #a5b7c1; border-radius: 8px; background: white; color: #213c43; font: inherit; overflow-wrap: anywhere; }

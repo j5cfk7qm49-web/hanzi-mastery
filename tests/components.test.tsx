@@ -183,6 +183,19 @@ describe('review UI and engine lifecycle',()=>{
     expect(screen.getByText('1 / 10 strokes · 1 rejected attempts')).toBeTruthy();
     expect(screen.getByText(/device interrupted this contact/)).toBeTruthy();
   });
+  it('does not perform a delayed auto-scroll after the learner touches the canvas',async()=>{
+    const previous=Object.getOwnPropertyDescriptor(HTMLElement.prototype,'scrollIntoView');
+    const scroll=vi.fn();Object.defineProperty(HTMLElement.prototype,'scrollIntoView',{value:scroll,configurable:true});
+    try {
+      setup();await begin();const count=scroll.mock.calls.length;expect(count).toBeGreaterThan(0);
+      fireEvent.touchStart(screen.getByRole('application'));
+      await act(async()=>{await new Promise(resolve=>setTimeout(resolve,350));});
+      expect(scroll).toHaveBeenCalledTimes(count);
+    } finally {
+      if(previous)Object.defineProperty(HTMLElement.prototype,'scrollIntoView',previous);
+      else Reflect.deleteProperty(HTMLElement.prototype,'scrollIntoView');
+    }
+  });
   it('does not save on a different current card',async()=>{
     let valid=true;const {store}=setup({isCurrent:async()=>valid});await begin();valid=false;await complete();
     await screen.findByRole('button',{name:'Retry mastery save'});expect(store.setSynced).not.toHaveBeenCalled();

@@ -158,7 +158,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   const accidentAvailable = mode === 'test' && last?.type === 'rejected' && !last.accidental && !attempt?.completed &&
     Date.now()-last.at <= 8000 &&
     (attempt?.events.filter(e => e.accidental).length || 0) < settings.accidentLimit;
-  return <section className="hm" aria-label="Hanzi Mastery handwriting review">
+  return <section className={`hm hm-review hm-mode-${mode}`} aria-label="Hanzi Mastery handwriting review">
     <header><h1>Hanzi Mastery</h1><span className="hm-badge">{mode === 'learn' ? 'Guided practice' : 'Writing review'}</span></header>
     <h2>{context.prompt}</h2>
     <div className="hm-meta"><span>{LEVEL_NAMES[currentLevel]} · required {Math.round(settings.thresholds[currentLevel]*100)}%</span>
@@ -175,13 +175,11 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
       {revealed && <p className="hm-muted">The native answer is already visible. Practice is available; testing is disabled.</p>}
     </>}
     {mode === 'test' && attempt && currentScore && <>
-      <div className="hm-score" aria-live="polite"><strong>Current first-attempt accuracy: {currentScore.firstAttempts} / {attempt.totalStrokes} ({Math.round(currentScore.accuracy*100)}%)</strong>
+      <div className="hm-score" aria-live="polite"><strong>First-attempt accuracy: {Math.round(currentScore.accuracy*100)}%</strong>
         <span>{attempt.events.filter(e => e.type === 'accepted').length} / {attempt.totalStrokes} strokes · {currentScore.mistakes} rejected attempts</span></div>
       <progress value={attempt.events.filter(e => e.type === 'accepted').length} max={attempt.totalStrokes} aria-label="Completed strokes" />
-      <div className="hm-actions"><button className="hm-danger" onClick={() => finish('forgotten-stroke')}>I forgot a stroke — end test</button>
-        <button onClick={guided}>End test for guided practice</button></div>
     </>}
-    {loaded && (mode === 'test' || mode === 'learn') && <>
+    {loaded && (mode === 'test' || mode === 'learn') && <div className="hm-writing-stage">
       {mode === 'learn' && outcomes.length > 0 && <p className="hm-preserved-result">Original writing test: <b>{passed ? 'Passed' : 'Failed'}</b>. Practice does not change this result.</p>}
       {mode === 'learn' && <p className="hm-muted">Practice does not advance mastery or submit an SRS grade. Target: {context.chars[index]}</p>}
       {engineProblem && <button disabled={suspended || checking} onClick={() => void retryEngine()}>Retry writing canvas</button>}
@@ -191,24 +189,28 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
         onComplete={() => { if (attemptRef.current?.completed) finish(); }}
         onInputCancelled={() => setInputNotice('The device interrupted this contact. Retry the current stroke; completed strokes and recorded errors are preserved.')}
         onError={() => { setEngineProblem(true); setError('The handwriting engine stopped. Retry the canvas to continue; completed strokes and recorded errors are preserved.'); }} />}
+      {mode === 'test' && <div className="hm-test-actions"><button className="hm-danger" aria-label="I forgot a stroke — end test" onClick={() => finish('forgotten-stroke')}>Forgot a stroke</button>
+        <button aria-label="Last input was accidental" disabled={!accidentAvailable || suspended} onClick={() => update(markLastAccidental(attemptRef.current!, settings.accidentLimit))}>Accidental input</button></div>}
       {mode === 'learn' && context.chars.length > 1 && <button onClick={() => { setIndex(i => (i+1)%context.chars.length); setVersion(v => v+1); }}>Next practice character</button>}
-    </>}
+    </div>}
     {mode === 'test' && attempt && currentScore && <>
       {inputNotice && <p role="status">{inputNotice}</p>}
-      <button disabled={!accidentAvailable || suspended} onClick={() => update(markLastAccidental(attemptRef.current!, settings.accidentLimit))}>Last input was accidental</button>
-      <details><summary>Accuracy and accidental input</summary><p>Unfinished strokes are pending. A correctly recalled stroke counts on its first accepted attempt; independent corrections lower accuracy.</p>
+      <details><summary>Practice and scoring</summary><button onClick={guided}>End test for guided practice</button>
+        <p>Forgotten strokes or assistance fail this test. Unfinished strokes are pending. Independent corrections lower first-attempt accuracy.</p>
         <p>Accident correction applies only to the latest rejected input within 8 seconds, before drawing again. Limit {settings.accidentLimit} per character. Original errors stay in the record.</p></details>
     </>}
     {resultVisible && <div className={`hm-result ${passed ? 'hm-pass' : 'hm-fail'}`} role="status">
       <h2>{passed ? 'Passed this writing test' : 'Writing test failed'}</h2>
+      <p className="hm-save-status">{saveState === 'saved' ? 'Writing mastery saved and read back.' : saveState === 'saving' ? 'Saving writing mastery…' : 'Writing mastery has not been saved.'}</p>
+      {saveState === 'failed' && <button onClick={() => void save()}>Retry mastery save</button>}
+      <details className="hm-character-results" open={outcomes.length === 1}><summary>Character results ({outcomes.length})</summary>
       {outcomes.map((o, i) => <p key={i}>{o.character}: {o.result.firstAttempts}/{o.result.totalStrokes} first attempts · {Math.round(o.result.accuracy*100)}% / {Math.round(o.result.threshold*100)}% required
         {o.result.accidents > 0 && ` · raw ${Math.round(o.result.rawAccuracy*100)}%, ${o.result.accidents} declared accident(s)`}
         {o.result.failure && ` · ${o.result.failure.replaceAll('-', ' ')}`}</p>)}
+      </details>
       <p>Suggested RemNote rating: <b>{!passed ? 'Again' : outcomes.some(o => o.result.suggestedGrade === 'Hard') ? 'Hard' : 'Good'}</b></p>
       <label>Your rating choice <select value={grade} onChange={e => setGrade(e.target.value as Grade)}>{(['Again','Hard','Good','Easy'] as Grade[]).map(g => <option key={g} value={g}>{g} — {NATIVE_GRADE_LABEL[g]}</option>)}</select></label>
-      <p className="hm-muted">Choose <b>{grade} / {NATIVE_GRADE_LABEL[grade]}</b> with RemNote’s native rating controls (labels may be customized). This selector does not submit a rating or alter this writing result.</p>
-      <p>{saveState === 'saved' ? 'Writing mastery saved and read back.' : saveState === 'saving' ? 'Saving writing mastery…' : 'Writing mastery has not been saved.'}</p>
-      {saveState === 'failed' && <button onClick={() => void save()}>Retry mastery save</button>}
+      <p className="hm-muted">Choose <b>{grade} / {NATIVE_GRADE_LABEL[grade]}</b> in RemNote’s native controls. Your choice here is a suggestion; it does not submit a rating.</p>
       {mode === 'result' && <button onClick={guided}>Practice with hints and animation</button>}
       {settings.geometryFeedback && diagnostics.filter(Boolean).length > 0 && <p className="hm-muted">Experimental path diagnostic: mean reference-path deviation {(diagnostics.reduce((sum,d) => sum+(d?.trajectoryError || 0),0)/diagnostics.length*100).toFixed(1)}% of canvas coordinates. This is feedback only, not a penmanship grade.</p>}
     </div>}

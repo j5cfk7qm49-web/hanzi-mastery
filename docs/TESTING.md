@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **59 unit/component/adapter/import tests pass** (8 test files). **10 browser tests pass** across Chromium desktop and phone-sized WebKit.
+Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **60 unit/component/adapter/import tests pass** (8 test files). **26 browser tests pass** across Chromium desktop and phone-sized WebKit.
 
 | Requirement | Evidence |
 | --- | --- |
@@ -18,6 +18,8 @@ Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **59 unit/component
 Other coverage includes load failure/retry, invalid settings, corrupt storage, write failure/read-back ambiguity, new repository instances, same-process concurrent writes, learning-only behavior, hidden targets in question DOM, no auto hints/forced acceptance, local asset root, script-form selection, geometry diagnostics, documented Pleco text/CSV mapping and safe card authoring.
 
 The v0.2.1 regression pass adds engine-error recovery on the second character without erasing earlier errors, host read failure/pause/reconnect without unmounting the attempt, irreversible answer reveal despite stale reads, repeated-character worst-result deduplication, completing a verified save batch across React unmount, same-card/new-review rejection, authoring fields locked during async validation, settings read-back mismatch and one-click practice/failure saving. Real-engine browser cases additionally complete a word across simulated host interruption and verify adjusted versus raw accuracy after a declared accident. The browser harness rebuilds automatically before every run.
+
+The v0.2.2 pass adds 16 embedded-layout cases across both browser projects: 320/375/430px phone widths, landscape, iPad, a 320px pane within a wider viewport, long prompts, dark mode, enlarged text, rotation with an accepted stroke and separate simulated native controls. Bounds checks include no horizontal overflow, square canvas, scroll margins, 44px control targets, settled iframe height and reachable controls. Screenshots were visually inspected. A component regression verifies that touch input cancels delayed auto-scroll. See [the iOS layout report](IOS_LAYOUT.md).
 
 Browser tests use real Hanzi Writer and JSON data. The queue host is simulated. Reference paths are generated input, not samples of human writing. Touch tests dispatch synthetic touch-shaped events because WebKit does not expose a constructible `Touch` in this automation environment; they check event handling/cancellation, not physical touchscreen/Pencil behavior. Browser reload verifies stored test-event ledgers and progress survive a new page session.
 
@@ -40,6 +42,8 @@ The live test caught and fixed two SDK integration issues missed by mocks: trans
 The isolated test entries are named **Hanzi Mastery acceptance test: study/country**. The earlier study entry was created before neutral-document organization was added; the country entry is under Hanzi Mastery. Pre-existing notes/cards were not edited. One native Forgot rating was applied only to the isolated country test card. Test artifacts remain available for inspection.
 
 On 2026-10-17 the v0.2.1 developer build was exercised again on the isolated country card: compact first-attempt feedback and test-ending controls render above the canvas; one click enters guided practice, preserves a prominent original-failure message, and confirms the synced failure save/read-back. This pass exited without submitting another native SRS rating.
+
+The v0.2.2 layout pass is automated. Its exact new layout has not been exercised in native RemNote iOS; the native desktop checks above describe v0.2.0/v0.2.1. The new iframe fixture models available space and scrolling without claiming to reproduce RemNote iOS chrome or its safe-area/keyboard handling.
 
 ## Still unverified
 

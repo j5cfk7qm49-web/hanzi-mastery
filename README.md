@@ -1,8 +1,8 @@
-# Hanzi Mastery 0.2.1 — RemNote handwriting MVP
+# Hanzi Mastery 0.2.2 — RemNote handwriting MVP
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
-The plugin builds reproducibly, passes 59 unit/component/adapter/import tests and 10 Chromium/WebKit browser tests, and has been loaded and exercised in **RemNote Desktop**. This is a pre-release: iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
+The plugin builds reproducibly, passes 60 unit/component/adapter/import tests and 26 Chromium/WebKit browser tests. The earlier v0.2.0/v0.2.1 integration was exercised in **RemNote Desktop**; v0.2.2 adds tested mobile layout refinements. This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
 
 ## Get started
 
@@ -17,11 +17,12 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. Run **Hanzi Mastery: create writing card / practice / settings** from the command menu (`Ctrl+/` on the verified Windows desktop). Enter an exact Traditional target and an English prompt, create the card, open it, and use RemNote's native practice action. Cards and vocabulary are siblings under a neutral **Hanzi Mastery** document.
 
-The compiled upload archive is **`release/HanziMastery-0.2.1-plugin.zip`**. The separately named source ZIP contains development files. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. It passes the official SDK validator and archive checks. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.2.2-plugin.zip`**. The separately named source ZIP contains development files. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. It passes the official SDK validator and archive checks. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
 
 ## What works
 
 - Responsive Hanzi Writer canvas; locally bundled JavaScript and data for 9,574 exact-script characters. 學、國、書、語、聽、體、愛 are also embedded in the widget bundle.
+- Compact phone layout, scroll margins beside the canvas, touch-sized controls, safe-area CSS and rotation/reflow tests inside a simulated review pane. [iOS layout and device-test limits](docs/IOS_LAYOUT.md).
 - Explicit hidden writing-card metadata and shared vocabulary linkage, rather than answer-text guessing. Single characters and sequential multi-character words.
 - First-attempt stroke correctness, remembered-but-misdrawn corrections, limited auditable accidental-input recovery, and mandatory failure on forgotten strokes or premature answer reveal.
 - Beginner/Developing/Proficient/Mastered thresholds of 60/75/90/95%, configurable spaced promotion, gentle regression and preserved peak. Same-session practice cannot inflate mastery.
@@ -43,6 +44,7 @@ Recognition, translation, pinyin, tones, listening and pronunciation have a shar
 - [Create compatible flashcards and share vocabulary](docs/FLASHCARDS.md)
 - [Grading, accident policy and spaced mastery](docs/GRADING.md)
 - [Tests and exact desktop/iOS verification boundary](docs/TESTING.md)
+- [iPhone/iPad layout decisions and embedded-pane tests](docs/IOS_LAYOUT.md)
 - [ChineseGuru/Pleco interoperability and CLI](docs/IMPORTING.md)
 - [Implemented/partial/deferred features and prioritized roadmap](docs/STATUS_AND_ROADMAP.md)
 - [Build, source structure and persistence](docs/DEVELOPMENT.md)
