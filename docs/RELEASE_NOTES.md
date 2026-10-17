@@ -1,16 +1,13 @@
-# Hanzi Mastery 0.2.2 pre-release
+# Hanzi Mastery 0.2.3 pre-release
 
-Mobile layout refinements for the Traditional-first RemNote handwriting MVP.
+Fix a result-display issue found by testing the new plugin in RemNote Desktop.
 
-- Compact phone header and first-attempt score, with two primary controls immediately below the square canvas.
-- Scroll margins beside the drawing surface; less frequent practice/scoring options use a disclosure.
-- Safe-area padding, long-prompt wrapping, 44px touch targets and 16px form controls.
-- Put mastery save status near the result heading; expandable multi-character result details.
-- Cancel delayed auto-scroll when input starts and skip unnecessary canvas resize updates. Preserve strokes/errors through rotation.
-- Add an auto-sized iframe fixture with separate simulated native controls, covering small phones, landscape, iPad and narrow split panes. Height synchronization and visual screenshot review prevent clipped-iframe false positives.
+- After finishing a scrolled handwriting test, its result heading and save confirmation could remain clipped above the queue pane. The result and persisted mastery were correct, but the feedback was easy to miss.
+- Bring the result heading into view after the host finishes resizing. Share the canvas's input-cancelled delayed adjustment without taking keyboard focus from RemNote.
+- Add a regression that fails before the fix and checks actual heading/save-status bounds inside a short review pane in Chromium and WebKit. Grading and scheduling behavior are unchanged.
 
-Verification: TypeScript, **60 unit/component/adapter/import tests**, **26 Chromium/WebKit browser tests**, official SDK manifest validation and ZIP integrity checks. Earlier v0.2.0/v0.2.1 integration flows were exercised in signed-in RemNote Desktop. This release's new layout was tested automatically in browser/iframe fixtures; native RemNote iOS was not available.
+Verification: TypeScript, **60 unit/component/adapter/import tests**, **28 Chromium/WebKit browser tests**, official SDK manifest validation and ZIP integrity checks. Live RemNote Desktop testing confirmed accepted/rejected strokes, explicit-forgetting failure, early native-reveal failure, synced mastery read-back, retained failure in guided practice, and the corrected result position. No native SRS rating was applied during this test pass. The original v0.2.2 ZIP was also rebuilt byte-for-byte before the fix.
 
-RemNote retains native rating controls and scheduling. Portrait is recommended for phone writing: short landscape panes may require scrolling. Finger/Pencil gesture routing, palm rejection, actual safe-area propagation, VoiceOver, Dynamic Type, keyboard behavior, hosted installation and offline/sync behavior remain unverified on a physical iOS device. First-attempt scoring and the documented Taiwan stroke-order limitations are unchanged. Wait for save confirmation before advancing; no durable pending-save outbox exists.
+RemNote retains native rating controls and scheduling. Real RemNote iOS/Apple Pencil, hosted installation, offline/multi-device behavior and complete Taiwan stroke-order compliance remain unverified or incomplete. Short review panes still require scrolling. Wait for save confirmation before advancing; no durable pending-save outbox exists.
 
-Download `HanziMastery-0.2.2-plugin.zip` for the compiled upload package and `HanziMastery-0.2.2-source.zip` for source. Local desktop developer loading uses `npm ci`, `npm run dev`, then **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. See `docs/IOS_LAYOUT.md` for layout decisions and remaining device checks, and `docs/INSTALLATION.md` for hosted distribution requirements. The test fixture is excluded from the plugin ZIP.
+Download `HanziMastery-0.2.3-plugin.zip` for the compiled upload package and `HanziMastery-0.2.3-source.zip` for source. Local desktop developer loading uses `npm ci`, `npm run dev`, then **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. See `docs/TESTING.md` for exact evidence and remaining platform checks. The browser fixtures are excluded from the plugin ZIP.

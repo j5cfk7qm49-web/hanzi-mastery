@@ -9,6 +9,7 @@ The intended phone workflow is portrait: read the prompt, begin, write in a squa
 - A compact header, mastery requirement and first-attempt score precede the canvas. **Forgot a stroke** and **Accidental input** sit directly below it in two columns. The accessible names still explain that forgetting ends the test. Less frequent practice/scoring options are in a disclosure.
 - Controls have at least 44 by 44 CSS pixel targets. Input/select/textarea text is 16px. Long English prompts wrap without horizontal page scrolling. Zoom is not disabled.
 - The original result stays visible during practice. Save status appears near the result heading, before the advisory grade selector. Long multi-character result lists can be expanded separately.
+- Since v0.2.3, a finished test scrolls its result heading and save status into view after host resizing, without moving keyboard focus or overriding a subsequent touch/scroll. This fixes a clipping issue found in live desktop testing.
 - Normal browser scrolling brings the canvas and its primary controls into view. Touch, pointer, mouse or wheel input cancels the delayed adjustment so it cannot move the surface under an active contact. Resize updates skip unchanged dimensions and retain accepted strokes/errors.
 - Outer padding uses `max(normal padding, env(safe-area-inset-…))`. In an iframe WebKit may report zero insets because the host already handles them; the plugin cannot establish the native app's safe-area policy. It adds no fixed bottom toolbar or overlay over RemNote's controls.
 

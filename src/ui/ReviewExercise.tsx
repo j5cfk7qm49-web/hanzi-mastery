@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { CharacterJson, StrokeData } from 'hanzi-writer';
 import { LEVEL_NAMES, type Settings } from '../core/config';
 import { addStroke, failRecall, gradeAttempt, markLastAccidental, newAttempt, type Attempt, type Grade, type Result, type RecallFailure } from '../core/attempt';
@@ -7,6 +7,7 @@ import { geometryFeedback } from '../core/geometry';
 import { MasteryRepository } from '../services/persistence';
 import { loadCharacter } from '../services/characters';
 import { WriterCanvas } from './WriterCanvas';
+import { useRevealInHost } from './useRevealInHost';
 const NATIVE_GRADE_LABEL: Record<Grade, string> = { Again:'Forgot', Hard:'Partially recalled', Good:'Recalled with effort', Easy:'Easily recalled' };
 export interface ExerciseContext { cardId: string; vocabularyId: string; chars: string[]; prompt: string }
 export interface ExerciseProps {
@@ -20,6 +21,9 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   const [loaded, setLoaded] = useState<{ data: CharacterJson[]; progress: Mastery[] }>();
   const [error, setError] = useState(''), [reload, setReload] = useState(0);
   const [mode, setMode] = useState<'ready' | 'test' | 'learn' | 'result'>('ready');
+  const resultHeading = useRef<HTMLHeadingElement>(null);
+  const getResultHeading = useCallback(() => resultHeading.current, []);
+  useRevealInHost(getResultHeading, mode === 'result', 0, 'start');
   const [index, setIndex] = useState(0), [version, setVersion] = useState(0);
   const [attempt, setAttempt] = useState<Attempt>();
   const attemptRef = useRef<Attempt>();
@@ -200,7 +204,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
         <p>Accident correction applies only to the latest rejected input within 8 seconds, before drawing again. Limit {settings.accidentLimit} per character. Original errors stay in the record.</p></details>
     </>}
     {resultVisible && <div className={`hm-result ${passed ? 'hm-pass' : 'hm-fail'}`} role="status">
-      <h2>{passed ? 'Passed this writing test' : 'Writing test failed'}</h2>
+      <h2 ref={resultHeading}>{passed ? 'Passed this writing test' : 'Writing test failed'}</h2>
       <p className="hm-save-status">{saveState === 'saved' ? 'Writing mastery saved and read back.' : saveState === 'saving' ? 'Saving writing mastery…' : 'Writing mastery has not been saved.'}</p>
       {saveState === 'failed' && <button onClick={() => void save()}>Retry mastery save</button>}
       <details className="hm-character-results" open={outcomes.length === 1}><summary>Character results ({outcomes.length})</summary>

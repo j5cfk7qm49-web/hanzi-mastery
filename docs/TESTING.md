@@ -2,7 +2,7 @@
 
 ## Automated checks
 
-Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **60 unit/component/adapter/import tests pass** (8 test files). **26 browser tests pass** across Chromium desktop and phone-sized WebKit.
+Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **60 unit/component/adapter/import tests pass** (8 test files). **28 browser tests pass** across Chromium desktop and phone-sized WebKit.
 
 | Requirement | Evidence |
 | --- | --- |
@@ -20,6 +20,8 @@ Other coverage includes load failure/retry, invalid settings, corrupt storage, w
 The v0.2.1 regression pass adds engine-error recovery on the second character without erasing earlier errors, host read failure/pause/reconnect without unmounting the attempt, irreversible answer reveal despite stale reads, repeated-character worst-result deduplication, completing a verified save batch across React unmount, same-card/new-review rejection, authoring fields locked during async validation, settings read-back mismatch and one-click practice/failure saving. Real-engine browser cases additionally complete a word across simulated host interruption and verify adjusted versus raw accuracy after a declared accident. The browser harness rebuilds automatically before every run.
 
 The v0.2.2 pass adds 16 embedded-layout cases across both browser projects: 320/375/430px phone widths, landscape, iPad, a 320px pane within a wider viewport, long prompts, dark mode, enlarged text, rotation with an accepted stroke and separate simulated native controls. Bounds checks include no horizontal overflow, square canvas, scroll margins, 44px control targets, settled iframe height and reachable controls. Screenshots were visually inspected. A component regression verifies that touch input cancels delayed auto-scroll. See [the iOS layout report](IOS_LAYOUT.md).
+
+The v0.2.3 test pass found a live-host issue that the earlier assertions missed: the failed result existed in the DOM while its heading/save confirmation were clipped above the queue pane. A regression test reproduced it before the fix in Chromium, then passed after the fix in both engines. It checks the actual heading and save-status bounds inside a short parent review pane without manually scrolling the result into view. Result reveal shares the canvas's input-cancelled delayed adjustment and does not take keyboard focus.
 
 Browser tests use real Hanzi Writer and JSON data. The queue host is simulated. Reference paths are generated input, not samples of human writing. Touch tests dispatch synthetic touch-shaped events because WebKit does not expose a constructible `Touch` in this automation environment; they check event handling/cancellation, not physical touchscreen/Pencil behavior. Browser reload verifies stored test-event ledgers and progress survive a new page session.
 
@@ -43,7 +45,13 @@ The isolated test entries are named **Hanzi Mastery acceptance test: study/count
 
 On 2026-10-17 the v0.2.1 developer build was exercised again on the isolated country card: compact first-attempt feedback and test-ending controls render above the canvas; one click enters guided practice, preserves a prominent original-failure message, and confirms the synced failure save/read-back. This pass exited without submitting another native SRS rating.
 
-The v0.2.2 layout pass is automated. Its exact new layout has not been exercised in native RemNote iOS; the native desktop checks above describe v0.2.0/v0.2.1. The new iframe fixture models available space and scrolling without claiming to reproduce RemNote iOS chrome or its safe-area/keyboard handling.
+The v0.2.2 build was retested in signed-in RemNote Desktop on 2026-10-17. The question kept its character hidden, a real mouse stroke was accepted, a deliberately wrong stroke recorded a rejection without failing the test, explicit forgetting produced failure/Again, synced mastery save/read-back succeeded, and guided practice displayed the outline while retaining the failure. This pass found the clipped result heading described above. No native SRS rating was submitted in this pass.
+
+The rebuilt v0.2.3 bundle was then loaded in the same real desktop queue. A mouse stroke was accepted again. Clicking native **Show Answer** before completion produced an **answer revealed** failure and a confirmed save/read-back. The failure heading and save status were now visibly inside the review pane without manual scrolling. All four native ratings remained available. Guided practice displayed the outline and retained the original failure. This pass also submitted no native SRS rating; only isolated test-entry plugin mastery records were written.
+
+The original v0.2.2 ZIP rebuilt byte-for-byte with SHA-256 `c0df9fff19b41717f6a7edc523316a1c924715e6edb41188e6867d83a1c54cf1` before the fix. The new manifest and production ZIP validate as v0.2.3. In this restricted Windows session, an initial managed browser-server shutdown stalled after its assertions; the final complete 28-test run used an independently started loopback fixture server and exited successfully. No product workaround was required.
+
+Native RemNote iOS remains unverified. The iframe fixture models available space and scrolling without claiming to reproduce RemNote iOS chrome or its safe-area/keyboard handling.
 
 ## Still unverified
 

@@ -83,3 +83,18 @@ test('embedded layout: enlarged text reflows inside the widget width',async({pag
   expect(await review.locator('html').evaluate(el=>el.scrollWidth<=window.innerWidth)).toBe(true);
   expect((await forgot.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 });
+
+test('embedded layout: failure brings its heading and save confirmation into view',async({page})=>{
+  await page.setViewportSize({width:390,height:504});await page.goto('/?host=mobile&long=1');
+  const review=page.frameLocator('iframe');await review.getByRole('button',{name:'Begin test'}).click();
+  await expect(review.getByRole('application')).toHaveAttribute('aria-busy','false');
+  await expect.poll(()=>review.locator('html').evaluate(el=>el.scrollHeight<=innerHeight+1)).toBe(true);
+  await review.getByRole('button',{name:'I forgot a stroke — end test'}).click();
+  const heading=review.getByRole('heading',{name:'Writing test failed'});
+  const saved=review.getByText('Writing mastery saved and read back.');await expect(saved).toBeVisible();
+  // DOM visibility alone passes even when the parent queue clips the result heading.
+  await expect.poll(async()=>{
+    const h=await heading.boundingBox(),s=await saved.boundingBox(),pane=await page.getByRole('main').boundingBox();
+    return !!h && !!s && !!pane && h.y>=pane.y-1 && s.y+s.height<=pane.y+pane.height+1;
+  }).toBe(true);
+});

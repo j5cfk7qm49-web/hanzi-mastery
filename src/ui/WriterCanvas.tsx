@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import HanziWriter, { type CharacterJson, type StrokeData } from 'hanzi-writer';
 import type { Settings } from '../core/config';
 import { CHARACTER_OVERRIDES } from '../data/overrides';
+import { useRevealInHost } from './useRevealInHost';
 export interface WriterCanvasProps {
   character: string; data: CharacterJson; mode: 'test' | 'learn'; active: boolean;
   settings: Settings; generation: number;
@@ -21,6 +22,8 @@ export function WriterCanvas(props: WriterCanvasProps) {
   const operation = useRef(0);
   const canvasWidth = useRef(0);
   const recoverInput = useRef<() => void>(() => {});
+  const getWritingStage = useCallback(() => canvas.current?.closest('.hm-writing-stage') || shell.current, []);
+  useRevealInHost(getWritingStage, ready && props.active, props.generation);
   useEffect(() => {
     const node = canvas.current!;
     let live = true;
@@ -97,28 +100,6 @@ export function WriterCanvas(props: WriterCanvasProps) {
     node.addEventListener('touchcancel', cancel);
     return () => node.removeEventListener('touchcancel', cancel);
   }, []);
-  useEffect(() => {
-    // Scroll through the browser's normal ancestors, including the host queue pane.
-    // This keeps the whole drawing surface reachable after starting or resuming.
-    if (!ready || !props.active) return;
-    const revealCanvas = () => (canvas.current?.closest('.hm-writing-stage') || shell.current)?.scrollIntoView?.({ block: 'nearest' });
-    revealCanvas();
-    // The SDK sends a ResizeObserver message to the host asynchronously.
-    const settled = window.setTimeout(revealCanvas, 300);
-    // Never move the surface under a finger/Pencil or override a user's scroll gesture.
-    const stopAutoScroll = () => window.clearTimeout(settled);
-    document.addEventListener('touchstart', stopAutoScroll, { capture: true, passive: true });
-    document.addEventListener('mousedown', stopAutoScroll, true);
-    document.addEventListener('pointerdown', stopAutoScroll, true);
-    document.addEventListener('wheel', stopAutoScroll, { capture: true, passive: true });
-    return () => {
-      window.clearTimeout(settled);
-      document.removeEventListener('touchstart', stopAutoScroll, true);
-      document.removeEventListener('mousedown', stopAutoScroll, true);
-      document.removeEventListener('pointerdown', stopAutoScroll, true);
-      document.removeEventListener('wheel', stopAutoScroll, true);
-    };
-  }, [ready, props.active, props.generation]);
   return <div ref={shell} className="hm-canvas-shell">
     <div ref={canvas} className="hm-canvas" role="application" aria-label="Chinese handwriting canvas" aria-busy={!ready} />
     {!ready && <p role="status">Preparing writing canvas…</p>}

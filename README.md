@@ -1,8 +1,8 @@
-# Hanzi Mastery 0.2.2 — RemNote handwriting MVP
+# Hanzi Mastery 0.2.3 — RemNote handwriting MVP
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
-The plugin builds reproducibly, passes 60 unit/component/adapter/import tests and 26 Chromium/WebKit browser tests. The earlier v0.2.0/v0.2.1 integration was exercised in **RemNote Desktop**; v0.2.2 adds tested mobile layout refinements. This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
+The plugin builds reproducibly, passes 60 unit/component/adapter/import tests and 28 Chromium/WebKit browser tests. Writing, failure, saved-result and guided-practice flows have been exercised in **RemNote Desktop**. This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
 
 ## Get started
 
@@ -17,7 +17,7 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. Run **Hanzi Mastery: create writing card / practice / settings** from the command menu (`Ctrl+/` on the verified Windows desktop). Enter an exact Traditional target and an English prompt, create the card, open it, and use RemNote's native practice action. Cards and vocabulary are siblings under a neutral **Hanzi Mastery** document.
 
-The compiled upload archive is **`release/HanziMastery-0.2.2-plugin.zip`**. The separately named source ZIP contains development files. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. It passes the official SDK validator and archive checks. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.2.3-plugin.zip`**. The separately named source ZIP contains development files. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. It passes the official SDK validator and archive checks. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
 
 ## What works
 
