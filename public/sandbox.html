@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Hanzi Mastery</title></head>
+<body><div id="root"></div><script type="module">
+const name = new URLSearchParams(location.search).get('widgetName');
+if (!['index', 'hanzi_review', 'workbench'].includes(name)) {
+  document.body.textContent = 'Open Hanzi Mastery from RemNote.';
+} else {
+  const script = document.createElement('script');
+  script.type = 'module'; script.src = name + '-sandbox.js'; document.body.appendChild(script);
+}
+</script></body></html>

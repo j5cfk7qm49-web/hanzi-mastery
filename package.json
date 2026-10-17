@@ -32,7 +32,15 @@
     "typescript": "7.0.2",
     "vitest": "5.0.5",
     "webpack": "5.112.0",
-    "webpack-cli": "7.2.3",
-    "webpack-dev-server": "6.0.0"
+    "webpack-cli": "6.0.1"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "test:browser": "playwright test",
+    "check": "npm run check-types && npm test",
+    "build": "remnote-plugin validate && webpack --mode production && node scripts/package.mjs",
+    "dev": "npm run build && node scripts/serve.mjs",
+    "import": "tsx scripts/import.ts"
   }
 }
