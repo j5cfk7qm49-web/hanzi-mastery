@@ -1,0 +1,9 @@
+node_modules/
+dist/
+release/
+audit/
+coverage/
+test-results/
+playwright-report/
+*.log
+docs/screenshots/
