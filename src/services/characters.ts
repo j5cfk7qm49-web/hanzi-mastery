@@ -26,10 +26,13 @@ export async function loadCharacter(character: string, assetRoot = window.locati
   const abort = new AbortController();
   const timeout = setTimeout(() => abort.abort(), 12000);
   try {
-    const url = new URL(`data/${character.codePointAt(0)!.toString(16)}.json`, assetRoot);
+    // Group 64 Unicode code points per asset to keep marketplace upload file counts small.
+    const group = (character.codePointAt(0)! >>> 6).toString(16);
+    const url = new URL(`data/${group}.json`, assetRoot);
     const response = await fetch(url, { signal: abort.signal, cache: 'force-cache' });
     if (!response.ok) throw new Error('Unavailable');
-    const d = validateCharacterData(await response.json());
+    const data = await response.json() as Record<string, unknown>;
+    const d = validateCharacterData(data?.[character]);
     cache.set(character, d);
     return d;
   } catch {

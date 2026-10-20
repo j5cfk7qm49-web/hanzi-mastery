@@ -30,8 +30,15 @@ it('geometry diagnostic retains placement and length, independent of input point
 });
 it('loads optional Simplified data via the documented plugin asset root without conversion', async () => {
   const raw={strokes:['M 0 0 L 1 1'],medians:[[[0,0],[1,1]]]};
-  const request=vi.spyOn(globalThis,'fetch').mockResolvedValueOnce({ok:true,json:async()=>raw} as Response);
+  const request=vi.spyOn(globalThis,'fetch').mockResolvedValueOnce({ok:true,json:async()=>({'学':raw,'學':{strokes:[],medians:[]}})} as Response);
   expect(await loadCharacter('学','https://plugins.example/hanzi/')).toEqual(raw);
-  expect(String(request.mock.calls[0][0])).toBe('https://plugins.example/hanzi/data/5b66.json');
+  expect(String(request.mock.calls[0][0])).toBe('https://plugins.example/hanzi/data/16d.json');
+  request.mockRestore();
+});
+it('blocks an absent character in a valid data group without substituting a nearby character', async () => {
+  const raw={strokes:['M 0 0 L 1 1'],medians:[[[0,0],[1,1]]]};
+  const request=vi.spyOn(globalThis,'fetch').mockResolvedValueOnce({ok:true,json:async()=>({'𠮶':raw})} as Response);
+  await expect(loadCharacter('𠮷','https://plugins.example/hanzi/')).rejects.toThrow('Stroke data could not be loaded');
+  expect(String(request.mock.calls[0][0])).toBe('https://plugins.example/hanzi/data/82e.json');
   request.mockRestore();
 });

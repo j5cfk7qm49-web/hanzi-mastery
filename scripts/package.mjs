@@ -1,14 +1,21 @@
-import { readFile, readdir, mkdir, writeFile, copyFile } from 'node:fs/promises';
+import { readFile, readdir, mkdir, writeFile, copyFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { zipSync, unzipSync } from 'fflate';
 const pkg = JSON.parse(await readFile('package.json', 'utf8'));
-await mkdir('dist/data', { recursive: true });
+const dataDir = path.resolve('dist/data');
+assert.equal(dataDir, path.join(process.cwd(), 'dist', 'data'));
+await rm(dataDir, { recursive: true, force: true });
+await mkdir(dataDir, { recursive: true });
 const dataFiles = (await readdir('node_modules/hanzi-writer-data')).filter(f => /^\p{Script=Han}\.json$/u.test(f)).sort();
+const groups = new Map();
 for (const file of dataFiles) {
-  const hex = file.codePointAt(0).toString(16);
-  await copyFile('node_modules/hanzi-writer-data/' + file, 'dist/data/' + hex + '.json');
+  const character = file.slice(0, -5);
+  const group = (character.codePointAt(0) >>> 6).toString(16);
+  if (!groups.has(group)) groups.set(group, {});
+  groups.get(group)[character] = JSON.parse(await readFile('node_modules/hanzi-writer-data/' + file, 'utf8'));
 }
+for (const [group, data] of groups) await writeFile(path.join(dataDir, group + '.json'), JSON.stringify(data));
 await mkdir('dist/licenses', { recursive: true });
 await copyFile('node_modules/hanzi-writer-data/ARPHICPL.TXT', 'dist/licenses/ARPHICPL.TXT');
 const seen = new Set();
@@ -27,7 +34,7 @@ async function license(name) {
 }
 for (const dep of Object.keys(pkg.dependencies)) await license(dep);
 await writeFile('dist/THIRD_PARTY_NOTICES.txt', notices.join('\n\n') + '\n\nWebpack setup follows the MIT-licensed RemNote React template.\nCopyright (c) 2023 RemNote Inc.\n');
-await writeFile('dist/data/manifest.json', JSON.stringify({ version: 1, source: 'hanzi-writer-data@2.0.1', count: dataFiles.length }));
+await writeFile('dist/data/manifest.json', JSON.stringify({ version: 2, source: 'hanzi-writer-data@2.0.1', count: dataFiles.length, codePointsPerGroup: 64, groups: groups.size }));
 const files = {};
 async function collect(dir) {
   for (const item of (await readdir(dir, { withFileTypes: true })).sort((a,b) => a.name.localeCompare(b.name))) {
@@ -40,7 +47,12 @@ await collect('dist');
 for (const required of ['manifest.json', 'index.html', 'index.js', 'index-sandbox.js', 'hanzi_review-sandbox.js', 'recall_review-sandbox.js', 'licenses/ARPHICPL.TXT']) assert(files[required], `Missing ${required}`);
 assert(dataFiles.length > 9000);
 assert(!Object.keys(files).some(name => /preview|harness|node_modules|\.tsx?$/.test(name)), 'Development source leaked into upload package');
-for (const ch of '學國書語聽體愛') assert(files[`data/${ch.codePointAt(0).toString(16)}.json`]);
+for (const [group, data] of groups) {
+  const packed = JSON.parse(new TextDecoder().decode(files[`data/${group}.json`][0]));
+  assert.deepEqual(packed, data, `Character group ${group} changed during packaging`);
+}
+assert.equal([...groups.values()].reduce((count, data) => count + Object.keys(data).length, 0), dataFiles.length);
+for (const ch of '學國書語聽體愛') assert(groups.get((ch.codePointAt(0) >>> 6).toString(16))[ch]);
 for (const [name, [content]] of Object.entries(files)) if (name.endsWith('.js')) {
   const js = new TextDecoder().decode(content);
   assert(!/import\s*\(?\s*['"]https?:/.test(js), `Runtime remote import: ${name}`);
@@ -54,4 +66,4 @@ assert.equal([manifest.version.major, manifest.version.minor, manifest.version.p
 await mkdir('release', { recursive: true });
 const output = `release/HanziMastery-${pkg.version}-plugin.zip`;
 await writeFile(output, zip);
-console.log(`Validated ${Object.keys(files).length} archive entries, ${dataFiles.length} exact-script characters. ${output} (${(zip.length / 1048576).toFixed(2)} MiB)`);
+console.log(`Validated ${Object.keys(files).length} archive entries, ${dataFiles.length} exact-script characters in ${groups.size} data groups. ${output} (${(zip.length / 1048576).toFixed(2)} MiB)`);

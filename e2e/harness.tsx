@@ -11,7 +11,7 @@ import { SkillRepository } from '../src/services/recall';
 import { RECALL_SKILLS, type RecallSchema } from '../src/core/recall';
 const params=new URLSearchParams(location.search);
 const embedded=params.get('frame')==='review';
-const cards=[...Array.from('學國書語聽體愛'),'學國','學學'].map((target,i)=>({id:`demo-${i}`,target,prompt:['study','country','book','language','listen','body','love','study country','study twice'][i]}));
+const cards=[...Array.from('學國書語聽體愛'),'學國','學學','人'].map((target,i)=>({id:`demo-${i}`,target,prompt:['study','country','book','language','listen','body','love','study country','study twice','person'][i]}));
 function Harness(){
   const [index,setIndex]=useState(0),[revealed,setRevealed]=useState(false);
   const [suspended,setSuspended]=useState(false);

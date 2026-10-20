@@ -1,6 +1,6 @@
 # Traditional characters and Taiwan stroke standards
 
-Traditional is the default; Simplified requires an explicitly supplied form. No automatic script conversion is performed. All seven requested characters are embedded in the handwriting bundle, and 9,574 individual character assets are included in the upload package. Hanzi Writer's data derives from Make Me a Hanzi/Arphic fonts; a Taiwanese font origin does not establish MOE stroke-order compliance.
+Traditional is the default; Simplified requires an explicitly supplied form. No automatic script conversion is performed. All seven requested characters are embedded in the handwriting bundle, and data for 9,574 exact characters is included in grouped local assets in the upload package. Hanzi Writer's data derives from Make Me a Hanzi/Arphic fonts; a Taiwanese font origin does not establish MOE stroke-order compliance.
 
 ## Check performed 2026-10-16
 

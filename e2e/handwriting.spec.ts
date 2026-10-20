@@ -57,6 +57,16 @@ test('touch trajectory reaches the engine; OS cancellation preserves completed s
   await expect(page.getByText(/device interrupted this contact/)).toBeVisible();
   await expect(page.getByText(/1 \/ 16 strokes · 0 rejected attempts/)).toBeVisible();
 });
+test('a character outside the embedded examples loads from the packaged data group and grades correctly',async({page})=>{
+  await page.goto('/');
+  const response=page.waitForResponse(r=>r.url().endsWith('/data/13a.json'));
+  await page.getByLabel('Demo card').selectOption({label:'person'});
+  expect((await response).ok()).toBe(true);
+  await page.getByRole('button',{name:'Begin test'}).click();
+  await draw(page,'人');
+  await expect(page.getByText('Passed this writing test')).toBeVisible();
+  await expect(page.getByText('Writing mastery saved and read back.')).toBeVisible();
+});
 test('reveal causes failure and guided practice preserves it; layout fits a phone',async({page})=>{
   await page.goto('/');await page.getByRole('button',{name:'Begin test'}).click();
   await page.getByRole('application').waitFor();

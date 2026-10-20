@@ -1,4 +1,10 @@
-# Hanzi Mastery 0.3.0 pre-release
+# Hanzi Mastery 0.3.1 pre-release
+
+Group the 9,574 exact character records into small local JSON bundles to reduce the number of files processed by RemNote's uploader. Version 0.3.0's upload returned a server timeout and a retry reported that version already existed; neither response established a completed review submission. Character keys/data, script selection and offline asset inclusion are preserved. Missing records still block grading rather than substituting another character.
+
+The patch passes TypeScript, 81 unit/component/adapter/import tests, SDK/ZIP validation and a focused packaged-data browser check in both Chromium and phone-sized WebKit. Its archive contains 405 files rather than 9,626. Actual RemNote iOS and hosted installation still require acceptance testing.
+
+## Study skills introduced in 0.3.0
 
 Add independently scheduled pinyin, tone and listening exercises linked to shared vocabulary entries.
 
@@ -10,7 +16,7 @@ Add independently scheduled pinyin, tone and listening exercises linked to share
 
 TypeScript and 80 unit/component/adapter/import tests pass. Browser and live-host verification boundaries are recorded in `docs/TESTING.md` and `docs/STUDY_SKILL_VERIFICATION.md`. The new skill cards still require live-host acceptance, and actual RemNote iOS/Pencil operation, hosted installation, offline behavior and cross-device progress remain unverified.
 
-The unlisted upload package is `release/HanziMastery-0.3.0-plugin.zip`. The manifest enables mobile use and requests sandboxed read/create/modify access. RemNote retains scheduling; the plugin does not delete existing notes or submit native ratings automatically. Installation instructions and the required RemNote approval process are in `docs/INSTALLATION.md`.
+The unlisted upload package is `release/HanziMastery-0.3.1-plugin.zip`. The manifest enables mobile use and requests sandboxed read/create/modify access. RemNote retains scheduling; the plugin does not delete existing notes or submit native ratings automatically. Installation instructions and the required RemNote approval process are in `docs/INSTALLATION.md`.
 
 ## Previous 0.2.3 handwriting fixes
 

@@ -1,4 +1,4 @@
-# Hanzi Mastery 0.3.0 — RemNote Chinese study plugin
+# Hanzi Mastery 0.3.1 — RemNote Chinese study plugin
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
@@ -17,7 +17,7 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. Run **Hanzi Mastery: create writing card / practice / settings** from the command menu (`Ctrl+/` on the verified Windows desktop). Enter an exact Traditional target and an English prompt, create the card, open it, and use RemNote's native practice action. Cards and vocabulary are siblings under a neutral **Hanzi Mastery** document.
 
-The compiled upload archive is **`release/HanziMastery-0.3.0-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.3.1-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
 
 ## What works
 
