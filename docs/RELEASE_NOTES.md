@@ -1,4 +1,12 @@
-# Hanzi Mastery 0.3.1 pre-release
+# Hanzi Mastery 0.3.2 pre-release
+
+Fix a review-binding bug consistent with a blank mobile writing card. The pinned SDK declares the widget's `cardId` optional, but the writing and study adapters previously rejected every widget that omitted it. Bind to the required matching Rem and the current forward card when that optional ID is absent; still reject a conflicting supplied card ID, another Rem, reverse reviews and lookback. Result saving and stale-review checks remain bound to the actual queue card ID and review time.
+
+Show a waiting status while a registered review widget cannot bind, instead of rendering an empty iframe. Existing correctly tagged cards do not need recreation. TypeScript, 83 unit/component/adapter/import tests, all 36 Chromium/WebKit browser checks, production build, SDK validation and ZIP/data integrity checks pass. Physical iPhone confirmation remains required; the screenshot did not expose its actual widget context, so this is a verified API-contract fix rather than a claim that the device's cause has been observed directly.
+
+The approved 0.3.1 hosted plugin was installed in an empty RemNote web demo knowledge base. Its commands, workbench, generated person (rén) card, Begin test control and actual Hanzi Writer canvas all loaded. No native SRS rating was submitted and no user knowledge-base cards were modified during that hosted test.
+
+## Previous 0.3.1 asset packaging
 
 Group the 9,574 exact character records into small local JSON bundles to reduce the number of files processed by RemNote's uploader. Version 0.3.0's upload returned a server timeout and a retry reported that version already existed; neither response established a completed review submission. Character keys/data, script selection and offline asset inclusion are preserved. Missing records still block grading rather than substituting another character.
 

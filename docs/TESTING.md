@@ -1,5 +1,11 @@
 # Verification report — 2026-10-17
 
+## 2026-10-20 optional review identity
+
+Version 0.3.2 passes TypeScript, **83 unit/component/adapter/import tests**, all **36 Chromium/WebKit browser checks**, the production build, SDK manifest validation and ZIP/data integrity checks. SDK 0.0.46's `WidgetLocationContextDataMap[FlashcardUnder]` declares `cardId?: string`; adapters previously rejected the omitted case. New regressions cover successful binding without that field and rejection of a different Rem, reverse card and lookback. A supplied conflicting card ID remains rejected. Save and lifecycle guards still use the actual current card's ID and repetition-history timestamp.
+
+The user reported approval and confirmed 0.3.1 on the iPhone's plugin page, while the writing review displayed only the native prompt. The public listing independently showed 0.3.1 with an Install action. In a clean, empty RemNote web demo session, the approved hosted 0.3.1 plugin installed, registered both commands, opened its workbench, created a person (rén) writing card and displayed the review and actual Hanzi Writer canvas after Begin test. That is hosted web evidence, not an iPhone acceptance test or direct observation of the phone's omitted card ID. No user cards or native SRS ratings were changed by this test.
+
 ## 2026-10-19 grouped character assets
 
 Version 0.3.1 passes TypeScript and **81 unit/component/adapter/import tests**. The build verifies all 9,574 exact character records against the grouped package data and validates the SDK manifest and ZIP. The archive contains 405 files, including 353 character-data groups, at approximately 13.51 MiB. Two focused browser checks pass in Chromium and phone-sized WebKit: a character outside the seven embedded examples loads from the actual generated assets, accepts its strokes and saves a passing result. Missing exact records are covered by a unit test and block grading. These checks do not establish actual RemNote iOS or hosted installation.

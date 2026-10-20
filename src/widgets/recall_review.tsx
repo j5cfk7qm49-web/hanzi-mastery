@@ -36,7 +36,8 @@ export function RecallReview() {
     void refresh(); const timer = window.setInterval(() => void refresh(), 750);
     return () => { live = false; window.clearInterval(timer); unsubscribe(); };
   }, [plugin]);
-  if (!context) return error ? <div className="hm"><p role="alert">{error}</p></div> : null;
+  if (!context) return <div className="hm">{error ? <p role="alert">{error}</p> :
+    <p role="status">Hanzi Mastery is waiting for a matching study review. Reopen the review if this message stays.</p>}</div>;
   return <RecallExercise key={context.key} context={context} repository={repository} revealed={context.revealed} suspended={!!error}
     isCurrent={allow => stillCurrent(plugin, context.cardId, allow, context.reviewAt)} />;
 }

@@ -9,7 +9,10 @@ export async function readReviewContext(plugin: RNPlugin, settings: Settings): P
     const widget = await plugin.widget.getWidgetContext<WidgetLocation.FlashcardUnder>();
     phase = 'current card';
     const card = await plugin.queue.getCurrentCard();
-    if (!card || card.type !== 'forward' || widget.cardId !== card._id || widget.remId !== card.remId) return null;
+    // SDK 0.0.46 permits hosts to omit cardId. Match its required Rem identity,
+    // and enforce the exact card identity whenever the host provides it.
+    if (!card || card.type !== 'forward' || widget.remId !== card.remId ||
+        (widget.cardId !== undefined && widget.cardId !== card._id)) return null;
     phase = 'card Rem';
     // SDK 0.0.46's Card.getRem returns unwrapped data at runtime despite its declared type.
     const rem = await plugin.rem.findOne(card.remId);

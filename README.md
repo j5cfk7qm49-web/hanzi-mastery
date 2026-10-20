@@ -1,10 +1,16 @@
-# Hanzi Mastery 0.3.1 — RemNote Chinese study plugin
+# Hanzi Mastery 0.3.2 — RemNote Chinese study plugin
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
-Writing, failure, saved-result and guided-practice flows have been exercised in **RemNote Desktop**. Version 0.3 adds separately scheduled pinyin, tone and listening exercises and an interim spoken-comparison tool; see [verification](docs/TESTING.md) for automated and live-host boundaries. This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
+Writing, failure, saved-result and guided-practice flows have been exercised in **RemNote Desktop**. Approved hosted 0.3.1 also loads the workbench and handwriting canvas in a clean RemNote web session. Version 0.3.2 fixes review binding when a host omits the SDK's optional widget card ID, a condition that previously hid the widget. Physical iPhone confirmation of this fix is still required. Version 0.3 adds separately scheduled pinyin, tone and listening exercises and an interim spoken-comparison tool; see [verification](docs/TESTING.md) for the remaining live-host boundaries. This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance and full offline operation remain unverified.
 
 ## Get started
+
+Install the approved hosted version from the [unlisted plugin page](https://www.remnote.com/plugins/hanzi_mastery_handwriting_v1). In a writing-card review, the plugin should show **Begin test**, followed by the writing square. Existing correctly tagged writing cards do not need to be recreated after an update. Check [installation and distribution status](docs/INSTALLATION.md) for the current approved/submitted versions.
+
+For card creation on the verified Windows desktop, run **Hanzi Mastery: create writing card / practice / settings** from RemNote's command menu (`Ctrl+/`). Enter an exact Traditional target and an English prompt, create the card, open it and use RemNote's native practice action. Cards and vocabulary are siblings under a neutral **Hanzi Mastery** document.
+
+### Local development
 
 Use Node 22.12+ (Node 24.17.0 tested):
 
@@ -15,9 +21,9 @@ npm run build
 npm run dev
 ```
 
-In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. Run **Hanzi Mastery: create writing card / practice / settings** from the command menu (`Ctrl+/` on the verified Windows desktop). Enter an exact Traditional target and an English prompt, create the card, open it, and use RemNote's native practice action. Cards and vocabulary are siblings under a neutral **Hanzi Mastery** document.
+In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. The loopback server is for this computer; use the hosted installation for phone review.
 
-The compiled upload archive is **`release/HanziMastery-0.3.1-plugin.zip`**, available from the [0.3.1 pre-release](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.3.1). It is the same ZIP submitted to RemNote. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. RemNote approval and hosted installation remain unverified; see [installation and version labels](docs/INSTALLATION.md). An existing 0.2.0 development registration does not update merely because the source or GitHub release changes.
+The compiled upload archive is **`release/HanziMastery-0.3.2-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. GitHub source/releases and RemNote registrations update separately; see [installation and version labels](docs/INSTALLATION.md).
 
 ## What works
 

@@ -7,7 +7,8 @@ export interface RecallContext { cardId: string; schema: RecallSchema; revealed:
 export async function readRecallContext(plugin: RNPlugin): Promise<RecallContext | null> {
   const widget = await plugin.widget.getWidgetContext<WidgetLocation.FlashcardUnder>();
   const card = await plugin.queue.getCurrentCard();
-  if (!card || card.type !== 'forward' || card._id !== widget.cardId || card.remId !== widget.remId || await plugin.queue.inLookbackMode()) return null;
+  if (!card || card.type !== 'forward' || card.remId !== widget.remId ||
+      (widget.cardId !== undefined && card._id !== widget.cardId) || await plugin.queue.inLookbackMode()) return null;
   const rem = await plugin.rem.findOne(card.remId);
   if (!rem || !await rem.hasPowerup(RECALL_POWERUP)) return null;
   const schema = parseRecallSchema(await rem.getPowerupProperty(RECALL_POWERUP, SCHEMA_SLOT));

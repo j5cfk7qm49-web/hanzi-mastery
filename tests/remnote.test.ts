@@ -7,7 +7,7 @@ function host() {
   const rem={hasPowerup:async()=>true,getPowerupProperty:async()=>JSON.stringify(schema)};
   const card={_id:'c',remId:'r',type:'forward',repetitionHistory:[] as {date:number}[],getRem:async()=>({_id:'r',text:['ordinary answer data']})};
   const api={rem:{findOne:vi.fn(async()=>rem)},queue:{getCurrentCard:vi.fn(async()=>card),hasRevealedAnswer:async()=>false,inLookbackMode:async()=>false},
-    widget:{getWidgetContext:async()=>({cardId:'c',remId:'r',revealed:false})},event:{addListener:vi.fn(),removeListener:vi.fn()}};
+    widget:{getWidgetContext:async():Promise<{cardId?:string;remId:string;revealed:boolean}>=>({cardId:'c',remId:'r',revealed:false})},event:{addListener:vi.fn(),removeListener:vi.fn()}};
   return {api,plugin:api as unknown as RNPlugin};
 }
 it('uses matching widget card identity and explicit metadata, never ordinary card parsing',async()=>{
@@ -19,6 +19,17 @@ it('rejects stale widget context, backwards cards and lookback',async()=>{
   expect(await readReviewContext(plugin,DEFAULT_SETTINGS)).toBeNull();
   expect(await stillCurrent(plugin,'wrong')).toBe(false);
   api.queue.inLookbackMode=async()=>true;expect(await stillCurrent(plugin,'c')).toBe(false);
+});
+it('accepts an SDK context without optional cardId only for the matching forward Rem outside lookback',async()=>{
+  const {plugin,api}=host();api.widget.getWidgetContext=async()=>({remId:'r',revealed:false});
+  expect(await readReviewContext(plugin,DEFAULT_SETTINGS)).toMatchObject({cardId:'c',chars:['學'],prompt:'study'});
+  api.widget.getWidgetContext=async()=>({remId:'another-rem',revealed:false});
+  expect(await readReviewContext(plugin,DEFAULT_SETTINGS)).toBeNull();
+  api.widget.getWidgetContext=async()=>({remId:'r',revealed:false});
+  const card=await api.queue.getCurrentCard();card.type='backward';
+  expect(await readReviewContext(plugin,DEFAULT_SETTINGS)).toBeNull();
+  card.type='forward';api.queue.inLookbackMode=async()=>true;
+  expect(await readReviewContext(plugin,DEFAULT_SETTINGS)).toBeNull();
 });
 it('removes subscriptions on unmount and never replaces native controls',()=>{
   const {plugin,api}=host();const unsubscribe=subscribeReview(plugin,()=>{},()=>{});

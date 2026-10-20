@@ -45,7 +45,8 @@ export function HanziReview() {
     const interval = window.setInterval(() => void refresh(), 750);
     return () => { live = false; window.clearInterval(interval); unsubscribe(); };
   }, [plugin]);
-  if (!state) return error ? <div className="hm"><p role="alert" className="hm-error">{error}</p></div> : null;
+  if (!state) return <div className="hm">{error ? <p role="alert" className="hm-error">{error}</p> :
+    <p role="status">Hanzi Mastery is waiting for a matching writing review. Reopen the review if this message stays.</p>}</div>;
   // Stable exercise context prevents answer-side state updates from reloading/resetting the attempt.
   return <BoundExercise key={state.context.key} context={state.context} settings={state.settings} repository={repository}
     suspended={!!error}

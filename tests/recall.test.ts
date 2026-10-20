@@ -81,3 +81,15 @@ it('binds recall widgets only to the matching forward card and rejects lookback 
   api.queue.inLookbackMode = async () => true;
   expect(await readRecallContext(api as unknown as RNPlugin)).toBeNull();
 });
+it('accepts an omitted widget cardId for study cards while rejecting a different Rem, reverse review or lookback', async () => {
+  let remId='r',type='forward',lookback=false;
+  const api={widget:{getWidgetContext:async()=>({remId,revealed:false})},
+    rem:{findOne:async()=>({hasPowerup:async()=>true,getPowerupProperty:async()=>JSON.stringify(schema)})},
+    queue:{getCurrentCard:async()=>({_id:'c',remId:'r',type,repetitionHistory:[]}),
+      inLookbackMode:async()=>lookback,hasRevealedAnswer:async()=>false}};
+  const plugin=api as unknown as RNPlugin;
+  expect(await readRecallContext(plugin)).toMatchObject({cardId:'c',schema});
+  remId='another-rem';expect(await readRecallContext(plugin)).toBeNull();
+  remId='r';type='backward';expect(await readRecallContext(plugin)).toBeNull();
+  type='forward';lookback=true;expect(await readRecallContext(plugin)).toBeNull();
+});
