@@ -6,6 +6,7 @@ import { createWritingCard, ensureCollection } from '../services/remnote';
 import { loadCharacter } from '../services/characters';
 import type { CharacterJson } from 'hanzi-writer';
 import { WriterCanvas } from '../ui/WriterCanvas';
+import { StudySkills } from '../ui/StudySkills';
 import '../ui/styles.css';
 export function Workbench() {
   const plugin = usePlugin();
@@ -17,6 +18,7 @@ export function Workbench() {
   const [initializing, setInitializing] = useState(true);
   const pendingCard = useRef(''), needsVocabularySetup = useRef(true);
   const [createdCard, setCreatedCard] = useState('');
+  const [referenceAudio, setReferenceAudio] = useState<string>();
   const [settings, setSettings] = useState(DEFAULT_SETTINGS), [settingsText, setSettingsText] = useState('');
   const [practice, setPractice] = useState<{ chars: string[]; data: CharacterJson[] }>();
   const [index, setIndex] = useState(0);
@@ -35,6 +37,7 @@ export function Workbench() {
           needsVocabularySetup.current = false;
           setTraditional(v.traditional); setSimplified(v.simplified || ''); setPinyin(v.pinyin); setMeaning(v.meanings.join('; '));
           setCategory(v.categories.join('; ')); setSource(v.source); setStatus('Using the focused vocabulary entry.');
+          setReferenceAudio(v.audio?.[0]);
         }
       } catch { if (live) setError('Could not load saved settings or vocabulary metadata. No data has been changed.'); }
       finally { if (live) setInitializing(false); }
@@ -46,14 +49,14 @@ export function Workbench() {
     try { await task(); } catch (e) { setError(e instanceof Error ? e.message : 'Operation failed.'); }
     finally { guard.current = false; setBusy(false); }
   };
-  const create = () => run(async () => {
+  const prepareVocabulary = async (withWritingData: boolean) => {
     const chars = characters(traditional);
     if (simplified) characters(simplified);
     if (!meaning.trim() || /\p{Script=Han}/u.test(meaning)) throw new Error('Use an English prompt without Chinese characters.');
     parseWritingSchema(JSON.stringify({ version:2, skill:'writing', vocabularyId:'pending', traditional,
       ...(simplified ? {simplified} : {}), prompt: meaning.trim() + (pinyin.trim() ? ` (${pinyin.trim()})` : '') }));
     // Validate availability before creating anything.
-    await Promise.all([...chars, ...Array.from(simplified)].map(c => loadCharacter(c, plugin.rootURL)));
+    if (withWritingData) await Promise.all([...chars, ...Array.from(simplified)].map(c => loadCharacter(c, plugin.rootURL)));
     const collection = await ensureCollection(plugin);
     let id = created.current;
     if (!id) {
@@ -73,11 +76,19 @@ export function Workbench() {
       await rem.setPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT, [JSON.stringify(vocab)]);
       needsVocabularySetup.current = false;
     }
+    return { id, collection };
+  };
+  const create = () => run(async () => {
+    const { id, collection } = await prepareVocabulary(true);
     const cardId = await createWritingCard(plugin, { version: 2, skill: 'writing', vocabularyId: id, traditional,
       ...(simplified ? { simplified } : {}), prompt: meaning.trim() + (pinyin.trim() ? ` (${pinyin.trim()})` : '') },
       { parentId: collection, resumeId: pendingCard.current || undefined, onCreate: newId => { pendingCard.current = newId; } });
     setCreatedCard(cardId);
     setStatus('Created a forward writing card in the Hanzi Mastery document. Open it and use RemNote’s native practice action.');
+  });
+  const saveVocabulary = () => run(async () => {
+    await prepareVocabulary(false);
+    setStatus('Vocabulary is ready. Choose pinyin, tone, listening or spoken-practice cards below.');
   });
   const startPractice = () => run(async () => {
     const chars = characters(settings.script === 'simplified' ? simplified : traditional);
@@ -89,7 +100,7 @@ export function Workbench() {
     {error && <p role="alert" className="hm-error">{error}</p>}
     {status && <p role="status">{status}</p>}
     {initializing && <p role="status">Loading settings and vocabulary…</p>}
-    <fieldset className="hm-form" disabled={busy || initializing || !!createdCard}>
+    <fieldset className="hm-form" disabled={busy || initializing || !!createdCard || (!!vocabId && !needsVocabularySetup.current)}>
     <label>Traditional characters <input value={traditional} onChange={e => { setTraditional(e.target.value); setPractice(undefined); }} disabled={!!vocabId} /></label>
     <label>Optional explicit Simplified form <input value={simplified} onChange={e => setSimplified(e.target.value)} disabled={!!vocabId} /></label>
     <label>Pinyin (optional; included in writing prompt) <input value={pinyin} onChange={e => setPinyin(e.target.value)} /></label>
@@ -98,12 +109,15 @@ export function Workbench() {
     <label>Source <input value={source} onChange={e => setSource(e.target.value)} disabled={!!vocabId} /></label>
     </fieldset>
     <div className="hm-actions"><button className="hm-primary" disabled={busy || initializing || !!createdCard} onClick={() => void create()}>Create linked writing card</button>
+      <button disabled={busy || initializing || !!vocabId} onClick={() => void saveVocabulary()}>Save vocabulary for other skills</button>
       <button disabled={busy || initializing} onClick={() => void startPractice()}>Practice selected characters</button></div>
     {createdCard && <button className="hm-primary" disabled={busy} onClick={() => void run(async () => {
       const rem = await plugin.rem.findOne(createdCard);
       if (!rem) throw new Error('The created card could not be opened.');
       await plugin.window.openRem(rem); await plugin.widget.closePopup();
     })}>Open created writing card</button>}
+    {vocabId && !needsVocabularySetup.current && !busy && <StudySkills key={vocabId} plugin={plugin} vocabularyId={vocabId}
+      traditional={traditional} pinyin={pinyin} meaning={meaning} audio={referenceAudio} />}
     {practice && <><h2>Practice: {practice.chars[index]}</h2><WriterCanvas key={settings.animationSpeed} character={practice.chars[index]} data={practice.data[index]} mode="learn" active settings={settings} generation={index}
       onCorrect={() => {}} onMistake={() => {}} onComplete={() => {}} onError={() => setError('Practice canvas could not start.')} />
       <button onClick={() => setIndex(i => (i+1)%practice.chars.length)}>Next character</button>

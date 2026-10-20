@@ -11,6 +11,9 @@
 - Native grade suggestions and advisory user override; RemNote retains all scheduling/rating controls.
 - Pure optional geometric path diagnostics, clearly excluded from pass/fail.
 - Pleco text and mapped CSV/TSV CLI converters with category/provenance retention and no scheduling-history migration.
+- Independently scheduled pinyin recall, dictionary-tone choices, and listening-to-pinyin cards, with first-answer checks, reveal failure, per-skill result history, retry IDs and read-back confirmation.
+- A reusable study-card registry and authoring from an existing vocabulary entry, plus vocabulary-only creation. Audio supports an explicit HTTPS reference or an available local Mandarin device voice.
+- Interim spoken recording/file playback and reference comparison, explicitly self-assessed. The open-source speech-engine audit and objective-assessment requirements are recorded in SPEECH_ASSESSMENT.md.
 
 ## Implemented but requiring live acceptance
 
@@ -20,7 +23,7 @@ Developer installation, registration, actual card creation, correct-card loading
 
 - Taiwan MOE alignment: one concrete 學 order discrepancy documented; count checks for seven characters; override registry present, verified Taiwan pack absent.
 - Geometric precision: normalized trajectory/endpoint/length diagnostic only. No validated handwriting-quality score, stroke explanations or small-screen calibrated geometric thresholds.
-- Additional skills: structured shared schema and native-card patterns documented; interactive translation/pinyin/tone/listening/pronunciation exercises absent.
+- Additional skills: translation/recognition still use native-card patterns. Pinyin/tone/listening exercises are implemented but not yet accepted in live RemNote. Spoken comparison is implemented; automatic speech recognition, acoustic tone classification, phoneme scoring and per-skill spaced mastery promotion are absent.
 - ChineseGuru import: no verified current export schema/sample. Generic mapping only. Pleco XML/history/audio transfer, batch UI and imported-Rem linking absent.
 - Automatic native grade submission: SDK method exists, but not enabled without host acceptance/duplicate-submission validation.
 - Full offline operation: no CDN dependence, but RemNote host loading, plugin-asset caching, WebView storage and synchronization are not verified offline. Non-embedded character assets load via `plugin.rootURL`; host availability still matters.
@@ -32,5 +35,5 @@ Developer installation, registration, actual card creation, correct-card loading
 2. Independently audit Taiwanese sequences/glyphs for frequent TOCFL characters. Ship lawful order-only overrides where possible and a licensed Taiwan vector pack where needed, with per-character tests and visible data provenance.
 3. Harden result persistence against host iframe replacement and concurrent cross-device edits, add user-visible history/backup/repair tools, and validate automatic rating submission only if it can preserve native controls and exactly-once behavior.
 4. Calibrate geometry on phone/tablet samples and real learner handwriting. Evaluate spatial proportion, placement and direction separately; retain device-size tolerance. Do not call recognizer acceptance penmanship quality.
-5. Add independently scheduled production, translation, pinyin and tone widgets using shared vocabulary entries. Add verified Taiwanese audio/listening, then pronunciation recording with clear privacy/permission handling.
+5. Finish live acceptance of pinyin/tone/listening cards, add licensed Taiwanese reference audio and listening comprehension, and extend sentence/grammar and translation workflows. Spoken practice remains self-assessed. Automatic speech recognition and pronunciation grading have been dropped from the current requirements; the earlier engine research is retained for reference.
 6. Obtain actual ChineseGuru/Pleco export samples, add native adapters and previewable idempotent batch import. Keep legacy review history as provenance until a defensible scheduling migration is established. Add verified TOCFL datasets with source/version tracking.

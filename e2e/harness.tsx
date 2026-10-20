@@ -6,6 +6,9 @@ import { DEFAULT_SETTINGS } from '../src/core/config';
 import { MasteryRepository } from '../src/services/persistence';
 import '../src/ui/styles.css';
 import { LayoutHost } from './layout-host';
+import { RecallExercise } from '../src/ui/RecallExercise';
+import { SkillRepository } from '../src/services/recall';
+import { RECALL_SKILLS, type RecallSchema } from '../src/core/recall';
 const params=new URLSearchParams(location.search);
 const embedded=params.get('frame')==='review';
 const cards=[...Array.from('學國書語聽體愛'),'學國','學學'].map((target,i)=>({id:`demo-${i}`,target,prompt:['study','country','book','language','listen','body','love','study country','study twice'][i]}));
@@ -43,4 +46,20 @@ function Harness(){
     <ReviewExercise key={context.cardId} context={context} settings={DEFAULT_SETTINGS} repository={repository}
       suspended={suspended} revealed={revealed} isCurrent={async(allow=true)=>!suspended && (allow || !revealed)}/></>;
 }
-ReactDOM.render(params.has('host')?<LayoutHost/>:<Harness/>,document.getElementById('root'));
+function SkillHarness() {
+  const [revealed, setRevealed] = useState(false), [suspended, setSuspended] = useState(false);
+  const repository = useMemo(() => new SkillRepository({
+    getSynced: async<T,>(key: string) => { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : undefined; },
+    setSynced: async(key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value)),
+  }), []);
+  const requested = params.get('skill');
+  const skill = RECALL_SKILLS.find(s => s === requested) || 'pinyin';
+  const schema: RecallSchema = { version: 1, skill, vocabularyId: 'skill-demo', traditional: '人', pinyin: 'rén', meaning: 'person',
+    ...(params.has('audioFixture') ? { referenceAudio: 'https://hanzi-audio.test/reference.wav' } : {}) };
+  return <><aside className="hm"><p>Development harness — simulated RemNote queue</p>
+    <button onClick={() => setRevealed(true)}>Simulate native answer reveal</button>
+    <button onClick={() => setSuspended(v => !v)}>{suspended ? 'Restore host connection' : 'Simulate host connection loss'}</button></aside>
+    <RecallExercise context={{ cardId: 'skill-demo', schema }} repository={repository} revealed={revealed} suspended={suspended}
+      isCurrent={async (allow = true) => !suspended && (allow || !revealed)} /></>;
+}
+ReactDOM.render(params.has('skill') ? <SkillHarness/> : params.has('host')?<LayoutHost/>:<Harness/>,document.getElementById('root'));

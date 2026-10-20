@@ -1,8 +1,8 @@
-# Hanzi Mastery 0.2.3 — RemNote handwriting MVP
+# Hanzi Mastery 0.3.0 — RemNote Chinese study plugin
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
-The plugin builds reproducibly, passes 60 unit/component/adapter/import tests and 28 Chromium/WebKit browser tests. Writing, failure, saved-result and guided-practice flows have been exercised in **RemNote Desktop**. This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
+Writing, failure, saved-result and guided-practice flows have been exercised in **RemNote Desktop**. Version 0.3 adds separately scheduled pinyin, tone and listening exercises and an interim spoken-comparison tool; see [verification](docs/TESTING.md) for automated and live-host boundaries. This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance, hosted ZIP installation and full offline operation remain unverified.
 
 ## Get started
 
@@ -17,7 +17,7 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. Run **Hanzi Mastery: create writing card / practice / settings** from the command menu (`Ctrl+/` on the verified Windows desktop). Enter an exact Traditional target and an English prompt, create the card, open it, and use RemNote's native practice action. Cards and vocabulary are siblings under a neutral **Hanzi Mastery** document.
 
-The compiled upload archive is **`release/HanziMastery-0.2.3-plugin.zip`**. The separately named source ZIP contains development files. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. It passes the official SDK validator and archive checks. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.3.0-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
 
 ## What works
 
@@ -31,12 +31,16 @@ The compiled upload archive is **`release/HanziMastery-0.2.3-plugin.zip`**. The 
 - Synced mastery storage with retry IDs and read-back confirmation. Suggested native grade and advisory override; native RemNote controls remain intact.
 - Optional experimental path geometry feedback, excluded from pass/fail.
 - Tested Pleco text and mapped CSV/TSV converters. Categories/provenance are retained; existing SRS history is not modified.
+- Pinyin recall checks both syllable spelling and tones. Tone recall uses per-syllable choices; no tracing. Numeric tones, tone marks and ü/v/u: are supported.
+- Listening tests dictionary-pinyin recall after reference playback. Supply an HTTPS recording or select an available local Mandarin device voice; no remote synthesis fallback is used.
+- Spoken practice records or opens a local audio clip for reference comparison. Its results are explicitly self-assessed; **automatic spoken-pronunciation grading is not implemented**. [Speech engine research and integration plan](docs/SPEECH_ASSESSMENT.md).
+- Each additional skill uses a separate forward RemNote card, hidden metadata and independently saved result history. Repeated authoring reuses the same skill card for a vocabulary entry.
 
 ## Read before studying
 
 First-attempt recognizer correctness is **not validated penmanship precision**. The bundled sequence for **學 differs from Taiwan MOE**. No Taiwan-compliance claim is made; a per-character override registry is provided. [Taiwan stroke audit](docs/TAIWAN_STROKES.md).
 
-Recognition, translation, pinyin, tones, listening and pronunciation have a shared vocabulary schema and separate native-card patterns, but dedicated interactive exercises are not implemented. ChineseGuru's current export schema has not been verified; there is no claimed native importer. Full parity remains a roadmap objective.
+Recognition and translation retain native-card patterns. Pinyin/tone/listening exercises are implemented; spoken comparison is an interim tool, not a speech recognizer. ChineseGuru's current export schema has not been verified; there is no claimed native importer. Full parity remains a roadmap objective.
 
 ## Documentation
 
@@ -49,9 +53,10 @@ Recognition, translation, pinyin, tones, listening and pronunciation have a shar
 - [Implemented/partial/deferred features and prioritized roadmap](docs/STATUS_AND_ROADMAP.md)
 - [Build, source structure and persistence](docs/DEVELOPMENT.md)
 - [Prototype audit and verified API sources](docs/RESEARCH.md)
+- [New study cards, audio setup and speech assessment research](docs/SPEECH_ASSESSMENT.md)
 
 ## Privacy and licenses
 
-No learner data is sent to a third party by the plugin. Optional dictionary links open an external app/site only when clicked. The plugin requests read/create/modify access to create and link Rems; it never deletes existing data or writes SRS history. RemNote manages its own storage and sync.
+Voice recordings remain in memory in the current review and are discarded when it closes; they are not uploaded or saved in progress history. Optional reference audio is fetched from its configured HTTPS source only when played; use recordings you have permission to use. Device synthesis is limited to voices reported as local. Optional dictionary links open an external app/site only when clicked. The plugin requests read/create/modify access to create and link Rems; it never deletes existing data or writes SRS history. RemNote manages its own storage and sync.
 
 Hanzi Writer is MIT; character vectors have the separate **Arphic Public License**. Complete data/license notices are included in the upload ZIP. MOE vectors/animations are not redistributed. No runtime JavaScript CDN is used. Local assets alone do not guarantee cold offline host operation or cross-device conflict-free persistence.

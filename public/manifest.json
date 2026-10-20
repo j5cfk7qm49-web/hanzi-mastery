@@ -4,8 +4,8 @@
   "name": "Hanzi Mastery",
   "author": "Hanzi Mastery contributors",
   "repoUrl": "https://github.com/j5cfk7qm49-web/hanzi-mastery",
-  "version": { "major": 0, "minor": 2, "patch": 3 },
+  "version": { "major": 0, "minor": 3, "patch": 0 },
   "theme": [], "enableOnMobile": true, "requestNative": false, "unlisted": true,
-  "description": "Traditional-first handwriting reviews with independent recall, progressive mastery and locally bundled stroke data. RemNote controls scheduling.",
+  "description": "Traditional-first writing, pinyin, tone and listening reviews, plus local spoken comparison. RemNote controls scheduling. Spoken results are self-assessed; no automatic speech grader is bundled.",
   "requiredScopes": [{ "type": "All", "level": "ReadCreateModify" }]
 }

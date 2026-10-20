@@ -37,7 +37,7 @@ async function collect(dir) {
   }
 }
 await collect('dist');
-for (const required of ['manifest.json', 'index.html', 'index.js', 'index-sandbox.js', 'hanzi_review-sandbox.js', 'licenses/ARPHICPL.TXT']) assert(files[required], `Missing ${required}`);
+for (const required of ['manifest.json', 'index.html', 'index.js', 'index-sandbox.js', 'hanzi_review-sandbox.js', 'recall_review-sandbox.js', 'licenses/ARPHICPL.TXT']) assert(files[required], `Missing ${required}`);
 assert(dataFiles.length > 9000);
 assert(!Object.keys(files).some(name => /preview|harness|node_modules|\.tsx?$/.test(name)), 'Development source leaked into upload package');
 for (const ch of '學國書語聽體愛') assert(files[`data/${ch.codePointAt(0).toString(16)}.json`]);

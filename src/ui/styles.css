@@ -36,6 +36,10 @@ body { margin: 0; }
 .hm .hm-save-status { font-size: 13px; }
 .hm-preserved-result { padding: 10px; border-left: 3px solid #b34e37; background: var(--panel); }
 .hm .hm-canvas[aria-busy=true] { pointer-events: none; }
+.hm .hm-target { font-size: 30px; }
+.hm-study-authoring { margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
+.hm audio { display: block; width: 100%; max-width: 100%; margin-block: 12px; }
+.hm form { margin-block: 14px; }
 @media (prefers-color-scheme: dark) {
  .hm { --muted: #a3b5ba; --border: #415157; --panel: #202e34; color: #e4eef0; background: #17242a; }
  .hm .hm-badge { background: #244940; color: #a8e4d3; }

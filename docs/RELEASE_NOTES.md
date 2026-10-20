@@ -1,4 +1,18 @@
-# Hanzi Mastery 0.2.3 pre-release
+# Hanzi Mastery 0.3.0 pre-release
+
+Add independently scheduled pinyin, tone and listening exercises linked to shared vocabulary entries.
+
+- Check the first pinyin answer for both spelling and tones, accepting tone marks or numbered syllables and common spellings of ü.
+- Test dictionary-tone recall with per-syllable choices and listening-to-pinyin recall after reference audio playback.
+- Create or reuse separate native forward cards for each skill from the vocabulary workbench. Preserve first results through answer reveal, study mode and save retries.
+- Support an HTTPS reference recording or an available local Mandarin device voice. Spoken recording/file comparison is optional and explicitly self-assessed; recordings remain in memory and are not uploaded. Automatic speech recognition and pronunciation grading are outside the current requirements.
+- Preserve existing independent handwriting recall, mastery progression, Traditional character data and native RemNote rating controls.
+
+TypeScript and 80 unit/component/adapter/import tests pass. Browser and live-host verification boundaries are recorded in `docs/TESTING.md` and `docs/STUDY_SKILL_VERIFICATION.md`. The new skill cards still require live-host acceptance, and actual RemNote iOS/Pencil operation, hosted installation, offline behavior and cross-device progress remain unverified.
+
+The unlisted upload package is `release/HanziMastery-0.3.0-plugin.zip`. The manifest enables mobile use and requests sandboxed read/create/modify access. RemNote retains scheduling; the plugin does not delete existing notes or submit native ratings automatically. Installation instructions and the required RemNote approval process are in `docs/INSTALLATION.md`.
+
+## Previous 0.2.3 handwriting fixes
 
 Fix a result-display issue found by testing the new plugin in RemNote Desktop.
 

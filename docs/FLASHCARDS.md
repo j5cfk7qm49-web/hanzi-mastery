@@ -37,9 +37,27 @@ The `Hanzi Vocabulary` schema stores exact forms, pinyin, meanings, optional par
 | Recognition | Character/word → meaning | Native forward RemNote card; manual creation |
 | Chinese → English | Chinese word/sentence → English | Native forward card; manual creation |
 | English → Chinese | English → exact Chinese form | Native forward card; manual creation |
-| Pinyin | Chinese → pinyin including tones | Native forward card; manual creation |
-| Tone identification | Audio/syllable → tone number | Native card design; dedicated exercise pending |
-| Listening | Audio → meaning/word | Native audio card design; dedicated exercise pending |
-| Pronunciation | Chinese/pinyin prompt → audio/self-assessment | Dedicated recording/recognition pending |
+| Pinyin | Chinese → pinyin including tones | Checked first-answer exercise |
+| Tone identification | Chinese + toneless syllables → tone numbers | Checked per-syllable choices |
+| Listening | Audio → dictionary pinyin including tones | Checked first-answer exercise; audio required |
+| Pronunciation | Chinese → first spoken attempt → reference comparison | Local recording/file and explicit self-assessment; automatic assessment pending |
 
-Use separate Rems referencing a shared vocabulary entry for these skills so RemNote schedules them separately. Answer-side references preserve shared data without revealing production targets. The plugin does not yet automatically generate these additional skill cards or grade speech, pinyin or tones. There is no tone-contour drawing.
+Use separate Rems referencing a shared vocabulary entry for these skills so RemNote schedules them separately. Answer-side references preserve shared data without revealing production targets. There is no tone-contour drawing.
+
+## Pinyin, tone, listening and spoken-practice cards
+
+Focus a **Hanzi Vocabulary** entry (for example 人 — rén — person), then run **Hanzi Mastery: pinyin, tones, listening and speaking** from `Ctrl+/`. The existing writing workbench command opens the same form. For new vocabulary you can use **Save vocabulary for other skills** without creating a writing card. Supply one pinyin syllable per Han character, separated by spaces, and create the skills you want in **Pinyin, tones, listening and speaking**. A separate vocabulary entry is required for another reading of the same characters.
+
+The generated Rems have the `Hanzi Study` Powerup and hidden programmatic metadata. Each has its own native schedule. Repeating a skill's creation reuses its existing Rem; changing its reference audio updates that card. The authoring form freezes vocabulary fields after they are saved. Existing writing cards and writing mastery are not converted.
+
+**Pinyin:** type tone marks or numbered syllables. `rén` and `ren2` are equivalent; `nü3`, `nv3` and `nu:3` are equivalent. An unmarked syllable means neutral tone (5), so `ren` does not pass a target of `rén`. All syllables, spelling and tones must match on the first submitted answer.
+
+**Tones:** choose one dictionary tone per syllable. This tests knowledge without a drawing gesture. Surface tones in connected speech can differ from dictionary tones.
+
+**Listening:** the native question omits the target and definition. Play the reference through, then enter dictionary pinyin. This version tests transcription/phonetic recall, not meaning comprehension. It does not treat a changed surface tone from sandhi as a different dictionary reading.
+
+**Audio:** add an HTTPS recording of the exact item, or select a local Mandarin voice during review. The selected device voice's name and region are shown; remote voices are excluded. If the host has no usable voice or the reference fails to play, the audio prerequisite blocks a successful listening test; do not guess a native rating. Adding a reference recording requires reopening the vocabulary workbench and recreating/updating its audio skill card. Audio availability and offline caching depend on the source/host.
+
+**Speaking:** record one attempt (up to 20 seconds) or choose an audio file smaller than 10 MB if microphone access is unavailable. After that attempt, compare the local recording with reference pinyin/audio. Only a self-assessed outcome is saved, explicitly separated from checked pinyin/tone results. Audio bytes are not saved or sent to a server. Browser tests do not establish native RemNote microphone permissions or recording quality. Automatic recognition, acoustic tone checking and phoneme grading are outside the current requirements; [the earlier research](SPEECH_ASSESSMENT.md) is retained for reference.
+
+Native answer reveal during an unfinished test records a failure. Study-only mode saves no result; studying after a test preserves its original result. Saves use retry IDs and read-back confirmation. Per-skill counts are performance history, not spaced writing mastery; use native RemNote controls to submit the suggested rating.

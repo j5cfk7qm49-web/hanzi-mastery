@@ -1,5 +1,9 @@
 # Verification report — 2026-10-17
 
+## 2026-10-19 study-skill increment
+
+Version 0.3.0 passes TypeScript and **80 unit/component/adapter/import tests** across 11 files. The 28 existing browser checks passed, and six new study-skill checks passed in a focused rerun after adapting the Windows WebKit media expectations. These cover pinyin/tone answers, hidden listening targets, playback prerequisites and explicitly self-assessed spoken comparison. Chromium verifies completed WAV playback; Windows WebKit rejects the fixture and verifies error reporting and blocked success grading. See [study-skill verification](STUDY_SKILL_VERIFICATION.md) for the boundary: synthetic audio exercises media/UI behavior, not Mandarin speech accuracy. New study skills have not yet been accepted in the live RemNote host. Automatic speech recognition and pronunciation grading are not bundled; [the source audit](SPEECH_ASSESSMENT.md) identifies candidate engines and validation work.
+
 ## Automated checks
 
 Windows, Node 24.17.0, npm 11.13.0. TypeScript check passes. **60 unit/component/adapter/import tests pass** (8 test files). **28 browser tests pass** across Chromium desktop and phone-sized WebKit.

@@ -38,3 +38,14 @@ it('does not claim settings were saved when read-back returns a different config
   expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringContaining('Settings save was not confirmed'));
   expect(screen.queryByText('Settings saved and read back.')).toBeNull();
 });
+it('can save a vocabulary entry for other skills without creating a writing card or requiring stroke data',async()=>{
+  render(<Workbench/>);
+  const target=screen.getByLabelText('Traditional characters');
+  await waitFor(()=>expect(target.closest('fieldset')!.disabled).toBe(false));
+  fireEvent.change(target,{target:{value:'人'}});
+  fireEvent.change(screen.getByLabelText('English meaning / writing prompt'),{target:{value:'person'}});
+  fireEvent.change(screen.getByLabelText('Pinyin (optional; included in writing prompt)'),{target:{value:'rén'}});
+  fireEvent.click(screen.getByRole('button',{name:'Save vocabulary for other skills'}));
+  await screen.findByRole('region',{name:'Other study skills'});
+  expect(mocks.load).not.toHaveBeenCalled();expect(mocks.create).not.toHaveBeenCalled();
+});
