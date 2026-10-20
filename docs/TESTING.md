@@ -6,6 +6,8 @@ Version 0.3.2 passes TypeScript, **83 unit/component/adapter/import tests**, all
 
 The user reported approval and confirmed 0.3.1 on the iPhone's plugin page, while the writing review displayed only the native prompt. The public listing independently showed 0.3.1 with an Install action. In a clean, empty RemNote web demo session, the approved hosted 0.3.1 plugin installed, registered both commands, opened its workbench, created a person (rén) writing card and displayed the review and actual Hanzi Writer canvas after Begin test. That is hosted web evidence, not an iPhone acceptance test or direct observation of the phone's omitted card ID. No user cards or native SRS ratings were changed by this test.
 
+The [clean GitHub Actions run for submitted commit b1ea5c1](https://github.com/j5cfk7qm49-web/hanzi-mastery/actions/runs/39442588124) also passed. After uploading 0.3.2 on October 20, the public plugin page displayed 0.3.2 and **Check for Updates** changed the isolated web installation from 0.3.1 to 0.3.2, loading the hosted 0.3.2 index bundle. The existing person card then loaded the versioned 0.3.2 review widget, displayed Begin test and opened the actual Hanzi Writer canvas. No card recreation, user knowledge-base changes or native SRS rating was involved. This confirms that the update is distributable and its web review loads; native iPhone behavior remains unverified.
+
 ## 2026-10-19 grouped character assets
 
 Version 0.3.1 passes TypeScript and **81 unit/component/adapter/import tests**. The build verifies all 9,574 exact character records against the grouped package data and validates the SDK manifest and ZIP. The archive contains 405 files, including 353 character-data groups, at approximately 13.51 MiB. Two focused browser checks pass in Chromium and phone-sized WebKit: a character outside the seven embedded examples loads from the actual generated assets, accepts its strokes and saves a passing result. Missing exact records are covered by a unit test and block grading. These checks do not establish actual RemNote iOS or hosted installation.
@@ -71,7 +73,7 @@ Native RemNote iOS remains unverified. The iframe fixture models available space
 
 ## Still unverified
 
-- ZIP upload/marketplace approval and hosted installation. Developer loading is verified; SDK ZIP validation is a separate packaging check.
+- Physical iPhone acceptance of the available hosted 0.3.2 update. Upload and hosted web installation/update are verified separately from SDK ZIP validation.
 - Complete human-drawn characters and all seven characters inside the live desktop host. Real-engine full reference-path completion was verified in the standalone browser tests.
 - Physical iPhone/iPad, RemNote iOS, Apple Pencil, palm rejection, rotation and app resume.
 - Real multi-device sync, simultaneous offline writes, app restart persistence and cold offline plugin/asset loading.
