@@ -17,7 +17,7 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. Run **Hanzi Mastery: create writing card / practice / settings** from the command menu (`Ctrl+/` on the verified Windows desktop). Enter an exact Traditional target and an English prompt, create the card, open it, and use RemNote's native practice action. Cards and vocabulary are siblings under a neutral **Hanzi Mastery** document.
 
-The compiled upload archive is **`release/HanziMastery-0.3.1-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. Marketplace upload/review is still required for hosted/unlisted distribution; see [installation](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.3.1-plugin.zip`**, available from the [0.3.1 pre-release](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.3.1). It is the same ZIP submitted to RemNote. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. RemNote approval and hosted installation remain unverified; see [installation and version labels](docs/INSTALLATION.md). An existing 0.2.0 development registration does not update merely because the source or GitHub release changes.
 
 ## What works
 

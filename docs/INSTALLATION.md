@@ -8,6 +8,20 @@ Version **0.3.1 was submitted as an unlisted plugin on October 19, 2026**. RemNo
 
 The initial 0.3.0 upload returned a 504 timeout and registered its version without a submission receipt. Version 0.3.1 groups the same character data into fewer files; this upload completed with RemNote's success message.
 
+## Version labels
+
+The source, GitHub releases and RemNote registrations are separate records:
+
+| Record | Version | Meaning |
+| --- | --- | --- |
+| Current source and upload ZIP | 0.3.1 | The implementation submitted to RemNote. |
+| GitHub pre-release | 0.3.1 | Downloadable copy of that submitted ZIP, with matching source and checksums. Publishing it does not update RemNote. |
+| Existing RemNote development registration | 0.2.0 | The desktop Build tab still points this entry at `http://localhost:8080/`. Its stored version label has not followed subsequent builds. |
+
+On October 20, the desktop development entry still displayed 0.2.0 and the localhost URL. A user-provided iPhone screenshot displayed matching 0.2.0 metadata and no plugin description. This is consistent with the old development registration appearing on the phone; the screenshot alone does not establish which hosted version is approved or installed. A localhost URL refers to the device opening it, so the desktop's loopback-only development server does not provide a phone installation. "Enabled on Mobile" is not an installation or runtime test.
+
+The 0.3.1 hosted install still needs to be verified from the unlisted plugin page after RemNote approval. Check the resulting version and actual review widget on the phone. GitHub's 0.3.1 pre-release is not an iOS sideload mechanism.
+
 For future uploads, use the Plugins **Build** tab → **Upload plugin** with the compiled ZIP. `unlisted: true` requests personal/unlisted distribution. RemNote's published policy still requires review, including a public source URL. After approval, use the [unlisted plugin page](https://www.remnote.com/plugins/hanzi_mastery_handwriting_v1) and enable it on the devices you use. There is no documented universal “install any local ZIP directly into iOS” route.
 
 Sources: [official upload instructions](https://plugins.remnote.com/advanced/submitting_plugins), [unlisted plugins](https://plugins.remnote.com/advanced/unlisted_plugins), [quick start](https://plugins.remnote.com/getting-started/quick_start_guide).
