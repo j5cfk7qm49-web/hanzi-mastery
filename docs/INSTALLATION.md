@@ -12,20 +12,20 @@ Version **0.3.2 was uploaded on October 20, 2026 and is available through RemNot
 
 ## Version labels
 
-Version **0.3.3 is being prepared** after the user reported that 0.3.2 still left a blank iPhone review. An actual compiled-bundle WebKit test reproduced a startup crash when `crypto.randomUUID` was unavailable, before any card read. The patch replaces those calls with identifiers generated from `crypto.getRandomValues` and shows a diagnostic for caught render/effect startup failures. Distribution and native iPhone acceptance still require confirmation. See [startup verification](TESTING.md).
+Version **0.3.3 was uploaded on October 20, 2026 and is available through Check for Updates**. RemNote displayed a new success notice after this upload; the public page showed 0.3.3, and the isolated web installation updated from 0.3.2 to the hosted 0.3.3 index bundle. This followed the user's report that 0.3.2 still left a blank iPhone review. An exact-release WebKit comparison reproduced a startup crash when `crypto.randomUUID` was unavailable, before any card read. The patch replaces those calls with identifiers generated from `crypto.getRandomValues` and shows a diagnostic for caught render/effect startup failures. Physical RemNote iPhone acceptance remains required; the device's actual API state has not been inspected. See [startup verification](TESTING.md) and the [0.3.3 release](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.3.3).
 
 The source, GitHub releases and RemNote registrations are separate records:
 
 | Record | Version | Meaning |
 | --- | --- | --- |
 | Current source and upload ZIP | 0.3.3 | Compiled-widget startup crash fix; distribution status recorded above. |
-| Latest available hosted update | 0.3.2 | Public page and isolated web update confirmed; physical iPhone review still requires confirmation. |
+| Latest available hosted update | 0.3.3 | Public page and isolated web update confirmed; physical iPhone review still requires confirmation. |
 | GitHub pre-release | See release tag | Downloadable package with matching source/checksums. Publishing it does not update RemNote. |
 | Existing RemNote development registration | 0.2.0 | The desktop Build tab still points this entry at `http://localhost:8080/`. Its stored version label has not followed subsequent builds. |
 
 The desktop development entry still displayed 0.2.0 and the localhost URL on October 20, but the user subsequently confirmed 0.3.1 on the phone. The desktop entry therefore does not establish the phone's installed source or version. A localhost URL refers to the device opening it, so the desktop's loopback-only development server does not provide a phone installation. "Enabled on Mobile" is not an installation or runtime test.
 
-On the phone, open Plugins → Manage and use **Check for Updates** if that control is available. Reopen RemNote and check that Hanzi Mastery displays 0.3.2, then open an existing writing review. The update control and hosted 0.3.2 loading were verified on the web; the phone's exact update-menu layout has not been verified. GitHub ZIPs are not an iOS sideload mechanism. If the waiting message persists, it distinguishes a registered widget that cannot bind from a widget that never loads; no successful handwriting result should be recorded in either case.
+On the phone, open Plugins → Manage and use **Check for Updates** if that control is available. Reopen RemNote and check that Hanzi Mastery displays 0.3.3, then open an existing writing review. The update control and hosted 0.3.3 loading were verified on the web; the phone's exact update-menu layout has not been verified. GitHub ZIPs are not an iOS sideload mechanism. A waiting message distinguishes an activated review that cannot bind; HM-START indicates a caught render/effect failure. Neither is a successful handwriting result. A completely blank view may instead mean that RemNote did not mount/activate the view or that failure preceded the error boundary.
 
 For future uploads, use the Plugins **Build** tab → **Upload plugin** with the compiled ZIP. `unlisted: true` requests personal/unlisted distribution. RemNote's published policy still requires review, including a public source URL. After approval, use the [unlisted plugin page](https://www.remnote.com/plugins/hanzi_mastery_handwriting_v1) and enable it on the devices you use. There is no documented universal “install any local ZIP directly into iOS” route.
 

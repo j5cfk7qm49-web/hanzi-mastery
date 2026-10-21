@@ -12,6 +12,10 @@ The iPhone's actual secure-context/API state has not been inspected; this is a r
 
 The complete local validation passed after the fix: **86 unit/component/adapter/import tests in 12 files and all 42 Chromium/WebKit browser checks**, including the six production-bundle startup checks. TypeScript, the production build, official SDK validator and ZIP/data integrity checks passed. The package still contains 405 entries, 353 data groups and 9,574 exact character records. Physical iPhone confirmation is separate from these results.
 
+On October 20 at approximately 23:10 America/Los_Angeles (October 21 UTC), RemNote showed a new successful-upload notice for 0.3.3. The public page displayed 0.3.3, and Check for Updates changed the isolated Guest web installation from 0.3.2 to the hosted 0.3.3 index bundle. The existing person (rén) card loaded its 0.3.3 review, showed Begin test and opened the actual Hanzi Writer canvas without card recreation. No user knowledge-base cards or native SRS ratings were changed. This normal hosted check is separate from the startup comparison and native iPhone acceptance.
+
+The [clean GitHub Actions run for submitted commit 30269e7](https://github.com/j5cfk7qm49-web/hanzi-mastery/actions/runs/39553545160) also passed TypeScript, all 86 tests, all 42 browser checks and production/package validation.
+
 ## 2026-10-20 optional review identity
 
 Version 0.3.2 passes TypeScript, **83 unit/component/adapter/import tests**, all **36 Chromium/WebKit browser checks**, the production build, SDK manifest validation and ZIP/data integrity checks. SDK 0.0.46's `WidgetLocationContextDataMap[FlashcardUnder]` declares `cardId?: string`; adapters previously rejected the omitted case. New regressions cover successful binding without that field and rejection of a different Rem, reverse card and lookback. A supplied conflicting card ID remains rejected. Save and lifecycle guards still use the actual current card's ID and repetition-history timestamp.
