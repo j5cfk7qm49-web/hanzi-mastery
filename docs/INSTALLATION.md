@@ -10,6 +10,10 @@ Version **0.3.1 was submitted on October 19 and confirmed approved on October 20
 
 Version **0.3.2 was uploaded on October 20, 2026 and is available through RemNote's Check for Updates**. The public plugin page displays 0.3.2, and an isolated web demo installation updated from 0.3.1 to the hosted 0.3.2 index bundle. This review-identity compatibility patch accepts the SDK's optional widget card ID being absent while still requiring the current forward card and matching Rem, and shows a waiting message instead of an empty registered widget. Physical iPhone confirmation remains required. This fixes an API-contract bug consistent with the report; the phone's actual widget context has not been inspected. The matching [GitHub release](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.3.2) contains the uploaded ZIP and source from commit b1ea5c1.
 
+The user subsequently confirmed that uninstalling and reinstalling restored the writing widget on iPhone. This confirms device startup, without establishing the sole cause of the earlier blank view.
+
+Version **0.3.4** contains the fitted mobile review and expanded writing square. Distribution verification is pending at this source snapshot.
+
 ## Version labels
 
 Version **0.3.3 was uploaded on October 20, 2026 and is available through Check for Updates**. RemNote displayed a new success notice after this upload; the public page showed 0.3.3, and the isolated web installation updated from 0.3.2 to the hosted 0.3.3 index bundle. This followed the user's report that 0.3.2 still left a blank iPhone review. An exact-release WebKit comparison reproduced a startup crash when `crypto.randomUUID` was unavailable, before any card read. The patch replaces those calls with identifiers generated from `crypto.getRandomValues` and shows a diagnostic for caught render/effect startup failures. Physical RemNote iPhone acceptance remains required; the device's actual API state has not been inspected. See [startup verification](TESTING.md) and the [0.3.3 release](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.3.3).
@@ -18,8 +22,8 @@ The source, GitHub releases and RemNote registrations are separate records:
 
 | Record | Version | Meaning |
 | --- | --- | --- |
-| Current source and upload ZIP | 0.3.3 | Compiled-widget startup crash fix; distribution status recorded above. |
-| Latest available hosted update | 0.3.3 | Public page and isolated web update confirmed; physical iPhone review still requires confirmation. |
+| Current source and upload ZIP | 0.3.4 | Fitted writing review; distribution status recorded above. |
+| Latest verified hosted update | 0.3.3 | Public page and isolated web update confirmed; user reports successful iPhone startup after reinstalling. |
 | GitHub pre-release | See release tag | Downloadable package with matching source/checksums. Publishing it does not update RemNote. |
 | Existing RemNote development registration | 0.2.0 | The desktop Build tab still points this entry at `http://localhost:8080/`. Its stored version label has not followed subsequent builds. |
 

@@ -1,7 +1,7 @@
 {
   "name": "hanzi-mastery-remnote",
   "private": true,
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Traditional-first handwriting, pinyin, tone and listening reviews for RemNote",
   "license": "MIT",
   "engines": {

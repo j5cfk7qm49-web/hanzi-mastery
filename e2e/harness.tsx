@@ -43,7 +43,7 @@ function Harness(){
       {cards.map((c,i)=><option key={c.id} value={i}>{c.prompt}</option>)}</select></label>
     <button onClick={()=>setRevealed(true)}>Simulate native answer reveal</button>
     <button onClick={()=>setSuspended(v=>!v)}>{suspended ? 'Restore host connection' : 'Simulate host connection loss'}</button></aside>}
-    <ReviewExercise key={context.cardId} context={context} settings={DEFAULT_SETTINGS} repository={repository}
+    <ReviewExercise fitToCard={embedded} key={context.cardId} context={context} settings={DEFAULT_SETTINGS} repository={repository}
       suspended={suspended} revealed={revealed} isCurrent={async(allow=true)=>!suspended && (allow || !revealed)}/></>;
 }
 function SkillHarness() {

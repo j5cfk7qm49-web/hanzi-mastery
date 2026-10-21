@@ -1,8 +1,8 @@
-# Hanzi Mastery 0.3.3 — RemNote Chinese study plugin
+# Hanzi Mastery 0.3.4 — RemNote Chinese study plugin
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
-Writing, failure, saved-result and guided-practice flows have been exercised in **RemNote Desktop**, and hosted web installation/update and the actual writing canvas are verified through 0.3.2. The user still reported a completely blank review on iPhone after 0.3.2. Version 0.3.3 fixes a reproduced startup crash: the compiled plugin called secure-context-only `crypto.randomUUID()` before reading the card, which unmounted the entire view when that API was unavailable. Identifiers now use `crypto.getRandomValues()`; widget render/effect crashes show an error instead of a blank view. The real SDK and compiled bundles are exercised in a browser origin without `randomUUID`; physical RemNote iOS confirmation remains required. See [verification](docs/TESTING.md). This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance and full offline operation remain unverified.
+The user confirmed that handwriting now loads on iPhone after uninstalling and reinstalling the plugin. Version 0.3.4 redesigns the writing review around the largest square that fits the available card area: one prompt, compact controls, and optional scoring details in a separate sheet. Ready, test, result and practice views are designed to fit without scrolling. RemNote's native answer/rating controls remain available. See [layout and device-test limits](docs/IOS_LAYOUT.md) and [verification](docs/TESTING.md). The new layout still needs physical iPhone acceptance; Pencil behavior, complete Taiwan MOE compliance and full offline operation remain unverified.
 
 ## Get started
 
@@ -23,12 +23,12 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. The loopback server is for this computer; use the hosted installation for phone review.
 
-The compiled upload archive is **`release/HanziMastery-0.3.3-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. GitHub source/releases and RemNote registrations update separately; see [installation and version labels](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.3.4-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. GitHub source/releases and RemNote registrations update separately; see [installation and version labels](docs/INSTALLATION.md).
 
 ## What works
 
 - Responsive Hanzi Writer canvas; locally bundled JavaScript and data for 9,574 exact-script characters. 學、國、書、語、聽、體、愛 are also embedded in the widget bundle.
-- Compact phone layout, scroll margins beside the canvas, touch-sized controls, safe-area CSS and rotation/reflow tests inside a simulated review pane. [iOS layout and device-test limits](docs/IOS_LAYOUT.md).
+- Fitted phone review with the largest available writing square, 44px controls, app dark-theme support, optional details sheet and rotation/reflow tests inside a simulated review pane. [iOS layout and device-test limits](docs/IOS_LAYOUT.md).
 - Explicit hidden writing-card metadata and shared vocabulary linkage, rather than answer-text guessing. Single characters and sequential multi-character words.
 - First-attempt stroke correctness, remembered-but-misdrawn corrections, limited auditable accidental-input recovery, and mandatory failure on forgotten strokes or premature answer reveal.
 - Beginner/Developing/Proficient/Mastered thresholds of 60/75/90/95%, configurable spaced promotion, gentle regression and preserved peak. Same-session practice cannot inflate mastery.

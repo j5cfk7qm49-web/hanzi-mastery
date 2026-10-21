@@ -107,6 +107,7 @@ describe('review UI and engine lifecycle',()=>{
   });
   it('one click ends the test for guided practice and saves the original failure',async()=>{
     const {store}=setup();await begin();stroke(0);
+    fireEvent.click(screen.getByRole('button',{name:'Review options and details'}));
     fireEvent.click(screen.getByRole('button',{name:'End test for guided practice'}));
     await screen.findByRole('button',{name:'Animate strokes'});
     await screen.findByText('Writing mastery saved and read back.');

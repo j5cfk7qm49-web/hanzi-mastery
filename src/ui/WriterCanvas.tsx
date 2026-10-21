@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import HanziWriter, { type CharacterJson, type StrokeData } from 'hanzi-writer';
 import type { Settings } from '../core/config';
 import { CHARACTER_OVERRIDES } from '../data/overrides';
@@ -10,9 +10,13 @@ export interface WriterCanvasProps {
   onCorrect(data: StrokeData): void; onMistake(data: StrokeData): void;
   onComplete(): void; onError(): void;
   onInputCancelled?(): void;
+  fit?: boolean; hideControls?: boolean;
+  controlsRef?: React.Ref<WriterCanvasControls>;
+  onReadyChange?(ready: boolean): void;
 }
+export interface WriterCanvasControls { animate(): void; restart(): void; show(): void }
 export function WriterCanvas(props: WriterCanvasProps) {
-  const canvas = useRef<HTMLDivElement>(null), shell = useRef<HTMLDivElement>(null);
+  const canvas = useRef<HTMLDivElement>(null), shell = useRef<HTMLDivElement>(null), area = useRef<HTMLDivElement>(null);
   const writer = useRef<HanziWriter | null>(null);
   const latest = useRef(props); latest.current = props;
   const characterData = useRef(new Map<string, CharacterJson>());
@@ -23,7 +27,21 @@ export function WriterCanvas(props: WriterCanvasProps) {
   const canvasWidth = useRef(0);
   const recoverInput = useRef<() => void>(() => {});
   const getWritingStage = useCallback(() => canvas.current?.closest('.hm-writing-stage') || shell.current, []);
-  useRevealInHost(getWritingStage, ready && props.active, props.generation);
+  useRevealInHost(getWritingStage, ready && props.active && !props.fit, props.generation);
+  useEffect(() => { latest.current.onReadyChange?.(ready); }, [ready]);
+  useImperativeHandle(props.controlsRef, () => ({
+    animate: () => {
+      if (!ready || !props.active) return;
+      recoverInput.current = () => {}; writer.current?.cancelQuiz();
+      void writer.current?.animateCharacter().catch(() => latest.current.onError());
+    },
+    restart: () => { if (ready) setPracticeVersion(value => value + 1); },
+    show: () => {
+      if (!ready || !props.active) return;
+      recoverInput.current = () => {}; writer.current?.cancelQuiz();
+      void writer.current?.showCharacter().catch(() => latest.current.onError());
+    },
+  }), [ready, props.active]);
   useEffect(() => {
     const node = canvas.current!;
     let live = true;
@@ -79,32 +97,34 @@ export function WriterCanvas(props: WriterCanvasProps) {
   }, [props.character, props.data, props.mode, props.active, props.generation, practiceVersion, props.settings.leniency]);
   useEffect(() => {
     const resize = () => {
-      const node = shell.current;
-      const style = node && window.getComputedStyle(node);
-      const gutters = style ? (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0) : 0;
-      // Reserve the canvas border and scroll margins instead of squeezing its SVG with CSS.
-      const available = (node?.clientWidth || 280) - gutters - 2;
-      const width = Math.max(1, Math.min(props.settings.canvasSize, available));
+      const node = area.current;
+      const available = (node?.clientWidth || 280) - 2;
+      // In a fitted review, use the largest square inside the actual available area.
+      // Workbench/document canvases retain their configured size cap.
+      const height = props.fit ? Math.max(1, (node?.clientHeight || 280) - 2) : props.settings.canvasSize;
+      const width = Math.max(1, Math.min(props.fit ? Infinity : props.settings.canvasSize, available, height));
       if (width === canvasWidth.current) return;
       canvasWidth.current = width;
       writer.current?.updateDimensions({ width, height: width, padding: 16 });
     };
     resize();
     const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
-    if (shell.current) observer?.observe(shell.current);
+    if (area.current) observer?.observe(area.current);
     return () => observer?.disconnect();
-  }, [props.settings.canvasSize]);
+  }, [props.settings.canvasSize, props.fit]);
   useEffect(() => {
     const node = canvas.current!;
     const cancel = () => recoverInput.current();
     node.addEventListener('touchcancel', cancel);
     return () => node.removeEventListener('touchcancel', cancel);
   }, []);
-  return <div ref={shell} className="hm-canvas-shell">
+  return <div ref={shell} className={`hm-canvas-shell${props.fit ? ' hm-canvas-fit' : ''}`}>
+    <div ref={area} className="hm-canvas-area">
     <div ref={canvas} className="hm-canvas" role="application" aria-label="Chinese handwriting canvas" aria-busy={!ready} />
     {!ready && <p role="status">Preparing writing canvas…</p>}
-    <p className="hm-scroll-hint">Draw in the square. Swipe beside it to scroll.</p>
-    {props.mode === 'learn' && <div className="hm-actions">
+    </div>
+    {!props.fit && <p className="hm-scroll-hint">Draw in the square. Swipe beside it to scroll.</p>}
+    {props.mode === 'learn' && !props.hideControls && <div className="hm-actions">
       <button disabled={!ready || !props.active} onClick={() => { recoverInput.current = () => {}; writer.current?.cancelQuiz(); void writer.current?.animateCharacter().catch(() => latest.current.onError()); }}>Animate strokes</button>
       <button disabled={!ready} onClick={() => setPracticeVersion(v => v+1)}>Practice again</button>
       <button disabled={!ready || !props.active} onClick={() => { recoverInput.current = () => {}; writer.current?.cancelQuiz(); void writer.current?.showCharacter().catch(() => latest.current.onError()); }}>Show character</button>

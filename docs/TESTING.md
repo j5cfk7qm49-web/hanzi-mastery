@@ -1,4 +1,13 @@
-# Verification report — 2026-10-17
+# Verification report
+
+## 0.3.4 fitted handwriting review
+
+The user confirmed that uninstalling and reinstalling restored the plugin on iPhone and supplied a screenshot of a working but heavily scrolled review. The redesign scopes host CSS to the writing iframe in the observed RemNote queue DOM, removes the duplicated native prompt/padding, and measures the largest square inside the remaining iframe area. Native answer/rating controls remain outside the changed content area.
+
+New layout checks cover 320×568, 375×667, 393×852, 430×932 dark, 844×390 landscape, 768×1024 and a 320px split pane. Each checks ready, test, saved result, guided practice, and native rating visibility, with no frame/parent scrolling and all visible action targets inside bounds. Additional checks cover unrelated-plugin CSS isolation, accepted strokes through rotation/details, focus return, and enlarged text. Optional details can scroll within their own sheet. These model host geometry rather than native iOS; physical acceptance of the redesign remains required.
+
+TypeScript, all **86 unit/component/adapter/import tests**, all **44 Chromium/WebKit browser checks**, production build, official SDK manifest validation and ZIP/data integrity checks pass locally. The package contains 405 entries, 353 character-data groups and 9,574 exact character records. Physical acceptance of the new layout remains required.
+
 
 ## 2026-10-20 compiled widget startup
 

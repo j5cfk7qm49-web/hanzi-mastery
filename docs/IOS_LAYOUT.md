@@ -1,39 +1,29 @@
-# iOS and iPadOS layout
+# iPhone and iPad writing layout
 
-The intended phone workflow is portrait: read the prompt, begin, write in a square canvas, then choose a rating with RemNote's native controls. The plugin is an auto-sized review widget inside a host pane. Phone screen dimensions alone do not establish how much space the widget receives.
+Version 0.3.4 gives the handwriting square the largest size that fits the available review area. It uses one compact prompt/status bar and 44px controls; scoring explanations and advisory rating choices open in a separate details sheet. Ready, test, saved result and guided practice fit without scrolling in the covered sizes. The optional details body can scroll.
 
-## Implemented in v0.2.2
+The review remains a FlashcardUnder widget. Scoped host CSS matches only `iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=hanzi_review"]` inside the current queue card. It hides that card's duplicate native question/answer and removes padding around this writing iframe. Native Show Answer and rating controls remain outside that content area. Other plugins and ordinary cards are not matched. The plugin supplies the English prompt and reveals the target only after testing or in guided practice. This integration depends on observed RemNote queue classes; future host markup changes may require maintenance. See [RemNote CSS integration](https://plugins.remnote.com/custom-css).
 
-- One column follows the widget's actual width, including a narrow iPad pane. The canvas remains square, respects the configured size cap and reserves its border instead of distorting the SVG with CSS.
-- Sixteen CSS pixels on each side of the canvas remain available for scrolling, in addition to outer widget padding. Drawing suppresses gestures only on the canvas; the margins allow vertical panning. The visible hint explains where to swipe. Physical gesture routing in RemNote iOS still needs a device test.
-- A compact header, mastery requirement and first-attempt score precede the canvas. **Forgot a stroke** and **Accidental input** sit directly below it in two columns. The accessible names still explain that forgetting ends the test. Less frequent practice/scoring options are in a disclosure.
-- Controls have at least 44 by 44 CSS pixel targets. Input/select/textarea text is 16px. Long English prompts wrap without horizontal page scrolling. Zoom is not disabled.
-- The original result stays visible during practice. Save status appears near the result heading, before the advisory grade selector. Long multi-character result lists can be expanded separately.
-- Since v0.2.3, a finished test scrolls its result heading and save status into view after host resizing, without moving keyboard focus or overriding a subsequent touch/scroll. This fixes a clipping issue found in live desktop testing.
-- Normal browser scrolling brings the canvas and its primary controls into view. Touch, pointer, mouse or wheel input cancels the delayed adjustment so it cannot move the surface under an active contact. Resize updates skip unchanged dimensions and retain accepted strokes/errors.
-- Outer padding uses `max(normal padding, env(safe-area-inset-…))`. In an iframe WebKit may report zero insets because the host already handles them; the plugin cannot establish the native app's safe-area policy. It adds no fixed bottom toolbar or overlay over RemNote's controls.
+The iframe fills the available card space, with a 400px fallback registration height. Its internal layout uses the actual frame height, and the canvas measures both available width and height. Fitted reviews ignore the workbench's 320px default cap. Portrait uses stacked prompt/canvas/controls; wider frames put prompt and controls beside the square. Resizing updates Hanzi Writer dimensions without discarding accepted strokes or errors. Opening details pauses input and resumes the recorded prefix; Escape/Close restores focus. Workbench/document canvases retain their configured cap and scroll hint.
 
-The 44 CSS pixel target is a web design choice informed by Apple's 44-point touch guidance; it is not a claim of native UIKit conformance. Safe-area treatment follows WebKit's documented `viewport-fit`/`env()` approach. See [Apple UI design guidance](https://developer.apple.com/design/tips/), [Apple layout guidance](https://developer.apple.com/design/human-interface-guidelines/layout), [WebKit safe-area documentation](https://webkit.org/blog/7929/designing-websites-for-iphone-x/) and [RemNote widgets](https://plugins.remnote.com/advanced/widgets).
+RemNote's `.dark` theme is respected even when the WebView's OS color preference differs. The writing paper stays light for stroke contrast. The host provides the device safe area; the iframe adds no overlay over native rating controls. Zoom remains enabled. Prompt display is capped at two lines to preserve writing space; the complete prompt is available in Review details.
 
-## Automated layout coverage
+## Automated coverage
 
-Startup is separate from layout. After the user's blank 0.3.2 iPhone report, the exact published bundle reproduced a blank view in WebKit when `crypto.randomUUID` was unavailable. A secure HTTPS iframe can still lack this API under a non-trustworthy ancestor. Version 0.3.3 uses `getRandomValues` for IDs and adds a visible fallback for caught render/effect startup failures. Production-bundle/SDK tests now cover this condition; earlier phone-size layout fixtures did not. See [startup evidence and device limits](TESTING.md).
+Both Chromium and phone-configured WebKit exercise:
 
-`npm run test:browser` includes a test-only parent queue pane with an auto-sized iframe and separate simulated native controls. It is a geometry/scrolling model, not a copy of RemNote's iOS interface. Height synchronization settles before geometry assertions, preventing a short stale iframe from making clipped content appear to pass. The fixture and its controls are excluded from the upload ZIP.
+| Case | CSS viewport / pane |
+| --- | --- |
+| Compact phone | 320 × 568 |
+| iPhone SE size | 375 × 667 |
+| Supplied screenshot size | 393 × 852 |
+| Large phone, dark | 430 × 932 |
+| Landscape | 844 × 390 |
+| Tablet | 768 × 1024 |
+| Narrow split pane | 320px pane in 1024 × 768 |
 
-| Scenario | CSS viewport / pane | Checks |
-| --- | --- | --- |
-| Small phone | 320 × 568 | Square canvas at least 240px wide, reachable primary controls, no horizontal overflow |
-| iPhone SE size | 375 × 667 | Same layout inside a limited review area |
-| Large phone, dark | 430 × 932 | Dark colors, long prompts, canvas and controls |
-| Phone landscape | 844 × 390 | Scroll to controls without shrinking the canvas into a tiny square |
-| Tablet | 768 × 1024 | Centered layout and intact native-control space |
-| Narrow tablet pane | 320px pane in 1024 × 768 | Layout responds to frame width rather than outer screen width |
+Checks require the iframe and parent pane to have no scroll overflow, every visible main action to remain inside the frame with a minimum 44px target, and the square to fill the smaller available dimension. They also cover native reveal/rating space, details/rotation with an accepted stroke, enlarged text, and unrelated-plugin CSS isolation. Generated screenshots supplement geometry checks. The fixture uses observed host structure and simulated native controls; it is not the native iOS app. Enlarged text is a reflow stress test, not verification of Dynamic Type.
 
-Both Chromium and phone-configured WebKit run these cases, plus rotation with a recorded stroke, early reveal/results/practice, and synthetic enlarged text. Screenshot review supplements bounds checks. Generated images are in ignored `test-results/`. Enlarged text is a reflow stress test, not a verification of iOS Dynamic Type.
+## Device status
 
-## Device validation still required
-
-Portrait is the recommended phone orientation. A short landscape queue may not show the whole canvas and controls together; use the scroll margins or rotate to portrait. The plugin does not take over RemNote's review screen. On iPad, `canvasSize` can be increased for more writing room; smaller panes still constrain it by width.
-
-Real RemNote iOS/iPadOS, safe-area propagation, finger/Pencil input, palm rejection, software-keyboard behavior in the workbench, VoiceOver, Dynamic Type, orientation changes during a contact, app suspension and save recovery remain unverified. WebKit emulation cannot certify those behaviors. Hosted plugin installation is also required for practical iOS use; a phone's localhost is not this computer's development server. See [installation](INSTALLATION.md) and [verification boundaries](TESTING.md).
+The user confirmed that reinstalling restored handwriting on their iPhone before this redesign. Earlier versions fixed reproducible API-contract/startup bugs, but the phone's original internal failure was not inspected directly. The new layout still needs acceptance in the physical app. Safe-area propagation, finger/Pencil input, palm rejection, VoiceOver, Dynamic Type, orientation during contact, app suspension and save recovery remain device-test items. Hosted installation is required for phone use; the phone's localhost does not point to the computer's development server. See [installation](INSTALLATION.md) and [verification](TESTING.md).

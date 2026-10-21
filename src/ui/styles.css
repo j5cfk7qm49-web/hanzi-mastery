@@ -56,3 +56,75 @@ body { margin: 0; }
  .hm .hm-result { padding: 10px; }
 }
 @media (max-width: 360px) { .hm-actions button { flex: 1 1 100%; } }
+
+/* Writing reviews fill their host card. Workbench and study forms keep their document layout. */
+.hm-review { position: relative; display: flex; flex-direction: column; gap: 8px; max-width: none; padding: 8px; }
+.hm-review-fit { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; margin: 0; }
+html:has(.hm-review-fit), body:has(.hm-review-fit) { height: 100%; margin: 0; overflow: hidden; }
+.plugin:has(.hm-review-fit) { margin: 0 !important; padding: 0 !important; height: 100vh; height: 100dvh; }
+.hm-review .hm-review-heading { display: flex; flex: none; flex-wrap: nowrap; gap: 8px; margin: 0; align-items: center; }
+.hm-review-heading-text { min-width: 0; flex: 1; }
+.hm-review .hm-review-prompt { font-size: 17px; line-height: 1.25; margin: 0 0 3px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.hm-review-meta { display: flex; flex-wrap: wrap; column-gap: 8px; font-size: 11px; line-height: 1.35; color: var(--muted); }
+.hm-review .hm-icon-button { flex: none; width: 44px; height: 44px; padding: 0; border-color: transparent; background: transparent; font-size: 24px; font-weight: 600; line-height: 1; }
+.hm-review-workspace { min-width: 0; min-height: 0; position: relative; display: flex; flex-direction: column; gap: 4px; }
+.hm-review-fit .hm-review-workspace { flex: 1 1 0%; overflow: hidden; }
+.hm-ready-stage { display: grid; place-items: center; min-width: 0; min-height: 322px; }
+.hm-review-fit .hm-ready-stage { flex: 1 1 0%; min-height: 0; }
+.hm-ready-square { display: grid; place-items: center; border: 1px solid var(--border); border-radius: 12px; background: linear-gradient(90deg, transparent calc(50% - .5px), #dce6e8 50%, transparent calc(50% + .5px)), linear-gradient(transparent calc(50% - .5px), #dce6e8 50%, transparent calc(50% + .5px)); }
+.hm-ready-prompt { display: flex; align-items: center; flex-direction: column; gap: 10px; text-align: center; max-width: 100%; padding: 8px; background: var(--hm-background, #fff); border-radius: 10px; }
+.hm-ready-prompt > span { font-size: 17px; font-weight: 600; }
+.hm-ready-prompt > small { font-size: 11px; }
+.hm-ready-prompt > button { width: 160px; }
+.hm-review .hm-score { flex: none; display: flex; flex-flow: row wrap; justify-content: space-between; column-gap: 8px; margin: 0; font-size: 11px; line-height: 1.35; }
+.hm-review .hm-score strong { font-weight: 600; }
+.hm-review .hm-writing-stage { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+.hm-review-fit .hm-writing-stage { flex: 1 1 0%; }
+.hm-canvas-area { position: relative; }
+.hm-review .hm-canvas-shell { padding: 0; margin: 0; }
+.hm-canvas-fit { display: flex; flex-direction: column; flex: 1 1 0%; min-height: 0; min-width: 0; }
+.hm-canvas-fit .hm-canvas-area { display: flex; align-items: center; justify-content: center; flex: 1 1 0%; min-height: 0; min-width: 0; }
+.hm-canvas-fit .hm-canvas-area > p { position: absolute; margin: 0; padding: 8px; background: var(--hm-background, #fff); border-radius: 8px; }
+.hm-review .hm-canvas { flex: none; background-color: #f8fbfb; border-radius: 12px; }
+.hm-review .hm-review-controls { flex: none; display: flex; gap: 6px; min-height: 44px; }
+.hm-review-controls > button { flex: 1 1 0; min-width: 44px; min-height: 44px; padding: 7px 6px; font-size: 13px; line-height: 1.2; }
+.hm-review .hm-review-notice { flex: none; padding: 8px; font-size: 12px; line-height: 1.3; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; }
+.hm-review .hm-contact-notice { flex: none; font-size: 11px; line-height: 1.3; margin: 0; }
+.hm-review .hm-preserved-result { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 4px; padding: 2px 5px; margin-top: 3px; font-size: 11px; line-height: 1.2; border-radius: 5px; }
+.hm-preserved-result em { font-style: normal; margin-left: auto; color: var(--muted); }
+.hm-a11y { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+.hm-review .hm-result { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; flex: 1 1 0%; min-height: 0; padding: 12px; margin: 0; text-align: center; border: 0; background: transparent; }
+.hm-review .hm-result h2, .hm-review .hm-result p { margin: 0; }
+.hm-result-mark { font-size: 36px; line-height: 1; color: #147d72; }
+.hm-fail .hm-result-mark { color: #b34e37; }
+.hm-result-score { font-size: 40px; line-height: 1; letter-spacing: -1px; }
+.hm-result-metrics { display: flex; justify-content: center; align-items: center; gap: 16px; max-width: 100%; }
+.hm-result-target { font-size: 38px; line-height: 1.3; min-width: 0; overflow-wrap: anywhere; }
+.hm-review-sheet { position: absolute; inset: 0; z-index: 5; min-width: 0; min-height: 0; padding: 8px; background: var(--hm-background, #fff); display: flex; flex-direction: column; }
+.hm-review-sheet > header { flex: none; display: flex; justify-content: space-between; align-items: center; margin: 0 0 8px; }
+.hm-review-sheet > header h2 { margin: 0; }
+.hm-review-sheet-body { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 4px 8px; font-size: 14px; }
+.hm-review-sheet-body h3 { font-size: 14px; margin: 14px 0 6px; }
+.hm-review-sheet-body h3:first-child { margin-top: 0; }
+@media (min-width: 600px) {
+  .hm-review-fit { display: grid; grid-template-columns: minmax(190px, 28%) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: 12px; }
+  .hm-review-fit .hm-review-heading { grid-column: 1; grid-row: 1; align-self: start; }
+  .hm-review-fit .hm-review-workspace { grid-column: 2; grid-row: 1 / -1; }
+  .hm-review-fit .hm-review-controls { grid-column: 1; grid-row: 3; flex-wrap: wrap; align-self: end; }
+  .hm-review-fit .hm-review-controls > button { flex-basis: 40%; }
+  .hm-review-fit .hm-result { align-self: stretch; }
+}
+@media (max-height: 340px) {
+  .hm-review-fit { gap: 4px; padding: 4px; }
+  .hm-review-fit .hm-result { gap: 4px; padding: 4px; font-size: 12px; }
+  .hm-review-fit .hm-result h2 { font-size: 16px; }
+  .hm-review-fit .hm-result-mark { display: none; }
+  .hm-review-fit .hm-result-score { font-size: 28px; }
+  .hm-review-fit .hm-ready-prompt > small { display: none; }
+}
+/* RemNote's app theme is independent of the iOS WebView's OS media preference. */
+.dark .hm { --muted: #a3b5ba; --border: #415157; --panel: #202e34; --hm-background: #17242a; color: #e4eef0; background: #17242a; }
+.dark .hm .hm-danger { color: #f3b9a9; }
+.dark .hm .hm-error { background: #402e25; color: #ffd7bd; }
+.dark .hm-review .hm-canvas, .dark .hm-ready-square { background-color: #e9f1ef; }
+@media (prefers-color-scheme: dark) { .hm { --hm-background: #17242a; } .hm-review .hm-canvas, .hm-ready-square { background-color: #e9f1ef; } }

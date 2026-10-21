@@ -1,7 +1,13 @@
-.hm-layout-host { height: 100vh; height: 100dvh; width: 100%; margin: auto; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; background: #e9edf1; color: #213c43; font: 15px/1.4 system-ui, sans-serif; }
-.hm-layout-toolbar { padding: max(12px, env(safe-area-inset-top, 0px)) 16px 12px; background: #dfe6ec; min-height: 48px; }
+.hm-layout-host { height: 100vh; height: 100dvh; width: 100%; margin: auto; display: grid; grid-template-rows: 128px minmax(0, 1fr) 104px; overflow: hidden; background: #e9edf1; color: #213c43; font: 15px/1.4 system-ui, sans-serif; }
+.hm-layout-toolbar { padding: max(12px, env(safe-area-inset-top, 0px)) 16px 12px; background: #dfe6ec; min-height: 48px; display:flex;align-items:center; }
+.hm-layout-card { display:grid;grid-template-rows:28px minmax(0,1fr);min-height:0;margin:8px 8px 0;background:white;border-radius:16px;overflow:hidden; }
+.hm-layout-statistics { padding:4px 12px;font-size:12px; }
 .hm-layout-scroll { overflow-y: auto; min-height: 0; overflow-x: hidden; }
+.rn-queue__content { display:flex;flex-direction:column;min-height:100%; }
+.hm-layout-native-content { padding:16px;display:flex;flex-direction:column; }
 .hm-layout-question { padding: 12px 16px; margin: 0; }
 .hm-layout-scroll iframe { display: block; width: 100%; border: 0; }
-.hm-layout-native { display: flex; gap: 8px; padding: 8px 12px max(8px, env(safe-area-inset-bottom, 0px)); background: #dfe6ec; }
+.hm-layout-native { display: flex; align-items:flex-start;gap: 8px; padding: 12px 12px max(8px, env(safe-area-inset-bottom, 0px)); background: #dfe6ec; }
 .hm-layout-native button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 8px 4px; border: 1px solid #a5b7c1; border-radius: 8px; background: white; color: #213c43; font: inherit; overflow-wrap: anywhere; }
+@media (orientation:landscape) { .hm-layout-host {grid-template-rows:56px minmax(0,1fr) 64px;} .hm-layout-card{grid-template-rows:22px minmax(0,1fr);margin-top:4px;} }
+@media(prefers-color-scheme:dark){.hm-layout-host{background:#17191f;color:#e4eef0}.hm-layout-card{background:#17242a}.hm-layout-toolbar,.hm-layout-native{background:#242931}}

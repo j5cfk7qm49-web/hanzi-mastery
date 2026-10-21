@@ -1,4 +1,14 @@
-# Hanzi Mastery 0.3.3 pre-release
+# Hanzi Mastery 0.3.4 pre-release
+
+Fit handwriting review to the available RemNote card area. Remove the duplicated native question and padding only in cards containing this plugin's writing iframe. Keep the native answer/rating controls. Use one compact prompt/status bar, the largest square allowed by both width and height, and a 44px control row. Landscape uses a side-by-side layout. Ready, test, result and guided practice fit without scrolling in the covered viewport sizes; detailed scoring and advisory rating choices open in an optional sheet.
+
+Fitted canvases no longer stop at the workbench's configured size cap. Resizing and opening details retain accepted strokes and recorded errors. Practice keeps the original test outcome and save state visible. Honor RemNote's app dark theme as well as the OS preference. The plugin still requires explicit Begin test and native SRS rating submission.
+
+The user confirmed that uninstalling and reinstalling restored the iPhone widget before this redesign. That confirms startup on their device, without identifying the sole cause of the earlier blank view. The new layout still requires physical iPhone acceptance. Host styling is scoped to the observed RemNote queue classes and handwriting iframe; a future host DOM change may require an adjustment. See [layout](IOS_LAYOUT.md) and [validation](TESTING.md).
+
+Validation: TypeScript, 86 unit/component tests, 44 Chromium/WebKit browser checks, SDK manifest validation and ZIP/data integrity pass.
+
+## Previous 0.3.3 startup fix
 
 Fix a startup crash reproduced with the exact published 0.3.2 ZIP. In WebKit, the compiled widget and real SDK activate, but an unavailable `crypto.randomUUID()` throws before the first card read and React clears the view. The comparison also reproduces this with HTTPS plugin files under a non-trustworthy parent. The same test opens the writing canvas with 0.3.3. Native iPhone API state has not been inspected; this is a confirmed crash matching the reported symptom, with physical device acceptance still outstanding.
 

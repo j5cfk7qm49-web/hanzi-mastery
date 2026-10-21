@@ -6,7 +6,9 @@ import type { Mastery } from '../core/mastery';
 import { geometryFeedback } from '../core/geometry';
 import { MasteryRepository } from '../services/persistence';
 import { loadCharacter } from '../services/characters';
-import { WriterCanvas } from './WriterCanvas';
+import { WriterCanvas, type WriterCanvasControls } from './WriterCanvas';
+import { ReviewSheet } from './ReviewSheet';
+import { ReviewStart } from './ReviewStart';
 import { useRevealInHost } from './useRevealInHost';
 import { createId } from '../core/ids';
 const NATIVE_GRADE_LABEL: Record<Grade, string> = { Again:'Forgot', Hard:'Partially recalled', Good:'Recalled with effort', Easy:'Easily recalled' };
@@ -16,15 +18,19 @@ export interface ExerciseProps {
   assetRoot?: string;
   suspended?: boolean;
   revealed: boolean; isCurrent(allowRevealed?: boolean): Promise<boolean>;
+  fitToCard?: boolean;
 }
 interface Outcome { character: string; result: Result; attempt: Attempt }
-export function ReviewExercise({ context, settings, repository, revealed, isCurrent, assetRoot, suspended = false }: ExerciseProps) {
+export function ReviewExercise({ context, settings, repository, revealed, isCurrent, assetRoot, suspended = false, fitToCard = false }: ExerciseProps) {
   const [loaded, setLoaded] = useState<{ data: CharacterJson[]; progress: Mastery[] }>();
   const [error, setError] = useState(''), [reload, setReload] = useState(0);
   const [mode, setMode] = useState<'ready' | 'test' | 'learn' | 'result'>('ready');
   const resultHeading = useRef<HTMLHeadingElement>(null);
   const getResultHeading = useCallback(() => resultHeading.current, []);
-  useRevealInHost(getResultHeading, mode === 'result', 0, 'start');
+  useRevealInHost(getResultHeading, mode === 'result' && !fitToCard, 0, 'start');
+  const [sheet, setSheet] = useState(false), [canvasReady, setCanvasReady] = useState(false);
+  const closeSheet = useCallback(() => setSheet(false), []);
+  const practiceControls = useRef<WriterCanvasControls>(null);
   const [index, setIndex] = useState(0), [version, setVersion] = useState(0);
   const [attempt, setAttempt] = useState<Attempt>();
   const attemptRef = useRef<Attempt>();
@@ -163,62 +169,90 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   const accidentAvailable = mode === 'test' && last?.type === 'rejected' && !last.accidental && !attempt?.completed &&
     Date.now()-last.at <= 8000 &&
     (attempt?.events.filter(e => e.accidental).length || 0) < settings.accidentLimit;
-  return <section className={`hm hm-review hm-mode-${mode}`} aria-label="Hanzi Mastery handwriting review">
-    <header><h1>Hanzi Mastery</h1><span className="hm-badge">{mode === 'learn' ? 'Guided practice' : 'Writing review'}</span></header>
-    <h2>{context.prompt}</h2>
-    <div className="hm-meta"><span>{LEVEL_NAMES[currentLevel]} · required {Math.round(settings.thresholds[currentLevel]*100)}%</span>
-      <span>Character {index+1} / {context.chars.length}</span><span>{settings.script === 'traditional' ? 'Traditional' : 'Simplified'}</span></div>
-    {error && <div role="alert" className="hm-error">{error}</div>}
-    {suspended && <p role="status" className="hm-error">Waiting for RemNote to confirm the current card. Writing is paused; your stroke record is preserved.</p>}
-    {!loaded && !error && <p role="status">Loading stroke data and mastery…</p>}
-    {!loaded && error && <button onClick={() => setReload(v => v+1)}>Retry loading</button>}
-    {loaded && mode === 'ready' && <>
-      <p>Recall every stroke independently. Corrections reduce first-attempt accuracy. A forgotten stroke or answer reveal fails the test.</p>
-      <details><summary>Stroke standards and scoring</summary><p className="hm-muted">Stroke sequences use Hanzi Writer data and can differ from Taiwan MOE standards. This version is not MOE-certified. First-attempt accuracy measures recognizer acceptance, not penmanship precision.</p></details>
-      <div className="hm-actions"><button className="hm-primary" disabled={revealed || suspended || checking} onClick={() => void start()}>{checking ? 'Checking current card…' : 'Begin test'}</button>
-      <button onClick={guided}>Guided practice only</button></div>
-      {revealed && <p className="hm-muted">The native answer is already visible. Practice is available; testing is disabled.</p>}
-    </>}
-    {mode === 'test' && attempt && currentScore && <>
-      <div className="hm-score" aria-live="polite"><strong>First-attempt accuracy: {Math.round(currentScore.accuracy*100)}%</strong>
-        <span>{attempt.events.filter(e => e.type === 'accepted').length} / {attempt.totalStrokes} strokes · {currentScore.mistakes} rejected attempts</span></div>
-      <progress value={attempt.events.filter(e => e.type === 'accepted').length} max={attempt.totalStrokes} aria-label="Completed strokes" />
-    </>}
-    {loaded && (mode === 'test' || mode === 'learn') && <div className="hm-writing-stage">
-      {mode === 'learn' && outcomes.length > 0 && <p className="hm-preserved-result">Original writing test: <b>{passed ? 'Passed' : 'Failed'}</b>. Practice does not change this result.</p>}
-      {mode === 'learn' && <p className="hm-muted">Practice does not advance mastery or submit an SRS grade. Target: {context.chars[index]}</p>}
-      {engineProblem && <button disabled={suspended || checking} onClick={() => void retryEngine()}>Retry writing canvas</button>}
-      {!engineProblem && <WriterCanvas character={context.chars[index]} data={loaded.data[index]} mode={mode} active={!suspended} settings={settings} generation={version}
-        resumeStrokeNum={mode === 'test' ? attempt?.events.filter(e => e.type === 'accepted').length : 0}
-        onCorrect={d => stroke(d, 'accepted')} onMistake={d => stroke(d, 'rejected')}
-        onComplete={() => { if (attemptRef.current?.completed) finish(); }}
-        onInputCancelled={() => setInputNotice('The device interrupted this contact. Retry the current stroke; completed strokes and recorded errors are preserved.')}
-        onError={() => { setEngineProblem(true); setError('The handwriting engine stopped. Retry the canvas to continue; completed strokes and recorded errors are preserved.'); }} />}
-      {mode === 'test' && <div className="hm-test-actions"><button className="hm-danger" aria-label="I forgot a stroke — end test" onClick={() => finish('forgotten-stroke')}>Forgot a stroke</button>
-        <button aria-label="Last input was accidental" disabled={!accidentAvailable || suspended} onClick={() => update(markLastAccidental(attemptRef.current!, settings.accidentLimit))}>Accidental input</button></div>}
-      {mode === 'learn' && context.chars.length > 1 && <button onClick={() => { setIndex(i => (i+1)%context.chars.length); setVersion(v => v+1); }}>Next practice character</button>}
-    </div>}
-    {mode === 'test' && attempt && currentScore && <>
-      {inputNotice && <p role="status">{inputNotice}</p>}
-      <details><summary>Practice and scoring</summary><button onClick={guided}>End test for guided practice</button>
-        <p>Forgotten strokes or assistance fail this test. Unfinished strokes are pending. Independent corrections lower first-attempt accuracy.</p>
-        <p>Accident correction applies only to the latest rejected input within 8 seconds, before drawing again. Limit {settings.accidentLimit} per character. Original errors stay in the record.</p></details>
-    </>}
-    {resultVisible && <div className={`hm-result ${passed ? 'hm-pass' : 'hm-fail'}`} role="status">
-      <h2 ref={resultHeading}>{passed ? 'Passed this writing test' : 'Writing test failed'}</h2>
-      <p className="hm-save-status">{saveState === 'saved' ? 'Writing mastery saved and read back.' : saveState === 'saving' ? 'Saving writing mastery…' : 'Writing mastery has not been saved.'}</p>
-      {saveState === 'failed' && <button onClick={() => void save()}>Retry mastery save</button>}
-      <details className="hm-character-results" open={outcomes.length === 1}><summary>Character results ({outcomes.length})</summary>
-      {outcomes.map((o, i) => <p key={i}>{o.character}: {o.result.firstAttempts}/{o.result.totalStrokes} first attempts · {Math.round(o.result.accuracy*100)}% / {Math.round(o.result.threshold*100)}% required
-        {o.result.accidents > 0 && ` · raw ${Math.round(o.result.rawAccuracy*100)}%, ${o.result.accidents} declared accident(s)`}
-        {o.result.failure && ` · ${o.result.failure.replaceAll('-', ' ')}`}</p>)}
-      </details>
-      <p>Suggested RemNote rating: <b>{!passed ? 'Again' : outcomes.some(o => o.result.suggestedGrade === 'Hard') ? 'Hard' : 'Good'}</b></p>
-      <label>Your rating choice <select value={grade} onChange={e => setGrade(e.target.value as Grade)}>{(['Again','Hard','Good','Easy'] as Grade[]).map(g => <option key={g} value={g}>{g} — {NATIVE_GRADE_LABEL[g]}</option>)}</select></label>
-      <p className="hm-muted">Choose <b>{grade} / {NATIVE_GRADE_LABEL[grade]}</b> in RemNote’s native controls. Your choice here is a suggestion; it does not submit a rating.</p>
-      {mode === 'result' && <button onClick={guided}>Practice with hints and animation</button>}
-      {settings.geometryFeedback && diagnostics.filter(Boolean).length > 0 && <p className="hm-muted">Experimental path diagnostic: mean reference-path deviation {(diagnostics.reduce((sum,d) => sum+(d?.trajectoryError || 0),0)/diagnostics.length*100).toFixed(1)}% of canvas coordinates. This is feedback only, not a penmanship grade.</p>}
-    </div>}
-    <p className="hm-muted"><small>Mastery requires separate review days with at least {settings.minSpacingHours} hours between qualifying tests. RemNote controls scheduling.</small></p>
+  const savedText = saveState === 'saved' ? 'Writing mastery saved and read back.' :
+    saveState === 'saving' ? 'Saving writing mastery…' : 'Writing mastery has not been saved.';
+  const summaryScore = outcomes.length ? Math.min(...outcomes.map(outcome => outcome.result.accuracy)) : 0;
+  return <section className={`hm hm-review hm-mode-${mode}${fitToCard ? ' hm-review-fit' : ''}`} aria-label="Hanzi Mastery handwriting review">
+    <header className="hm-review-heading">
+      <div className="hm-review-heading-text"><h2 className="hm-review-prompt" title={context.prompt}>{context.prompt}</h2>
+        <div className="hm-review-meta"><span>{mode === 'learn' ? 'Guided practice' : LEVEL_NAMES[currentLevel]}</span>
+          <span>{Math.round(settings.thresholds[currentLevel]*100)}% to pass</span>
+          {context.chars.length > 1 && <span>Character {index+1} / {context.chars.length}</span>}</div>
+        {mode === 'learn' && outcomes.length > 0 && <div className="hm-preserved-result" role="status">
+          <strong>{passed ? 'Passed this writing test' : 'Writing test failed'}</strong>
+          <em>{saveState === 'saved' ? 'Saved' : saveState === 'saving' ? 'Saving…' : 'Not saved'}</em>
+          <span className="hm-a11y">Original writing test: {passed ? 'Passed' : 'Failed'}. Practice does not change this result.</span>
+          <small className="hm-a11y">{savedText}</small>
+        </div>}
+      </div>
+      <button className="hm-icon-button" aria-label="Review options and details" title="Review options and details" onClick={event => { event.currentTarget.focus({ preventScroll: true }); setSheet(true); }}>···</button>
+    </header>
+    <div className="hm-review-workspace">
+      {(error || suspended) && <div className="hm-review-notice" role={error ? 'alert' : 'status'}>
+        {error || 'Waiting for RemNote to confirm the current card. Writing is paused; your stroke record is preserved.'}
+        {!loaded && error && <button onClick={() => setReload(v => v+1)}>Retry loading</button>}
+      </div>}
+      {!loaded && !error && <p role="status">Loading stroke data and mastery…</p>}
+      {loaded && mode === 'ready' && <ReviewStart fit={fitToCard}><span>Write from memory</span>
+          <button className="hm-primary" disabled={revealed || suspended || checking} onClick={() => void start()}>{checking ? 'Checking current card…' : 'Begin test'}</button>
+          <small>{revealed ? 'Answer revealed — use guided practice' : 'Recall every stroke independently'}</small>
+      </ReviewStart>}
+      {mode === 'test' && attempt && currentScore && <div className="hm-score" aria-live="polite">
+        <strong>First-attempt accuracy: {Math.round(currentScore.accuracy*100)}%</strong>
+        <span>{attempt.events.filter(e => e.type === 'accepted').length} / {attempt.totalStrokes} strokes · {currentScore.mistakes} rejected attempts</span>
+      </div>}
+      {loaded && (mode === 'test' || mode === 'learn') && <div className="hm-writing-stage">
+        {engineProblem && <button disabled={suspended || checking} onClick={() => void retryEngine()}>Retry writing canvas</button>}
+        {!engineProblem && <WriterCanvas fit={fitToCard} hideControls controlsRef={practiceControls} onReadyChange={setCanvasReady}
+          character={context.chars[index]} data={loaded.data[index]} mode={mode} active={!suspended && !sheet} settings={settings} generation={version}
+          resumeStrokeNum={mode === 'test' ? attempt?.events.filter(e => e.type === 'accepted').length : 0}
+          onCorrect={d => stroke(d, 'accepted')} onMistake={d => stroke(d, 'rejected')}
+          onComplete={() => { if (attemptRef.current?.completed) finish(); }}
+          onInputCancelled={() => setInputNotice('The device interrupted this contact. Retry the current stroke; completed strokes and recorded errors are preserved.')}
+          onError={() => { setEngineProblem(true); setError('The handwriting engine stopped. Retry the canvas to continue; completed strokes and recorded errors are preserved.'); }} />}
+      </div>}
+      {mode === 'test' && inputNotice && <p className="hm-contact-notice" role="status">{inputNotice}</p>}
+      {mode === 'result' && <div className={`hm-result ${passed ? 'hm-pass' : 'hm-fail'}`} role="status">
+        <h2 ref={resultHeading}>{passed ? 'Passed this writing test' : 'Writing test failed'}</h2>
+        <div className="hm-result-metrics"><span className="hm-result-target" lang={settings.script === 'traditional' ? 'zh-Hant' : 'zh-Hans'} style={{ fontSize: context.chars.length > 6 ? 18 : undefined }}>{context.chars.join('')}</span>
+          <strong className="hm-result-score">{Math.round(summaryScore*100)}%</strong></div>
+        <p className="hm-save-status">{savedText}</p>
+        {saveState === 'failed' && <button onClick={() => void save()}>Retry mastery save</button>}
+        <p>Suggested RemNote rating: <b>{grade}</b></p>
+        <p className="hm-muted">Choose {NATIVE_GRADE_LABEL[grade]} in RemNote.</p>
+      </div>}
+    </div>
+    <footer className="hm-review-controls">
+      {loaded && mode === 'ready' && <button onClick={guided}>Guided practice only</button>}
+      {mode === 'test' && <><button className="hm-danger" aria-label="I forgot a stroke — end test" onClick={() => finish('forgotten-stroke')}>Forgot a stroke</button>
+        <button aria-label="Last input was accidental" disabled={!accidentAvailable || suspended} onClick={() => update(markLastAccidental(attemptRef.current!, settings.accidentLimit))}>Accidental input</button></>}
+      {mode === 'learn' && <>
+        <button aria-label="Animate strokes" disabled={!canvasReady || suspended} onClick={() => practiceControls.current?.animate()}>▶ <span>Animate</span></button>
+        <button aria-label="Practice again" disabled={!canvasReady} onClick={() => practiceControls.current?.restart()}>↻ <span>Again</span></button>
+        <button aria-label="Show character" disabled={!canvasReady || suspended} onClick={() => practiceControls.current?.show()}>◉ <span>Show</span></button>
+        {context.chars.length > 1 && <button aria-label="Next practice character" onClick={() => { setIndex(i => (i+1)%context.chars.length); setVersion(v => v+1); }}>→</button>}
+      </>}
+      {mode === 'result' && <button className="hm-primary" onClick={guided}>Practice with hints and animation</button>}
+    </footer>
+    {sheet && <ReviewSheet title="Review details" onClose={closeSheet}>
+      <h3>{context.prompt}</h3>
+      <p>{settings.script === 'traditional' ? 'Traditional' : 'Simplified'} · {LEVEL_NAMES[currentLevel]} · {Math.round(settings.thresholds[currentLevel]*100)}% required</p>
+      {resultVisible && <>
+        <h3>Character results ({outcomes.length})</h3>
+        {outcomes.map((o, i) => <p key={i}>{o.character}: {o.result.firstAttempts}/{o.result.totalStrokes} first attempts · {Math.round(o.result.accuracy*100)}% / {Math.round(o.result.threshold*100)}% required
+          {o.result.accidents > 0 && ` · raw ${Math.round(o.result.rawAccuracy*100)}%, ${o.result.accidents} declared accident(s)`}
+          {o.result.failure && ` · ${o.result.failure.replaceAll('-', ' ')}`}</p>)}
+        <label>Your rating choice <select value={grade} onChange={e => setGrade(e.target.value as Grade)}>{(['Again','Hard','Good','Easy'] as Grade[]).map(g => <option key={g} value={g}>{g} — {NATIVE_GRADE_LABEL[g]}</option>)}</select></label>
+        <p>Your choice is advisory. Use RemNote's native controls to submit a rating.</p>
+      </>}
+      {mode === 'test' && <button onClick={() => { closeSheet(); guided(); }}>End test for guided practice</button>}
+      <h3>Recall and scoring</h3>
+      <p>Recall every stroke independently. Corrections lower first-attempt accuracy. A forgotten stroke, assistance or answer reveal fails the test.</p>
+      <p>Accident correction applies only to the latest rejected input within 8 seconds, before drawing again. Limit {settings.accidentLimit} per character. Original errors stay in the record.</p>
+      <h3>Stroke standards</h3>
+      <p>Hanzi Writer sequences can differ from Taiwan MOE. First-attempt accuracy measures recognizer acceptance, not penmanship precision.</p>
+      <p>Mastery requires separate review days at least {settings.minSpacingHours} hours apart. Guided practice preserves the original result. RemNote controls scheduling.</p>
+      {settings.geometryFeedback && diagnostics.filter(Boolean).length > 0 && <p>Experimental path diagnostic: mean reference-path deviation {(diagnostics.reduce((sum,d) => sum+(d?.trajectoryError || 0),0)/diagnostics.length*100).toFixed(1)}%. Feedback only; not a penmanship grade.</p>}
+    </ReviewSheet>}
   </section>;
 }

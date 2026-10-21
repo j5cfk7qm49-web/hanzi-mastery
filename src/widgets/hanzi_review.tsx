@@ -60,7 +60,7 @@ function BoundExercise({ context, settings, repository, isCurrent, assetRoot, su
   suspended?: boolean;
 }) {
   const stable = useRef(context);
-  return <ReviewExercise context={stable.current} settings={settings} repository={repository} revealed={context.revealed}
+  return <ReviewExercise fitToCard context={stable.current} settings={settings} repository={repository} revealed={context.revealed}
     isCurrent={isCurrent} assetRoot={assetRoot} suspended={suspended} />;
 }
 renderWidget(() => <WidgetBoundary><HanziReview /></WidgetBoundary>);

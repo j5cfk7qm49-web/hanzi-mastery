@@ -103,6 +103,7 @@ test('declared accidental contact retains the original rejected stroke and raw s
   await expect(page.getByText('0 / 16 strokes · 1 rejected attempts')).toBeVisible();
   await page.getByRole('button',{name:'Last input was accidental'}).click();await draw(page,'學');
   await expect(page.getByText('Writing mastery saved and read back.')).toBeVisible();
+  await page.getByRole('button',{name:'Review options and details'}).click();
   await expect(page.getByText(/raw 94%, 1 declared accident/)).toBeVisible();
   const record=await page.evaluate(()=>JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>k.startsWith('hm:v2:writing:'))!)!).history[0]);
   expect(record.attempt.events[0]).toMatchObject({type:'rejected',accidental:true});
