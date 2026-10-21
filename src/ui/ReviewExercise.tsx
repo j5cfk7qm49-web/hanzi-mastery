@@ -194,7 +194,6 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
       </div>}
       {!loaded && !error && <p role="status">Loading stroke data and mastery…</p>}
       {loaded && mode === 'ready' && <ReviewStart fit={fitToCard}><span>Write from memory</span>
-          <button className="hm-primary" disabled={revealed || suspended || checking} onClick={() => void start()}>{checking ? 'Checking current card…' : 'Begin test'}</button>
           <small>{revealed ? 'Answer revealed — use guided practice' : 'Recall every stroke independently'}</small>
       </ReviewStart>}
       {mode === 'test' && attempt && currentScore && <div className="hm-score" aria-live="polite">
@@ -223,7 +222,8 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
       </div>}
     </div>
     <footer className="hm-review-controls">
-      {loaded && mode === 'ready' && <button onClick={guided}>Guided practice only</button>}
+      {loaded && mode === 'ready' && <><button className="hm-primary" disabled={revealed || suspended || checking} onClick={() => void start()}>{checking ? 'Checking current card…' : 'Begin test'}</button>
+        <button onClick={guided}>Guided practice only</button></>}
       {mode === 'test' && <><button className="hm-danger" aria-label="I forgot a stroke — end test" onClick={() => finish('forgotten-stroke')}>Forgot a stroke</button>
         <button aria-label="Last input was accidental" disabled={!accidentAvailable || suspended} onClick={() => update(markLastAccidental(attemptRef.current!, settings.accidentLimit))}>Accidental input</button></>}
       {mode === 'learn' && <>

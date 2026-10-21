@@ -14,6 +14,8 @@ The user subsequently confirmed that uninstalling and reinstalling restored the 
 
 Version **0.3.4 is available through Check for Updates**, verified October 21, 2026. RemNote displayed a fresh upload success notice, the public page shows 0.3.4, and the isolated Guest web installation updated to its versioned hosted bundle. At a 393×852 browser viewport, the existing writing card fitted its prompt, 359×359 canvas and controls without scrolling. Details, saved failure, guided practice and native answer/rating controls were also verified. No native SRS rating was submitted. This verifies phone-sized web geometry; the new layout still needs physical iPhone acceptance. The matching [GitHub release](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.3.4) contains the exact uploaded ZIP and source from commit 7fc2d4b.
 
+Version **0.3.5** fixes the confirmed Beautiful Queue clipping while preserving Compact mode. It shows only Hanzi Mastery in the writing-card content area and reserves native answer/rating space in both modes. Distribution verification is pending in this source snapshot.
+
 ## Version labels
 
 Version **0.3.3 was uploaded on October 20, 2026 and is available through Check for Updates**. RemNote displayed a new success notice after this upload; the public page showed 0.3.3, and the isolated web installation updated from 0.3.2 to the hosted 0.3.3 index bundle. This followed the user's report that 0.3.2 still left a blank iPhone review. An exact-release WebKit comparison reproduced a startup crash when `crypto.randomUUID` was unavailable, before any card read. The patch replaces those calls with identifiers generated from `crypto.getRandomValues` and shows a diagnostic for caught render/effect startup failures. Physical RemNote iPhone acceptance remains required; the device's actual API state has not been inspected. See [startup verification](TESTING.md) and the [0.3.3 release](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.3.3).
@@ -22,7 +24,7 @@ The source, GitHub releases and RemNote registrations are separate records:
 
 | Record | Version | Meaning |
 | --- | --- | --- |
-| Current source and upload ZIP | 0.3.4 | Fitted writing review; distribution status recorded above. |
+| Current source and upload ZIP | 0.3.5 | Compact and Beautiful Queue compatibility; distribution status recorded above. |
 | Latest verified hosted update | 0.3.4 | Public page, isolated update and fitted web review confirmed; new physical iPhone layout acceptance remains required. |
 | GitHub pre-release | See release tag | Downloadable package with matching source/checksums. Publishing it does not update RemNote. |
 | Existing RemNote development registration | 0.2.0 | The desktop Build tab still points this entry at `http://localhost:8080/`. Its stored version label has not followed subsequent builds. |

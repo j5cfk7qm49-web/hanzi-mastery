@@ -1,5 +1,12 @@
 # Verification report
 
+## 0.3.5 Compact and Beautiful Queue
+
+After the user reported a clipped 0.3.4 iPhone review, the same hosted bundle was opened in an isolated Guest KB with beta Beautiful Queue enabled. At a 393×852 browser viewport the actual writing iframe was 295×150. The native prompt remained visible, and the centered start controls were clipped. DOM inspection showed extra beautiful-queue-insight-scroll-layout, beautiful-queue-card-scroll-stage and beautiful-queue-card-content wrappers that the earlier direct-child sizing skipped. The native bottom controls are absolutely overlaid inside this mode's card. The user independently identified Beautiful Queue as the trigger and requested both modes with only the plugin UI in writing cards.
+
+A fixture using the observed nesting/overlay reproduces the clipping: the new WebKit regression fails on 0.3.4 before the fix. Version 0.3.5 sizes the complete content branch, hides its non-writing content, and reserves the actual native control height. The primary controls are checked for overlap as well as frame bounds. Both modes cover seven viewport/pane sizes, ready/test/result/practice/native reveal, unrelated-plugin isolation, rotation/details with recorded strokes and enlarged text. A separate 150px bootstrap-frame case keeps both start choices reachable. TypeScript, all **86 unit/component/adapter/import tests**, all **66 Chromium/WebKit browser checks**, SDK manifest validation, production build and ZIP/data integrity pass locally. The package contains 405 entries, 353 local character-data groups and 9,574 exact character records. Hosted distribution and physical iPhone acceptance are pending in this source snapshot.
+
+
 ## 0.3.4 fitted handwriting review
 
 The user confirmed that uninstalling and reinstalling restored the plugin on iPhone and supplied a screenshot of a working but heavily scrolled review. The redesign scopes host CSS to the writing iframe in the observed RemNote queue DOM, removes the duplicated native prompt/padding, and measures the largest square inside the remaining iframe area. Native answer/rating controls remain outside the changed content area.

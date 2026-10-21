@@ -41,18 +41,19 @@ const sizes = [
   { name: 'ipad', width: 768, height: 1024 },
   { name: 'narrow-split-view', width: 1024, height: 768, frameWidth: 320 },
 ];
-for (const size of sizes) test(`fitted review: ${size.name} needs no scrolling in ready, test, result or practice`, async ({ page }) => {
+for (const beautiful of [false, true]) for (const size of sizes) test(`fitted ${beautiful ? 'beautiful' : 'compact'} review: ${size.name} needs no scrolling in ready, test, result or practice`, async ({ page }) => {
   await page.setViewportSize({ width: size.width, height: size.height });
   await page.emulateMedia({ colorScheme: size.dark ? 'dark' : 'light' });
-  await page.goto(`/?host=mobile&long=1${size.frameWidth ? `&width=${size.frameWidth}` : ''}`);
+  await page.goto(`/?host=mobile&long=1${beautiful ? '&beautiful=1' : ''}${size.frameWidth ? `&width=${size.frameWidth}` : ''}`);
   const review = page.frameLocator('iframe');
   await expect(review.getByRole('button', { name: 'Begin test', exact: true })).toBeVisible();
   await expectFits(page, review);
   await expect(page.getByText('Write the word from its English prompt.')).toBeHidden();
+  await expect(page.getByText('Statistics', {exact:true})).toBeHidden();
   await review.getByRole('button', { name: 'Begin test', exact: true }).click();
   await expectLargestSquare(review); await expectFits(page, review);
   if (size.name === 'iphone-screenshot') expect((await review.getByRole('application').boundingBox())!.width).toBeGreaterThan(340);
-  await page.screenshot({ path: `test-results/${test.info().project.name}-${size.name}-writing.png` });
+  await page.screenshot({ path: `test-results/${test.info().project.name}-${beautiful ? 'beautiful' : 'compact'}-${size.name}-writing.png` });
   await review.getByRole('button', { name: 'I forgot a stroke — end test' }).click();
   await expect(review.getByText('Writing mastery saved and read back.')).toBeVisible();
   await expectFits(page, review);
@@ -63,18 +64,30 @@ for (const size of sizes) test(`fitted review: ${size.name} needs no scrolling i
   await page.getByRole('button', { name: 'Native Show Answer (simulated)' }).click();
   for (const label of ['Forgot', 'Hard', 'Good', 'Easy']) await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
   await expectFits(page, review);
+  const pluginControls = (await review.locator('.hm-review-controls').boundingBox())!;
+  const nativeControls = (await page.getByRole('contentinfo', { name:'Simulated native RemNote controls' }).boundingBox())!;
+  expect(pluginControls.y + pluginControls.height).toBeLessThanOrEqual(nativeControls.y + 1);
 });
 
-test('fitted host CSS leaves other plugins and native cards unchanged', async ({ page }) => {
+for (const beautiful of [false, true]) test(`fitted ${beautiful ? 'beautiful' : 'compact'} host CSS leaves other plugins and native cards unchanged`, async ({ page }) => {
   await page.setViewportSize({ width: 393, height: 852 });
-  await page.goto('/?host=mobile&unrelated=1');
+  await page.goto(`/?host=mobile&unrelated=1${beautiful ? '&beautiful=1' : ''}`);
   await expect(page.getByText('Write the word from its English prompt.')).toBeVisible();
+  await expect(page.getByText('Statistics', {exact:true})).toBeVisible();
   expect(await page.getByRole('main').evaluate(el => getComputedStyle(el).overflowY)).toBe('auto');
   await expect(page.getByRole('button', { name: 'Native Show Answer (simulated)' })).toBeVisible();
 });
 
-test('fitted canvas retains strokes through rotation and opening details', async ({ page }) => {
-  await page.setViewportSize({ width: 393, height: 852 }); await page.goto('/?host=mobile');
+test('start and practice remain reachable in a 150px bootstrap frame', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 }); await page.goto('/?host=mobile&unfitted=1');
+  const review = page.frameLocator('iframe');
+  await expect(review.getByRole('button', { name:'Begin test',exact:true })).toBeVisible();
+  await expect(review.getByRole('button', { name:'Guided practice only' })).toBeVisible();
+  await expectFits(page, review);
+});
+
+for (const beautiful of [false, true]) test(`fitted ${beautiful ? 'beautiful' : 'compact'} canvas retains strokes through rotation and opening details`, async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 }); await page.goto(`/?host=mobile${beautiful ? '&beautiful=1' : ''}`);
   const review = page.frameLocator('iframe'); await review.getByRole('button', { name: 'Begin test', exact: true }).click();
   await expectLargestSquare(review);
   const canvas = review.getByRole('application');
@@ -99,8 +112,8 @@ test('fitted canvas retains strokes through rotation and opening details', async
   await page.setViewportSize({ width: 393, height: 852 }); await expectLargestSquare(review); await expectFits(page, review);
 });
 
-test('fitted review reflows larger text without scrolling or losing its controls', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 667 }); await page.goto('/?host=mobile&long=1');
+for (const beautiful of [false, true]) test(`fitted ${beautiful ? 'beautiful' : 'compact'} review reflows larger text without scrolling or losing its controls`, async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 }); await page.goto(`/?host=mobile&long=1${beautiful ? '&beautiful=1' : ''}`);
   const review = page.frameLocator('iframe'); await review.getByRole('button', { name: 'Begin test', exact: true }).click();
   await review.locator('.hm-review').evaluate(el => {
     for (const item of el.querySelectorAll<HTMLElement>('h2,button,.hm-review-meta,.hm-score')) item.style.fontSize = '20px';

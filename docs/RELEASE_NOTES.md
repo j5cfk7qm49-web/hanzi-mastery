@@ -1,4 +1,12 @@
-# Hanzi Mastery 0.3.4 pre-release
+# Hanzi Mastery 0.3.5 pre-release
+
+Support both Compact and beta Beautiful Queue, presenting only the Hanzi Mastery interface inside writing cards. The user's 0.3.4 clipping was reproduced in the actual hosted Beautiful Queue: its extra insight/stage/content wrappers were not sized, so the iframe resolved to the browser's 150px default. Native answer controls also overlay that mode's card. Size every wrapper along the writing iframe's content branch, suppress duplicate native prompt/context/statistics/insight content only in these writing cards, and put the existing Beautiful Queue answer controls in normal flow so their actual height is reserved. Compact mode keeps its native controls.
+
+Move Begin test to the bottom control row so it remains reachable even in a short initial frame. Keep the maximum fitted square, recorded-stroke recovery, saved outcomes, grading and native scheduling. Expanded browser fixtures use the observed Beautiful Queue nesting and overlay structure as well as Compact mode. The new regression fails on the previous code. Physical iPhone acceptance of 0.3.5 remains required.
+
+Validation: TypeScript, 86 unit/component tests, 66 Chromium/WebKit browser checks, SDK manifest validation and ZIP/data integrity pass.
+
+## Previous 0.3.4 fitted review
 
 Fit handwriting review to the available RemNote card area. Remove the duplicated native question and padding only in cards containing this plugin's writing iframe. Keep the native answer/rating controls. Use one compact prompt/status bar, the largest square allowed by both width and height, and a 44px control row. Landscape uses a side-by-side layout. Ready, test, result and guided practice fit without scrolling in the covered viewport sizes; detailed scoring and advisory rating choices open in an optional sheet.
 

@@ -1,8 +1,8 @@
-# Hanzi Mastery 0.3.4 — RemNote Chinese study plugin
+# Hanzi Mastery 0.3.5 — RemNote Chinese study plugin
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
-The user confirmed that handwriting now loads on iPhone after uninstalling and reinstalling the plugin. Version 0.3.4 redesigns the writing review around the largest square that fits the available card area: one prompt, compact controls, and optional scoring details in a separate sheet. Ready, test, result and practice views are designed to fit without scrolling. RemNote's native answer/rating controls remain available. See [layout and device-test limits](docs/IOS_LAYOUT.md) and [verification](docs/TESTING.md). The new layout still needs physical iPhone acceptance; Pencil behavior, complete Taiwan MOE compliance and full offline operation remain unverified.
+Version 0.3.5 supports both RemNote's Compact and beta Beautiful Queue layouts. Writing cards show just the Hanzi Mastery interface in the card content area, with the largest square that fits and native answer/rating controls below it. Detailed scoring opens separately. The user's clipped 0.3.4 screenshot was reproduced in Beautiful Queue: additional unsized wrappers left the iframe only 150px tall, and native controls overlay the card. The new layout sizes the full wrapper chain and reserves the native controls' actual height. See [layout and device-test limits](docs/IOS_LAYOUT.md) and [verification](docs/TESTING.md). Physical iPhone acceptance of this fix, Pencil behavior and full offline operation remain unverified.
 
 ## Get started
 
@@ -23,7 +23,7 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. The loopback server is for this computer; use the hosted installation for phone review.
 
-The compiled upload archive is **`release/HanziMastery-0.3.4-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. GitHub source/releases and RemNote registrations update separately; see [installation and version labels](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.3.5-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. GitHub source/releases and RemNote registrations update separately; see [installation and version labels](docs/INSTALLATION.md).
 
 ## What works
 
