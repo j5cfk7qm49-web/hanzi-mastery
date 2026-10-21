@@ -5,6 +5,7 @@ import { SETTINGS_KEY } from '../core/schema';
 import { MasteryRepository } from '../services/persistence';
 import { readReviewContext, stillCurrent, subscribeReview, type ReviewContext } from '../services/remnote';
 import { ReviewExercise } from '../ui/ReviewExercise';
+import { WidgetBoundary } from '../ui/WidgetBoundary';
 import '../ui/styles.css';
 export function HanziReview() {
   const plugin = usePlugin();
@@ -62,4 +63,4 @@ function BoundExercise({ context, settings, repository, isCurrent, assetRoot, su
   return <ReviewExercise context={stable.current} settings={settings} repository={repository} revealed={context.revealed}
     isCurrent={isCurrent} assetRoot={assetRoot} suspended={suspended} />;
 }
-renderWidget(HanziReview);
+renderWidget(() => <WidgetBoundary><HanziReview /></WidgetBoundary>);

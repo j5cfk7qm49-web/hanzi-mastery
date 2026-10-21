@@ -1,8 +1,8 @@
-# Hanzi Mastery 0.3.2 — RemNote Chinese study plugin
+# Hanzi Mastery 0.3.3 — RemNote Chinese study plugin
 
 Traditional-first Chinese writing reviews with progressive mastery. **RemNote owns scheduling. Independent recall of every stroke is mandatory.** Practice and testing are separate.
 
-Writing, failure, saved-result and guided-practice flows have been exercised in **RemNote Desktop**. Approved hosted 0.3.1 also loads the workbench and handwriting canvas in a clean RemNote web session. Version 0.3.2 fixes review binding when a host omits the SDK's optional widget card ID, a condition that previously hid the widget. Physical iPhone confirmation of this fix is still required. Version 0.3 adds separately scheduled pinyin, tone and listening exercises and an interim spoken-comparison tool; see [verification](docs/TESTING.md) for the remaining live-host boundaries. This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance and full offline operation remain unverified.
+Writing, failure, saved-result and guided-practice flows have been exercised in **RemNote Desktop**, and hosted web installation/update and the actual writing canvas are verified through 0.3.2. The user still reported a completely blank review on iPhone after 0.3.2. Version 0.3.3 fixes a reproduced startup crash: the compiled plugin called secure-context-only `crypto.randomUUID()` before reading the card, which unmounted the entire view when that API was unavailable. Identifiers now use `crypto.getRandomValues()`; widget render/effect crashes show an error instead of a blank view. The real SDK and compiled bundles are exercised in a browser origin without `randomUUID`; physical RemNote iOS confirmation remains required. See [verification](docs/TESTING.md). This is a pre-release: real RemNote iOS/Pencil, complete Taiwan MOE compliance and full offline operation remain unverified.
 
 ## Get started
 
@@ -23,7 +23,7 @@ npm run dev
 
 In RemNote: **Settings → Plugins → Build → Develop from localhost → http://localhost:8080/**. Keep the server running for developer loading. The loopback server is for this computer; use the hosted installation for phone review.
 
-The compiled upload archive is **`release/HanziMastery-0.3.2-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. GitHub source/releases and RemNote registrations update separately; see [installation and version labels](docs/INSTALLATION.md).
+The compiled upload archive is **`release/HanziMastery-0.3.3-plugin.zip`**. The upload package has manifest/widget bundles at its root, local stroke data, licenses and documentation. GitHub source/releases and RemNote registrations update separately; see [installation and version labels](docs/INSTALLATION.md).
 
 ## What works
 

@@ -1,5 +1,17 @@
 # Verification report — 2026-10-17
 
+## 2026-10-20 compiled widget startup
+
+The user confirmed that 0.3.2 still left the iPhone card completely blank, with no waiting message. The actual compiled 0.3.2 writing widget was then loaded with SDK 0.0.46 in WebKit at a non-trustworthy HTTP test origin. The browser reported `isSecureContext: false`, `typeof crypto.randomUUID: "undefined"` and `typeof crypto.getRandomValues: "function"`. The SDK activated, but `subscribeReview` threw `TypeError: crypto.randomUUID is not a function` before the first settings/card read, and React unmounted the widget. The captured body text was empty. This reproduces the screenshot's blank-view failure in the real bundle rather than an adapter mock.
+
+Version 0.3.3 uses cryptographically random UUIDs built from `getRandomValues` for listeners and both writing/study result IDs. It adds a React error boundary around review/workbench views. New browser tests exercise the production HTML, compiled bundles, actual SDK activation and message transport with HTTPS plugin files inside a non-trustworthy HTTP parent. The browser itself withholds `randomUUID`; it is not stubbed. Only the RemNote host's RPC responses are simulated. All six new checks pass across Chromium and WebKit, covering index registration, opening the real handwriting canvas, saving/read-back of a forgotten-stroke failure, and saving/read-back of a first pinyin answer. `npm run test:browser` now builds production bundles before the test fixtures, preventing stale startup tests. TypeScript and all 86 unit/component/adapter/import tests pass, including render/effect error-boundary coverage.
+
+A separate comparison loaded the exact published 0.3.2 ZIP and the 0.3.3 build in that same HTTPS-child/non-secure-parent WebKit fixture. Version 0.3.2 produced the randomUUID exception, empty body text and zero card reads; 0.3.3 opened the actual canvas without page errors. Local JSON and screenshots of both cases are retained in the ignored audit directory.
+
+The iPhone's actual secure-context/API state has not been inspected; this is a reproduced crash consistent with the report, not proof that this is the phone's only failure. Physical RemNote iOS acceptance still remains necessary. API availability is documented by [Mozilla for randomUUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) and [getRandomValues](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues).
+
+The complete local validation passed after the fix: **86 unit/component/adapter/import tests in 12 files and all 42 Chromium/WebKit browser checks**, including the six production-bundle startup checks. TypeScript, the production build, official SDK validator and ZIP/data integrity checks passed. The package still contains 405 entries, 353 data groups and 9,574 exact character records. Physical iPhone confirmation is separate from these results.
+
 ## 2026-10-20 optional review identity
 
 Version 0.3.2 passes TypeScript, **83 unit/component/adapter/import tests**, all **36 Chromium/WebKit browser checks**, the production build, SDK manifest validation and ZIP/data integrity checks. SDK 0.0.46's `WidgetLocationContextDataMap[FlashcardUnder]` declares `cardId?: string`; adapters previously rejected the omitted case. New regressions cover successful binding without that field and rejection of a different Rem, reverse card and lookback. A supplied conflicting card ID remains rejected. Save and lifecycle guards still use the actual current card's ID and repetition-history timestamp.

@@ -1,7 +1,7 @@
 {
   "name": "hanzi-mastery-remnote",
   "private": true,
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Traditional-first handwriting, pinyin, tone and listening reviews for RemNote",
   "license": "MIT",
   "engines": {
@@ -37,7 +37,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "vitest run",
-    "test:browser": "npm run build:preview && playwright test",
+    "test:browser": "npm run build && npm run build:preview && playwright test",
     "check": "npm run check-types && npm test",
     "build": "remnote-plugin validate && webpack --mode production && node scripts/package.mjs",
     "dev": "npm run build && node scripts/serve.mjs",

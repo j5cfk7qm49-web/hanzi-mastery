@@ -12,11 +12,13 @@ Version **0.3.2 was uploaded on October 20, 2026 and is available through RemNot
 
 ## Version labels
 
+Version **0.3.3 is being prepared** after the user reported that 0.3.2 still left a blank iPhone review. An actual compiled-bundle WebKit test reproduced a startup crash when `crypto.randomUUID` was unavailable, before any card read. The patch replaces those calls with identifiers generated from `crypto.getRandomValues` and shows a diagnostic for caught render/effect startup failures. Distribution and native iPhone acceptance still require confirmation. See [startup verification](TESTING.md).
+
 The source, GitHub releases and RemNote registrations are separate records:
 
 | Record | Version | Meaning |
 | --- | --- | --- |
-| Current source and upload ZIP | 0.3.2 | Review-identity compatibility patch, with distribution outcome recorded above. |
+| Current source and upload ZIP | 0.3.3 | Compiled-widget startup crash fix; distribution status recorded above. |
 | Latest available hosted update | 0.3.2 | Public page and isolated web update confirmed; physical iPhone review still requires confirmation. |
 | GitHub pre-release | See release tag | Downloadable package with matching source/checksums. Publishing it does not update RemNote. |
 | Existing RemNote development registration | 0.2.0 | The desktop Build tab still points this entry at `http://localhost:8080/`. Its stored version label has not followed subsequent builds. |

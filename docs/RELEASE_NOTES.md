@@ -1,4 +1,10 @@
-# Hanzi Mastery 0.3.2 pre-release
+# Hanzi Mastery 0.3.3 pre-release
+
+Fix a startup crash reproduced with the exact published 0.3.2 ZIP. In WebKit, the compiled widget and real SDK activate, but an unavailable `crypto.randomUUID()` throws before the first card read and React clears the view. The comparison also reproduces this with HTTPS plugin files under a non-trustworthy parent. The same test opens the writing canvas with 0.3.3. Native iPhone API state has not been inspected; this is a confirmed crash matching the reported symptom, with physical device acceptance still outstanding.
+
+Generate listener and writing/study-result UUIDs from `crypto.getRandomValues()`, which does not require a secure context. Preserve cryptographic randomness and existing result-ID formatting. Add a boundary that shows HM-START for caught render/effect startup failures. New tests use production HTML/bundles and the actual SDK message transport, with simulated RemNote host responses, to cover index registration, handwriting canvas and result persistence, and first-answer pinyin persistence. Earlier browser fixtures mocked the plugin context and did not exercise this startup path.
+
+## Previous 0.3.2 review identity fix
 
 Fix a review-binding bug consistent with a blank mobile writing card. The pinned SDK declares the widget's `cardId` optional, but the writing and study adapters previously rejected every widget that omitted it. Bind to the required matching Rem and the current forward card when that optional ID is absent; still reject a conflicting supplied card ID, another Rem, reverse reviews and lookback. Result saving and stale-review checks remain bound to the actual queue card ID and review time.
 

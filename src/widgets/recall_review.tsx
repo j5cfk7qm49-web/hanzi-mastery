@@ -3,6 +3,7 @@ import { renderWidget, usePlugin } from '@remnote/plugin-sdk';
 import { readRecallContext, SkillRepository, type RecallContext } from '../services/recall';
 import { stillCurrent, subscribeReview } from '../services/remnote';
 import { RecallExercise } from '../ui/RecallExercise';
+import { WidgetBoundary } from '../ui/WidgetBoundary';
 import '../ui/styles.css';
 
 export function RecallReview() {
@@ -41,4 +42,4 @@ export function RecallReview() {
   return <RecallExercise key={context.key} context={context} repository={repository} revealed={context.revealed} suspended={!!error}
     isCurrent={allow => stillCurrent(plugin, context.cardId, allow, context.reviewAt)} />;
 }
-renderWidget(RecallReview);
+renderWidget(() => <WidgetBoundary><RecallReview /></WidgetBoundary>);

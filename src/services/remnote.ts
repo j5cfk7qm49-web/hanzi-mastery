@@ -2,6 +2,7 @@ import { AppEvents, WidgetLocation, type RNPlugin } from '@remnote/plugin-sdk';
 import { WRITING_POWERUP, SCHEMA_SLOT, parseWritingSchema, selectScript, characters, type WritingSchema } from '../core/schema';
 import type { Settings } from '../core/config';
 import type { ExerciseContext } from '../ui/ReviewExercise';
+import { createId } from '../core/ids';
 export interface ReviewContext extends ExerciseContext { key: string; revealed: boolean; reviewAt: number }
 export async function readReviewContext(plugin: RNPlugin, settings: Settings): Promise<ReviewContext | null> {
   let phase = 'widget context';
@@ -38,7 +39,7 @@ export async function stillCurrent(plugin: RNPlugin, cardId: string, allowReveal
     card.type === 'forward' && !await plugin.queue.inLookbackMode() && (allowRevealed || !await plugin.queue.hasRevealedAnswer());
 }
 export function subscribeReview(plugin: RNPlugin, refresh: () => void, reveal: (cardId?: string) => void): () => void {
-  const key = `hm-${crypto.randomUUID()}`;
+  const key = `hm-${createId()}`;
   const queue = [AppEvents.QueueLoadCard, AppEvents.QueueExit, AppEvents.QueueCompleteCard] as const;
   for (const event of queue) plugin.event.addListener(event, key, refresh);
   plugin.event.addListener(AppEvents.RevealAnswer, key, args => reveal(args?.cardId));

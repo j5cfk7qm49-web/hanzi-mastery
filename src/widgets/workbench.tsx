@@ -7,6 +7,7 @@ import { loadCharacter } from '../services/characters';
 import type { CharacterJson } from 'hanzi-writer';
 import { WriterCanvas } from '../ui/WriterCanvas';
 import { StudySkills } from '../ui/StudySkills';
+import { WidgetBoundary } from '../ui/WidgetBoundary';
 import '../ui/styles.css';
 export function Workbench() {
   const plugin = usePlugin();
@@ -132,4 +133,4 @@ export function Workbench() {
       })}>Save settings</button></details>
   </section>;
 }
-renderWidget(Workbench);
+renderWidget(() => <WidgetBoundary><Workbench /></WidgetBoundary>);

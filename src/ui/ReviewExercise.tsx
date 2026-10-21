@@ -8,6 +8,7 @@ import { MasteryRepository } from '../services/persistence';
 import { loadCharacter } from '../services/characters';
 import { WriterCanvas } from './WriterCanvas';
 import { useRevealInHost } from './useRevealInHost';
+import { createId } from '../core/ids';
 const NATIVE_GRADE_LABEL: Record<Grade, string> = { Again:'Forgot', Hard:'Partially recalled', Good:'Recalled with effort', Easy:'Easily recalled' };
 export interface ExerciseContext { cardId: string; vocabularyId: string; chars: string[]; prompt: string }
 export interface ExerciseProps {
@@ -37,7 +38,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   const [checking, setChecking] = useState(false);
   const [, tickAccidentDeadline] = useState(0);
   const active = useRef(false), live = useRef(true), saving = useRef(false);
-  const id = useRef(crypto.randomUUID()), completedAt = useRef(0);
+  const id = useRef(createId()), completedAt = useRef(0);
   const checkCurrent = useRef(isCurrent); checkCurrent.current = isCurrent;
   const revealedRef = useRef(revealed); revealedRef.current = revealed;
   const startGuard = useRef(false);
@@ -88,7 +89,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
         setError('Testing is unavailable after answer reveal, during lookback, or after changing cards. Use guided practice.'); return;
       }
       setIndex(0); outcomesRef.current = []; setOutcomes([]); setDiagnostics([]); setInputNotice('');
-      setEngineProblem(false); setSaveState('idle'); id.current = crypto.randomUUID();
+      setEngineProblem(false); setSaveState('idle'); id.current = createId();
       update(newAttempt(loaded.data[0].strokes.length)); active.current = true;
       setMode('test'); setError(''); setVersion(v => v+1);
     } catch { if (live.current && token === controlVersion.current) setError('The current review could not be verified. Testing is blocked.'); }

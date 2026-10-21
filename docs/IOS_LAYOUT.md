@@ -17,6 +17,8 @@ The 44 CSS pixel target is a web design choice informed by Apple's 44-point touc
 
 ## Automated layout coverage
 
+Startup is separate from layout. After the user's blank 0.3.2 iPhone report, the exact published bundle reproduced a blank view in WebKit when `crypto.randomUUID` was unavailable. A secure HTTPS iframe can still lack this API under a non-trustworthy ancestor. Version 0.3.3 uses `getRandomValues` for IDs and adds a visible fallback for caught render/effect startup failures. Production-bundle/SDK tests now cover this condition; earlier phone-size layout fixtures did not. See [startup evidence and device limits](TESTING.md).
+
 `npm run test:browser` includes a test-only parent queue pane with an auto-sized iframe and separate simulated native controls. It is a geometry/scrolling model, not a copy of RemNote's iOS interface. Height synchronization settles before geometry assertions, preventing a short stale iframe from making clipped content appear to pass. The fixture and its controls are excluded from the upload ZIP.
 
 | Scenario | CSS viewport / pane | Checks |

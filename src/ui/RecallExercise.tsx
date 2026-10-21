@@ -3,6 +3,7 @@ import { checkRecall, parsePinyin, RECALL_NAMES, type RecallResult, type RecallS
 import { SkillRepository, type SkillHistory, type SkillRecord } from '../services/recall';
 import { ReferenceAudio } from './ReferenceAudio';
 import { PronunciationRecorder } from './PronunciationRecorder';
+import { createId } from '../core/ids';
 
 export interface RecallExerciseProps {
   context: { cardId: string; schema: RecallSchema }; repository: SkillRepository;
@@ -29,7 +30,7 @@ export function RecallExercise({ context, repository, revealed, suspended, isCur
   const finish = (value: RecallResult) => {
     if (!active.current || done.current) return;
     active.current = false; done.current = true; operation.current++;
-    record.current = { id: crypto.randomUUID(), at: Date.now(), cardId: context.cardId, result: value };
+    record.current = { id: createId(), at: Date.now(), cardId: context.cardId, result: value };
     setResult(value); setMode('result'); setChecking(false);
   };
   const fail = (failure: 'answer-revealed'|'forgotten') => finish({ passed: false, accuracy: 0,
