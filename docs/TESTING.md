@@ -2,7 +2,9 @@
 
 ## Final 0.4.0 release checks
 
-TypeScript and all **136 unit/component tests across 18 files** pass. Final browser results and release checksums are recorded in the release test report. The final input controls use standalone diacritics, no neutral-mark toolbar button, and a four-quadrant tone square with a central neutral choice. Umlaut entry changes an entered u to ü and retains an existing tone.
+TypeScript and all **136 unit/component tests across 18 files** pass. The clean [GitHub Actions run for release commit 5d2bd90](https://github.com/j5cfk7qm49-web/hanzi-mastery/actions/runs/39890924251) also passed all **128 Chromium/WebKit browser checks** and package integrity validation. Final checksums are recorded in the release test report. The final input controls use standalone diacritics, no neutral-mark toolbar button, and a four-quadrant tone square with a central neutral choice. Umlaut entry changes an entered u to ü and retains an existing tone.
+
+RemNote accepted the exact 0.4.0 ZIP (SHA256 `9bd9c72c8ed31ae4055fc1569d289b019a4e86458e3f4decc88977dfe56727c4`) under the existing plugin ID. Publishing to GitHub alone left the installed version at 0.3.5 after Check for Updates; after the ZIP upload, that control updated the desktop installation to 0.4.0 and the app loaded the hosted `/hanzi_mastery_handwriting_v1/0.4.0/` index. This verifies distribution and startup, not every modality on the hosted build or physical mobile acceptance. No user cards or native ratings were changed during release verification.
 
 The October 22 Windows RemNote acceptance pass covered all eight modes, including real Hanzi Writer strokes for both writing and meaning → characters, four-option recognition and successful reference-audio playback. Synthetic test cards were disabled again. Phone-sized Chromium/WebKit fixtures verify geometry and controls, not the physical RemNote iPhone app. Microphone capture and pronunciation quality remain unverified.
 

@@ -1,5 +1,7 @@
 # Hanzi Mastery 0.4.0
 
+Released October 22, 2026. The official GitHub release and the existing RemNote plugin now distribute 0.4.0. RemNote upload success, Check for Updates from 0.3.5 and hosted index loading were verified. Clean CI passed 136 unit/component tests and 128 browser checks. See INSTALLATION.md for the exact source commit and ZIP checksum.
+
 Eight study modes now share a fitted review surface, centered prompts and consistent results. Meaning → characters uses Hanzi Writer with a hidden target and checked strokes; characters → meaning preserves the first typed answer for self-assessment. Writing uses the same centered canvas and guided practice. Native RemNote controls retain scheduling.
 
 Pinyin entry offers standalone tone marks and an umlaut control, with numbered input converted to marked pinyin. Tone recall uses four square quadrants with neutral tone at the center; only large marks and numbers are displayed. Character recognition always requires four unambiguous choices, including supplementation of legacy cards. Listening requires completed reference playback. Spoken practice exposes Play and Record directly and remains self-assessed; automatic pronunciation scoring is not included.
