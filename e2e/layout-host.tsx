@@ -9,13 +9,14 @@ export function LayoutHost() {
   const width = Number(params.get('width')) || 680;
   const unrelated = params.has('unrelated');
   const beautiful = params.has('beautiful');
+  const skill = params.get('reviewSkill');
   const nativeContent = <div className="hm-layout-native-content box-border">
     <div className="hm-layout-statistics">Statistics</div>
     <p className="hm-layout-question">Write the word from its English prompt.</p>
     <div className="spaced-repetition-answer">{revealed ? 'Native answer' : ''}</div>
     <div className="fade-in-first-load relative"><div style={{display:'flex'}}>
       <iframe ref={frame} data-plugin-id={unrelated ? 'another-plugin' : 'hanzi_mastery_handwriting_v1'} title="Handwriting review fixture"
-        src={unrelated ? 'about:blank' : `/?frame=review&widgetName=hanzi_review${params.has('long') ? '&long=1' : ''}`} style={{height:params.has('unfitted') ? 150 : 400}} />
+        src={unrelated ? 'about:blank' : `/?frame=review&widgetName=${skill ? 'recall_review' : 'hanzi_review'}${skill ? `&skill=${encodeURIComponent(skill)}` : ''}${params.has('long') ? '&long=1' : ''}${params.has('audioFixture') ? '&audioFixture=1' : ''}`} style={{height:params.has('unfitted') ? 150 : 400}} />
     </div></div>
   </div>;
   const controls = <footer className="hm-layout-native" aria-label="Simulated native RemNote controls">

@@ -32,11 +32,11 @@ export async function readReviewContext(plugin: RNPlugin, settings: Settings): P
       revealed: widget.revealed || await plugin.queue.hasRevealedAnswer() };
   } catch { throw new Error(`Hanzi Mastery could not read ${phase}. Testing is blocked; check the card configuration or host API support.`); }
 }
-export async function stillCurrent(plugin: RNPlugin, cardId: string, allowRevealed = true, reviewAt?: number): Promise<boolean> {
+export async function stillCurrent(plugin: RNPlugin, cardId: string, allowRevealed = true, reviewAt?: number, direction: 'forward' | 'backward' = 'forward'): Promise<boolean> {
   const card = await plugin.queue.getCurrentCard();
   const currentReviewAt = (card?.repetitionHistory || []).reduce((at, r) => Math.max(at, r.date), 0);
   return card?._id === cardId && (reviewAt === undefined || currentReviewAt === reviewAt) &&
-    card.type === 'forward' && !await plugin.queue.inLookbackMode() && (allowRevealed || !await plugin.queue.hasRevealedAnswer());
+    card.type === direction && !await plugin.queue.inLookbackMode() && (allowRevealed || !await plugin.queue.hasRevealedAnswer());
 }
 export function subscribeReview(plugin: RNPlugin, refresh: () => void, reveal: (cardId?: string) => void): () => void {
   const key = `hm-${createId()}`;

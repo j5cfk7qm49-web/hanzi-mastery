@@ -49,17 +49,16 @@ export function PronunciationRecorder({ disabled, onReady }: { disabled?: boolea
     }
   };
   return <div className="hm-recorder">
-    <p className="hm-muted">Record your first attempt, then compare it with the reference. Your recording stays in this review and is discarded when you leave.</p>
-    {state === 'idle' && <button disabled={disabled} onClick={() => void record()}>Record pronunciation</button>}
+    {state === 'idle' && <button className="hm-audio-button" disabled={disabled} onClick={() => void record()}><span aria-hidden="true">●</span> Record pronunciation</button>}
     {state === 'requesting' && <p role="status">Waiting for microphone access…</p>}
     {state === 'recording' && <><p role="status">Recording… up to 20 seconds.</p><button onClick={stopCapture}>Stop recording</button></>}
-    {state !== 'ready' && <label>Or choose a pronunciation recording<input type="file" accept="audio/*" disabled={disabled || state !== 'idle'} onChange={e => {
+    {state !== 'ready' && <details className="hm-recording-file"><summary>Use an audio file</summary><label>Or choose a pronunciation recording<input type="file" accept="audio/*" disabled={disabled || state !== 'idle'} onChange={e => {
       const file = e.target.files?.[0]; if (!file) return;
       if ((!file.type.startsWith('audio/') && !/\.(mp3|m4a|wav|ogg|webm|mp4)$/i.test(file.name)) || file.size > 10 * 1024 * 1024 || !file.size) {
         setError('Choose an audio file smaller than 10 MB.'); e.target.value = ''; return;
       }
       setError(''); keep(file);
-    }} /></label>}
+    }} /></label><small>Your clip stays in this review and is discarded when you leave.</small></details>}
     {url && <audio controls src={url} aria-label="Your pronunciation recording" />}
     {error && <p role="alert" className="hm-error">{error}</p>}
   </div>;

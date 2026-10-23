@@ -33,10 +33,10 @@ export function ReferenceAudio({ text, url, disabled, onPlayed }: {
       onChange={e => setSelected(e.target.value)}><option value="">Choose a local Mandarin voice</option>
       {voices.map(v => <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}</select></label>}
     {!url && !voices.length && <p className="hm-muted">No local Mandarin voice is available. Add an HTTPS audio recording in the workbench to use this exercise.</p>}
-    <div className="hm-actions"><button disabled={disabled || playing || (!url && !selected)} onClick={play}>Play reference audio</button>
+    <div className="hm-actions"><button className="hm-audio-button" disabled={disabled || playing || (!url && !selected)} onClick={play}><span aria-hidden="true">▶</span> Play reference audio</button>
       {playing && <button onClick={() => { stop.current(); setPlaying(false); }}>Stop audio</button>}</div>
     {playing && <p role="status">Playing reference audio…</p>}
     {error && <p role="alert" className="hm-error">{error}</p>}
-    <p className="hm-muted"><small>{url ? 'Uses the reference recording configured for this card.' : 'Uses a local device voice. Check the voice’s language region; it is synthesized speech.'}</small></p>
+    {!url && <p className="hm-muted"><small>Local synthesized voice · check its language region.</small></p>}
   </div>;
 }

@@ -53,13 +53,20 @@ function SkillHarness() {
     setSynced: async(key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value)),
   }), []);
   const requested = params.get('skill');
+  useEffect(() => {
+    if (!embedded) return;
+    const receive = (event: MessageEvent) => { if (event.origin === location.origin && event.source === window.parent && event.data?.type === 'hm-layout-reveal') setRevealed(true); };
+    window.addEventListener('message', receive); return () => window.removeEventListener('message', receive);
+  }, []);
   const skill = RECALL_SKILLS.find(s => s === requested) || 'pinyin';
   const schema: RecallSchema = { version: 1, skill, vocabularyId: 'skill-demo', traditional: '人', pinyin: 'rén', meaning: 'person',
+    ...(skill === 'character-choice' ? { choices: [{ traditional: '人', pinyin: 'rén' }, { traditional: '書', pinyin: 'shū' },
+      { traditional: '愛', pinyin: 'ài' }, { traditional: '國', pinyin: 'guó' }] } : {}),
     ...(params.has('audioFixture') ? { referenceAudio: 'https://hanzi-audio.test/reference.wav' } : {}) };
-  return <><aside className="hm"><p>Development harness — simulated RemNote queue</p>
+  return <>{!embedded && <aside className="hm"><p>Development harness — simulated RemNote queue</p>
     <button onClick={() => setRevealed(true)}>Simulate native answer reveal</button>
-    <button onClick={() => setSuspended(v => !v)}>{suspended ? 'Restore host connection' : 'Simulate host connection loss'}</button></aside>
-    <RecallExercise context={{ cardId: 'skill-demo', schema }} repository={repository} revealed={revealed} suspended={suspended}
+    <button onClick={() => setSuspended(v => !v)}>{suspended ? 'Restore host connection' : 'Simulate host connection loss'}</button></aside>}
+    <RecallExercise fitToCard={embedded} context={{ cardId: 'skill-demo', schema }} repository={repository} revealed={revealed} suspended={suspended}
       isCurrent={async (allow = true) => !suspended && (allow || !revealed)} /></>;
 }
 ReactDOM.render(params.has('skill') ? <SkillHarness/> : params.has('host')?<LayoutHost/>:<Harness/>,document.getElementById('root'));

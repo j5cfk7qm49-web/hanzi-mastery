@@ -28,7 +28,7 @@ test('real Hanzi Writer accepts seven Traditional median paths and resets betwee
     await expect(exercise).not.toContainText(ch);
     await draw(page,ch);
     await expect(page.getByText('Passed this writing test')).toBeVisible();
-    await expect(page.getByText('Writing mastery saved and read back.')).toBeVisible();
+    await expect(page.getByLabel('Result saved')).toBeVisible();
   }
   expect(errors).toEqual([]);expect(requests.every(u=>u.startsWith('http://127.0.0.1:8081'))).toBe(true);
   await page.screenshot({path:`test-results/${test.info().project.name}-completed.png`,fullPage:true});
@@ -65,7 +65,7 @@ test('a character outside the embedded examples loads from the packaged data gro
   await page.getByRole('button',{name:'Begin test'}).click();
   await draw(page,'人');
   await expect(page.getByText('Passed this writing test')).toBeVisible();
-  await expect(page.getByText('Writing mastery saved and read back.')).toBeVisible();
+  await expect(page.getByLabel('Result saved')).toBeVisible();
 });
 test('reveal causes failure and guided practice preserves it; layout fits a phone',async({page})=>{
   await page.goto('/');await page.getByRole('button',{name:'Begin test'}).click();
@@ -87,7 +87,7 @@ test('multi-character test resumes its accepted prefix after host connection los
   await expect(page.getByText(/Writing is paused/)).toBeVisible();
   await page.getByRole('button',{name:'Restore host connection'}).click();
   await draw(page,'國',1);await expect(page.getByText('Passed this writing test')).toBeVisible();
-  await expect(page.getByText('Writing mastery saved and read back.')).toBeVisible();
+  await expect(page.getByLabel('Result saved')).toBeVisible();
   expect(errors).toEqual([]);
   const records=await page.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('hm:v2:writing:')).map(k=>JSON.parse(localStorage.getItem(k)!)));
   expect(records).toHaveLength(2);expect(records.every(r=>r.history[0].result.accuracy===1)).toBe(true);
@@ -102,7 +102,7 @@ test('declared accidental contact retains the original rejected stroke and raw s
   await page.mouse.move(box.x+box.width*.95,box.y+box.height*.95,{steps:3});await page.mouse.up();
   await expect(page.getByText('0 / 16 strokes · 1 rejected attempts')).toBeVisible();
   await page.getByRole('button',{name:'Last input was accidental'}).click();await draw(page,'學');
-  await expect(page.getByText('Writing mastery saved and read back.')).toBeVisible();
+  await expect(page.getByLabel('Result saved')).toBeVisible();
   await page.getByRole('button',{name:'Review options and details'}).click();
   await expect(page.getByText(/raw 94%, 1 declared accident/)).toBeVisible();
   const record=await page.evaluate(()=>JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k=>k.startsWith('hm:v2:writing:'))!)!).history[0]);

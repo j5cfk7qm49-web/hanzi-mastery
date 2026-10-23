@@ -19,6 +19,7 @@ npm run test:browser
 
 - `src/core`: pure grading, event ledger, settings/schema, mastery progression and diagnostic geometry.
 - `src/services`: documented RemNote adapter, synced mastery repository and local character loading.
+- `src/services/dictionary.ts`: exact-word MOE/Moedict lookup, locally bundled CC-CEDICT parsing and reading-aware English matching, with progress and abort support. `vocabulary.ts` imports/reuses entries and updates linked study cards with source-preserving edits. `lists.ts` reads ordinary parent bullets and moves vocabulary/linked cards with parent read-back confirmation.
 - `src/ui`: responsive exercise and reusable Hanzi Writer canvas.
 - `src/widgets`: SDK entrypoints, filtered review widget and authoring/practice/settings popup.
 - `src/importers`: format adapters with no knowledge-base side effects.
@@ -31,12 +32,16 @@ The build invokes the SDK's `remnote-plugin validate` command, compiles normal a
 
 The package script checks root entries, data counts, core characters, development-file exclusion, runtime remote imports, archive extraction and manifest version. JavaScript and character data carry separate licenses. All notices/license files are copied into the package. `npm audit --omit=dev` can verify runtime dependencies independently.
 
+`public/dictionary/cedict.txt.gz` is the unmodified, committed CC-CEDICT source snapshot. The build copies it and `SOURCE.md`; packaging checks the pinned SHA256. Builds never refresh dictionary data implicitly. To update it deliberately, obtain the upstream download, inspect its header/version/license, update the source attribution and checksum in both the adapter and package validator, then run dictionary and browser import tests. The code license does not replace the dictionary's CC BY-SA 4.0 license. MOE API responses retain their CC BY-ND attribution and original definitions separately from learner wording.
+
 ## Persistence boundaries
 
 `storage.setSynced` is a RemNote user-level store, not its card scheduler. Keys use a stable vocabulary Rem ID and exact character code point. Save IDs deduplicate retries; same-process writes serialize and read back before confirmation. Histories are bounded to 200 tests, while timestamps/level/peak survive trimming. RemNote does not document a transactional cross-device key-value update API, so concurrent device edits remain a limitation.
 
 The earlier prototype's per-card `hanzi-mastery-v1` keys are not imported automatically. A future migration should preview mappings from old cards to vocabulary/character identities and never alter FSRS history.
 
+Dictionary imports use `hm:v5:dictionary:<encoded parent/headword/reading>` draft/complete retry links, then the existing `hm:v3:card:<vocabularyId>:<skill>` registry for both translation directions. The original `hm:v4:dictionary:<encoded headword/reading>` links remain reusable for flat entries in the default collection. Native parent bullets determine list membership; there is no list Powerup or persisted membership table. Each import batch inventories the selected bullet once, so moved entries are found even when a retry index is stale, without scanning the list for every new word. Cross-list reimports create independent entries rather than moving the original. Incomplete imports resume; completed imports read saved vocabulary rather than overwriting edits. Existing study-card updates preserve parent and practice direction; new/draft cards are kept out of practice until metadata confirmation. Translation result keys include the meaning, retaining old results when prompts change. The vocabulary editor validates all linked study schemas before writes and reports partial update failures for an idempotent retry. Separately authored writing-card prompts are outside this editor's update scope.
+
 ## Release gate
 
-The source and upload artifact are a pre-release. Principal developer-installation, authoring, input, failure and native-rating flows have passed in signed-in RemNote Desktop. Unlisted submission enables testing hosted installation; production use still requires the remaining desktop/iOS checklist and review of Taiwan differences. Check actual GitHub Actions results for the submitted source rather than treating the workflow's presence as passing evidence.
+Version 0.4.0 is the official release package. Principal developer-installation, authoring, input, failure and native-rating flows have passed in signed-in RemNote Desktop. Hosted distribution is unlisted. The remaining physical iOS checklist and review of Taiwan differences are documented as verification limits. Check actual GitHub Actions results for the submitted source rather than treating the workflow's presence as passing evidence.

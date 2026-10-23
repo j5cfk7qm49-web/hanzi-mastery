@@ -6,12 +6,18 @@ export interface WritingSchema {
   version: 2; skill: 'writing'; vocabularyId: string;
   traditional: string; simplified?: string; prompt: string;
 }
-export const SKILLS = ['recognition', 'writing', 'english-to-chinese', 'chinese-to-english', 'pinyin', 'tones', 'listening', 'pronunciation'] as const;
+export const SKILLS = ['recognition', 'writing', 'english-to-chinese', 'chinese-to-english', 'pinyin', 'tones', 'character-choice', 'listening', 'pronunciation'] as const;
 export interface Vocabulary {
   version: 2; traditional: string; simplified?: string; pinyin: string; meanings: string[];
   partOfSpeech?: string; examples?: { chinese: string; english?: string }[]; audio?: string[];
   tocfl?: { level: string; source: string; verified: boolean }; source: string; categories: string[];
   tags?: string[]; dictionaryLinks?: string[];
+  dictionary?: DictionaryProvenance;
+}
+export interface DictionaryProvenance {
+  importedAt: string;
+  moe: { provider: 'MOE Revised via Moedict'; url: string; pinyin: string; bopomofo: string; definitions: string[]; license: 'CC BY-ND 3.0 TW'; edition: string };
+  english?: { provider: 'CC-CEDICT'; url: string; snapshot: string; pinyin: string; definitions: string[]; license: 'CC BY-SA 4.0' };
 }
 export function characters(text: string): string[] {
   const result = Array.from(text);

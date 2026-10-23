@@ -4,6 +4,9 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { ReviewExercise, type ExerciseProps } from '../src/ui/ReviewExercise';
 import { DEFAULT_SETTINGS } from '../src/core/config';
 import { MasteryRepository } from '../src/services/persistence';
+import { RecallExercise } from '../src/ui/RecallExercise';
+import { SkillRepository, skillHistoryKey } from '../src/services/recall';
+import type { RecallSchema } from '../src/core/recall';
 import type { QuizOptions, StrokeData, CharacterJson } from 'hanzi-writer';
 const mocks=vi.hoisted(()=>({ quiz: undefined as Partial<QuizOptions> | undefined,
   quizHistory: [] as Partial<QuizOptions>[], setCharacter:vi.fn(),cancel:vi.fn(),options:undefined as Record<string,unknown> | undefined,
@@ -37,6 +40,43 @@ function stroke(i:number,type:'accepted'|'rejected'='accepted',character='學') 
   const event:StrokeData={character,strokeNum:i,totalMistakes:0,mistakesOnStroke:0,strokesRemaining:9-i,isBackwards:false,drawnPath:{points:[{x:0,y:0},{x:1,y:1}],pathString:''}};
   act(()=>{if(type==='accepted')mocks.quiz!.onCorrectStroke!(event);else mocks.quiz!.onMistake!(event);});
 }
+function meaningSetup() {
+  const values = new Map<string, unknown>();
+  const storage = { getSynced: async <T,>(key: string) => structuredClone(values.get(key)) as T | undefined,
+    setSynced: async (key: string, value: unknown) => { values.set(key, structuredClone(value)); } };
+  const repository = new SkillRepository(storage);
+  const schema: RecallSchema = { version: 1, skill: 'english-to-chinese', vocabularyId: 'meaning-vocab', traditional: '學', pinyin: 'xué', meaning: 'to study' };
+  const props = { context: { cardId: 'translation-forward', schema }, repository, revealed: false, isCurrent: async () => true };
+  return { props, values, repository, schema, view: render(<RecallExercise {...props} />) };
+}
+describe('meaning-to-characters uses the shared Hanzi Writer engine', () => {
+  it('keeps the target hidden, grades actual strokes, and saves the translation skill separately', async () => {
+    const { view, values, schema } = meaningSetup(); await begin();
+    expect(view.container.innerHTML).not.toContain('學'); expect(screen.queryByRole('textbox')).toBeNull();
+    expect(mocks.quiz).toMatchObject({ showHintAfterMisses: false, acceptBackwardsStrokes: false });
+    await complete(); await screen.findByLabelText('Result saved');
+    expect(values.get(skillHistoryKey(schema))).toMatchObject({ attempts: 1, passed: 1, history: [{ cardId: 'translation-forward', result: { assessment: 'checked', accuracy: 1 } }] });
+    expect(values.has('hm:v2:writing:meaning-vocab:5b78')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Practice with hints and animation' }));
+    expect(screen.getByText('Passed this writing test')).toBeTruthy();
+    expect(values.get(skillHistoryKey(schema))).toMatchObject({ attempts: 1 });
+  });
+  it('fails on a premature native answer reveal and does not turn practice into success', async () => {
+    const { view, props, values, schema } = meaningSetup(); await begin(); stroke(0);
+    view.rerender(<RecallExercise {...props} revealed />); await screen.findByLabelText('Result saved');
+    expect(values.get(skillHistoryKey(schema))).toMatchObject({ attempts: 1, passed: 0, history: [{ result: { failure: 'answer-revealed' } }] });
+  });
+  it('retries an interrupted translation save without recording the stroke attempt twice', async () => {
+    const { repository, values, schema } = meaningSetup();
+    const original = repository.save.bind(repository);
+    const save = vi.spyOn(repository, 'save').mockRejectedValueOnce(new Error('offline')).mockImplementation(original);
+    await begin(); await complete(); fireEvent.click(await screen.findByRole('button', { name: 'Retry result save' }));
+    await screen.findByLabelText('Result saved'); expect(save.mock.calls[0][1].id).toBe(save.mock.calls[1][1].id);
+    expect(values.get(skillHistoryKey(schema))).toMatchObject({ attempts: 1, passed: 1 });
+    const writing = [...values.entries()].find(([key]) => key.startsWith('hm:v2:writing:'))![1] as { history: unknown[] };
+    expect(writing.history).toHaveLength(1);
+  });
+});
 async function complete(character='學') {
   for(let i=0;i<10;i++)stroke(i,'accepted',character);
   act(()=>mocks.quiz!.onComplete!({character,totalMistakes:0}));
@@ -199,6 +239,6 @@ describe('review UI and engine lifecycle',()=>{
   });
   it('does not save on a different current card',async()=>{
     let valid=true;const {store}=setup({isCurrent:async()=>valid});await begin();valid=false;await complete();
-    await screen.findByRole('button',{name:'Retry mastery save'});expect(store.setSynced).not.toHaveBeenCalled();
+    await screen.findByRole('button',{name:'Retry result save'});expect(store.setSynced).not.toHaveBeenCalled();
   });
 });

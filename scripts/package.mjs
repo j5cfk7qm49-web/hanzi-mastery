@@ -1,6 +1,7 @@
 import { readFile, readdir, mkdir, writeFile, copyFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { zipSync, unzipSync } from 'fflate';
 const pkg = JSON.parse(await readFile('package.json', 'utf8'));
 const dataDir = path.resolve('dist/data');
@@ -44,9 +45,12 @@ async function collect(dir) {
   }
 }
 await collect('dist');
+assert(files['dictionary/cedict.txt.gz'] && files['dictionary/SOURCE.md'], 'Dictionary data or attribution is missing');
+assert.equal(createHash('sha256').update(files['dictionary/cedict.txt.gz'][0]).digest('hex'),
+  '2680af828c0d949b544c9399b4dc8503788c99150ab73887600fed6b4f880b26', 'Bundled CC-CEDICT source changed');
 for (const required of ['manifest.json', 'index.html', 'index.js', 'index-sandbox.js', 'hanzi_review-sandbox.js', 'recall_review-sandbox.js', 'licenses/ARPHICPL.TXT']) assert(files[required], `Missing ${required}`);
 assert(dataFiles.length > 9000);
-assert(!Object.keys(files).some(name => /preview|harness|node_modules|\.tsx?$/.test(name)), 'Development source leaked into upload package');
+assert(!Object.keys(files).some(name => /preview|harness|APP_ACCEPTANCE_|REVIEW_UI_REFRESH_|node_modules|\.tsx?$/.test(name)), 'Development source or local acceptance report leaked into upload package');
 for (const [group, data] of groups) {
   const packed = JSON.parse(new TextDecoder().decode(files[`data/${group}.json`][0]));
   assert.deepEqual(packed, data, `Character group ${group} changed during packaging`);

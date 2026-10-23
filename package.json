@@ -1,16 +1,18 @@
 {
   "name": "hanzi-mastery-remnote",
   "private": true,
-  "version": "0.3.5",
-  "description": "Traditional-first handwriting, pinyin, tone and listening reviews for RemNote",
+  "version": "0.4.0",
+  "description": "Traditional-first Chinese writing, translation and audio reviews with dictionary import and editable study cards for RemNote",
   "license": "MIT",
   "engines": {
     "node": ">=22.12.0"
   },
   "dependencies": {
     "@remnote/plugin-sdk": "0.0.46",
+    "fflate": "0.8.3",
     "hanzi-writer": "3.7.3",
     "hanzi-writer-data": "2.0.1",
+    "pinyin-pro": "3.29.5",
     "react": "17.0.2",
     "react-dom": "17.0.2"
   },
@@ -24,7 +26,6 @@
     "copy-webpack-plugin": "14.0.0",
     "css-loader": "7.1.5",
     "esbuild-loader": "4.5.0",
-    "fflate": "0.8.3",
     "html-webpack-plugin": "5.6.8",
     "jsdom": "30.1.3",
     "style-loader": "4.0.0",

@@ -18,15 +18,17 @@ Version **0.3.5 is available through Check for Updates**, verified October 21, 2
 
 ## Version labels
 
+Version **0.4.0 is the current release package**, with all eight study modes, Hanzi Writer for meaning → characters, four-choice recognition, dictionary import/editing, native vocabulary lists and shared review UI. The GitHub release contains the compiled ZIP, matching source and checksums. RemNote upload and hosted availability are verified separately below; the previously verified hosted version is 0.3.5 until the new upload is confirmed.
+
 Version **0.3.3 was uploaded on October 20, 2026 and is available through Check for Updates**. RemNote displayed a new success notice after this upload; the public page showed 0.3.3, and the isolated web installation updated from 0.3.2 to the hosted 0.3.3 index bundle. This followed the user's report that 0.3.2 still left a blank iPhone review. An exact-release WebKit comparison reproduced a startup crash when `crypto.randomUUID` was unavailable, before any card read. The patch replaces those calls with identifiers generated from `crypto.getRandomValues` and shows a diagnostic for caught render/effect startup failures. Physical RemNote iPhone acceptance remains required; the device's actual API state has not been inspected. See [startup verification](TESTING.md) and the [0.3.3 release](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.3.3).
 
 The source, GitHub releases and RemNote registrations are separate records:
 
 | Record | Version | Meaning |
 | --- | --- | --- |
-| Current source and upload ZIP | 0.3.5 | Compact and Beautiful Queue compatibility; distribution status recorded above. |
+| Current source and upload ZIP | 0.4.0 | Official release package; RemNote hosted availability is recorded separately. |
 | Latest verified hosted update | 0.3.5 | Isolated hosted update and both queue layouts verified; physical iPhone acceptance remains required. |
-| GitHub pre-release | See release tag | Downloadable package with matching source/checksums. Publishing it does not update RemNote. |
+| GitHub release | See release tag | Downloadable package with matching source/checksums. Publishing it does not update RemNote. |
 | Existing RemNote development registration | 0.2.0 | The desktop Build tab still points this entry at `http://localhost:8080/`. Its stored version label has not followed subsequent builds. |
 
 The desktop development entry still displayed 0.2.0 and the localhost URL on October 20, but the user subsequently confirmed 0.3.1 on the phone. The desktop entry therefore does not establish the phone's installed source or version. A localhost URL refers to the device opening it, so the desktop's loopback-only development server does not provide a phone installation. "Enabled on Mobile" is not an installation or runtime test.

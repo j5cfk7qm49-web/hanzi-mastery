@@ -1,4 +1,18 @@
-# Hanzi Mastery 0.3.5 pre-release
+# Hanzi Mastery 0.4.0
+
+Eight study modes now share a fitted review surface, centered prompts and consistent results. Meaning → characters uses Hanzi Writer with a hidden target and checked strokes; characters → meaning preserves the first typed answer for self-assessment. Writing uses the same centered canvas and guided practice. Native RemNote controls retain scheduling.
+
+Pinyin entry offers standalone tone marks and an umlaut control, with numbered input converted to marked pinyin. Tone recall uses four square quadrants with neutral tone at the center; only large marks and numbers are displayed. Character recognition always requires four unambiguous choices, including supplementation of legacy cards. Listening requires completed reference playback. Spoken practice exposes Play and Record directly and remains self-assessed; automatic pronunciation scoring is not included.
+
+Import vocabulary automatically using MOE-derived readings/Chinese definitions through Moedict and the unchanged, attributed CC-CEDICT snapshot for English. Optional preview supports alternate readings and editable study wording. Batches have progress, cancellation/resume and no fixed word-count ceiling. Original dictionary records remain separate from learner edits. The mirror does not report its MOE edition; current Taiwan curriculum compliance is not claimed.
+
+Organize vocabulary beneath ordinary RemNote bullets as **List → character/word → cards**, sorted by Traditional Chinese collation. Rename/move bullets natively and refresh membership; move vocabulary with its linked cards while preserving native histories. Reimports reuse entries within a list. New translation cards use a bidirectional Rem with separate native directions; legacy separate cards retain their IDs and directions.
+
+Release validation covers unit/component, import, list, persistence and compiled-SDK behavior, Chromium/WebKit layouts, and actual Windows RemNote acceptance. See TESTING.md for evidence. Physical iPhone/Pencil input, microphone capture and learner pronunciation quality remain unverified. Existing writing metadata and native review schedules are retained.
+
+**0.4.1 focus:** preferred dictionary learning glosses, with full definitions retained separately. General visual polish remains a later pass.
+
+## Previous 0.3.5 queue compatibility
 
 Support both Compact and beta Beautiful Queue, presenting only the Hanzi Mastery interface inside writing cards. The user's 0.3.4 clipping was reproduced in the actual hosted Beautiful Queue: its extra insight/stage/content wrappers were not sized, so the iframe resolved to the browser's 150px default. Native answer controls also overlay that mode's card. Size every wrapper along the writing iframe's content branch, suppress duplicate native prompt/context/statistics/insight content only in these writing cards, and put the existing Beautiful Queue answer controls in normal flow so their actual height is reserved. Compact mode keeps its native controls.
 

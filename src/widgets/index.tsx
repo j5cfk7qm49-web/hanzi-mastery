@@ -14,12 +14,12 @@ async function onActivate(plugin: ReactRNPlugin) {
   });
   await plugin.app.registerWidget('workbench', WidgetLocation.Popup, { dimensions: { width: 'min(560px, 95vw)', height: 'auto' } });
   await plugin.app.registerPowerup({ name: 'Hanzi Study', code: RECALL_POWERUP,
-    description: 'Pinyin, tone, listening and spoken-practice cards with independent schedules.',
+    description: 'Translation, pinyin, tone, character recognition, listening and spoken-practice cards with independent schedules.',
     options: { slots: [{ code: SCHEMA_SLOT, name: 'Study metadata', hidden: true, onlyProgrammaticModifying: true, propertyType: PropertyType.TEXT }] } });
   await plugin.app.registerWidget('recall_review', WidgetLocation.FlashcardUnder, {
     powerupFilter: RECALL_POWERUP, dimensions: { width: '100%', height: 'auto' }
   });
-  await plugin.app.registerCommand({ id: 'hanzi-study-skills', name: 'Hanzi Mastery: pinyin, tones, listening and speaking',
+  await plugin.app.registerCommand({ id: 'hanzi-study-skills', name: 'Hanzi Mastery: import, edit and create study cards',
     description: 'Focus a Hanzi Vocabulary entry to create its independently scheduled study cards.',
     action: async () => {
       const rem = await plugin.focus.getFocusedRem();

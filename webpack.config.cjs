@@ -23,7 +23,8 @@ module.exports = (_, argv = {}) => {
       new webpack.BannerPlugin({ banner: f => f.chunk.name.endsWith('-sandbox') ? '' : 'const IMPORT_META=import.meta;', raw: true }),
       new CopyPlugin({ patterns: [
         { from: 'public/manifest.json', to: 'manifest.json' }, { from: 'README.md' },
-        { from: 'LICENSE' }, { from: 'docs', to: 'docs', globOptions: { ignore: ['**/screenshots/**'] } }
+        { from: 'LICENSE' }, { from: 'docs', to: 'docs', globOptions: { ignore: ['**/screenshots/**', '**/APP_ACCEPTANCE_*.md', '**/REVIEW_UI_REFRESH_*.md'] } },
+        { from: 'public/dictionary', to: 'dictionary' }
       ] })
     ],
     performance: { hints: false }, devtool: production ? false : 'source-map'

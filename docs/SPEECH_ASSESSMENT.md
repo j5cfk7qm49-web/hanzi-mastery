@@ -1,10 +1,25 @@
 # Mandarin speech recognition and learner assessment
 
-Research checked 2026-10-19. This records the earlier investigation into automatic spoken-pronunciation assessment. That requirement has since been dropped from the current scope; pinyin recall, tone knowledge, listening and self-assessed spoken practice remain relevant. The candidate engines below are retained for reference.
+Feasibility refreshed 2026-10-21 after the user asked to explore independent assessment as well as simple reference comparison. The original open-source source audit below dates to 2026-10-19. Automatic pronunciation assessment is exploratory; it is not bundled or claimed as implemented.
 
 ## What the current increment provides
 
-Pinyin and dictionary-tone answers are checked directly. Listening asks for dictionary pinyin after reference playback. Spoken practice records/plays a local clip and labels its outcome **self-assessed**. Automatic speech grading is outside the current requirements. No speech-recognition model is bundled, and no voice recording is uploaded by the plugin.
+Pinyin and dictionary-tone answers are checked directly. Pinyin-to-character recognition checks the selected form against a vocabulary-derived, unambiguous option set. Listening asks for dictionary pinyin after reference playback. Spoken practice defaults to saying the word, playing the reference and explicitly **self-assessing**. Optional local recording/file playback remains available. No speech-recognition model is bundled, and no voice recording is uploaded by the plugin.
+
+## Current feasibility decision
+
+| Approach | Verified capability | Decision for this release |
+| --- | --- | --- |
+| Reference comparison | An HTTPS recording or an available local Mandarin voice already plays in the widget. | Implemented without mandatory recording. It works without microphone access and preserves explicit self-assessment. |
+| Azure Pronunciation Assessment | Microsoft lists both `zh-CN` and **`zh-TW` Taiwanese Mandarin** among supported assessment locales. | A practical optional cloud-assessment candidate, requiring a configured Speech resource, service authentication and real recordings before integration can be accepted. It is not configured or exercised here. |
+| Browser SpeechRecognition | MDN documents limited browser availability and that some implementations send audio to a service. | Do not use transcription as a pronunciation grade. It does not supply the acoustic tone evidence this task needs. |
+| Browser-local sherpa-onnx | The official WASM example performs Chinese/English transcription; its illustrated build includes about 199 MB of model data and 10 MB of WASM. | Browser ASR is feasible, but this example adds substantial payload and still needs a separate learner-assessment layer. It is not a ready Mandarin tone grader. |
+
+Sources checked: [Azure assessment locales](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=pronunciation-assessment), [MDN SpeechRecognition](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition), [official sherpa-onnx WASM build](https://k2-fsa.github.io/sherpa/onnx/wasm/build.html).
+
+Azure's [assessment documentation](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/how-to-pronunciation-assessment) describes pronunciation accuracy and fluency scores. Phoneme names are documented for `en-US` and `zh-CN`, whereas prosody assessment is `en-US` only. These capabilities do not establish a separate Taiwanese Mandarin tone-correctness score; that would require empirical evaluation. An initial integration should show service feedback separately from the learner's rating, retaining an uncertain result rather than inventing a pass threshold.
+
+A concrete service trial would keep credentials in a server/helper, accept an explicitly selected clip, and request `zh-TW` pronunciation assessment. The [short-audio REST API](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text-short) requires authentication, supports 16 kHz mono PCM WAV or OGG/Opus, and limits assessment input to 30 seconds. Browser recordings need conversion or SDK capture. Testing must include silence, incorrect tones, initial/final substitutions, homophones and Taiwan variants before using results to recommend a native grade. A configured resource and learner-speech samples are prerequisites; no service was provisioned or audio uploaded during this update.
 
 ## Candidate dependencies and prototypes
 

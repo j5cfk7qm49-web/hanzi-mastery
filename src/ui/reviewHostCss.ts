@@ -1,9 +1,17 @@
 // Scope host layout changes to this plugin's handwriting iframe in the current card.
 // The native answer/rating controls are outside rn-queue__content and remain untouched.
-const frame = 'iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=hanzi_review"]';
+const frame = ':is(iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=hanzi_review"], iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=recall_review"])';
 const content = `.rn-queue__content:has(${frame})`;
 const queue = `.rn-queue:has(${frame})`;
+const studyFrame = 'iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=recall_review"]';
+const studyContent = `.rn-queue__content:has(${studyFrame})`;
 export const REVIEW_HOST_CSS = `
+/* Character headings organize notes but must not disclose production/listening
+   answers in native ancestor context. The study widget supplies its own prompt. */
+${studyContent} > :not(:has(${studyFrame})):not(${studyFrame}),
+${studyContent} div:has(${studyFrame}) > :not(:has(${studyFrame})):not(${studyFrame}) {
+  display: none !important;
+}
 ${queue} .width-container-scroller:has(${frame}) {
   min-height: 0 !important;
   overflow: hidden !important;

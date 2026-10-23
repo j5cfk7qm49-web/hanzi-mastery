@@ -55,7 +55,7 @@ for (const beautiful of [false, true]) for (const size of sizes) test(`fitted ${
   if (size.name === 'iphone-screenshot') expect((await review.getByRole('application').boundingBox())!.width).toBeGreaterThan(340);
   await page.screenshot({ path: `test-results/${test.info().project.name}-${beautiful ? 'beautiful' : 'compact'}-${size.name}-writing.png` });
   await review.getByRole('button', { name: 'I forgot a stroke — end test' }).click();
-  await expect(review.getByText('Writing mastery saved and read back.')).toBeVisible();
+  await expect(review.getByLabel('Result saved')).toBeVisible();
   await expectFits(page, review);
   await review.getByRole('button', { name: 'Practice with hints and animation' }).click();
   await expectLargestSquare(review); await expectFits(page, review);
