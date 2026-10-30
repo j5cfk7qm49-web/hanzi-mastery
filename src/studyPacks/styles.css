@@ -1,0 +1,114 @@
+/* Course practice is scoped so ordinary Hanzi reviews keep their own layout. */
+.hm-study-packs{min-width:0;overflow-wrap:anywhere;--course-accent:var(--accent,#4f5dc9)}
+.hm-study-packs button{min-height:44px;touch-action:manipulation;white-space:normal;line-height:1.4}
+.hm-study-packs button:focus-visible,.hm-study-packs summary:focus-visible,.hm-study-packs select:focus-visible{outline:3px solid var(--course-accent);outline-offset:3px}
+.hm-study-packs input,.hm-study-packs textarea,.hm-study-packs select{max-width:100%;font-size:16px}
+.hm-study-packs label{display:block;margin:.7rem 0}
+.hm-study-packs textarea{display:block;width:100%;box-sizing:border-box}
+.hm-study-packs audio{display:block;width:100%;margin:12px 0}
+.hm-study-packs summary{min-height:44px;cursor:pointer;display:list-item;align-content:center}
+.hm-study-packs .hm-pack-heading{display:flex;flex-wrap:wrap;align-items:start;gap:12px;border-bottom:1px solid var(--border);padding-bottom:20px;margin-bottom:18px}
+.hm-pack-heading>div{flex:1;min-width:180px}
+.hm-study-packs .hm-pack-heading h2{font-size:28px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px}
+.hm-study-packs .hm-pack-eyebrow{font-size:11px;font-weight:650;letter-spacing:.08em;color:var(--muted);margin:0 0 8px;text-transform:uppercase}
+.hm-pack-heading .hm-caption{margin:0;max-width:48ch}
+.hm-pack-badge{display:inline-block;padding:6px 9px;border:1px solid var(--border);border-radius:20px;background:var(--panel);color:var(--muted);font-size:11px}
+.hm-pack-setup{display:flex;gap:6px 20px;flex-wrap:wrap;margin-bottom:12px}
+.hm-pack-setup>details{flex:1 1 160px;margin:0}
+.hm-pack-setup>details[open]{flex-basis:100%;padding:12px;background:var(--panel);border-radius:10px}
+.hm-study-packs .hm-pack-title{font-size:15px;margin:12px 0}
+.hm-pack-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:12px 0 20px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 0}
+.hm-pack-stats>div{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+.hm-pack-stats>div+div{border-left:1px solid var(--border)}
+.hm-pack-stats strong{font-size:25px;font-weight:600;line-height:1.3;font-variant-numeric:tabular-nums}
+.hm-pack-stats small{font-size:12px;font-weight:400;color:var(--muted)}
+.hm-pack-stats span{font-size:12px;color:var(--muted)}
+.hm-pack-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.hm-study-packs .hm-pack-sections button{display:flex;align-items:start;gap:10px;text-align:left;padding:12px;min-width:0;border-radius:10px}
+.hm-pack-section-number{display:grid;place-items:center;width:26px;height:26px;flex-shrink:0;background:var(--panel);border-radius:8px;color:var(--muted);font-size:12px}
+.hm-pack-section-copy{flex:1;min-width:0;font-weight:550}
+.hm-pack-sections small{display:block;color:var(--muted);font-weight:400;font-size:11px;margin-top:4px}
+.hm-study-packs .hm-pack-sections [aria-pressed=true]{border-color:var(--course-accent);box-shadow:inset 0 0 0 1px var(--course-accent)}
+.hm-pack-meter{display:block;height:3px;background:var(--border);border-radius:8px;overflow:hidden;margin-top:9px}
+.hm-pack-meter>span{display:block;height:100%;background:var(--course-accent)}
+.hm-pack-practice{margin:22px 0;padding:18px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.hm-study-packs .hm-pack-practice>h3{margin:0 0 12px;font-size:18px}
+.hm-study-packs .hm-field-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hm-study-packs .hm-field-grid label{margin:0 0 12px}
+.hm-study-packs select{width:100%;min-height:44px}
+.hm-study-packs .hm-pack-start{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:6px 0 12px}
+.hm-pack-start>.hm-primary{grid-column:1/-1}
+.hm-pack-count{display:inline-block;margin-left:8px;font-size:11px;opacity:.8}
+.hm-study-packs .hm-pack-resume{border:1px solid var(--border);border-left:3px solid var(--course-accent);border-radius:10px;padding:14px;margin:16px 0 0;background:var(--panel)}
+.hm-pack-resume p{margin:0 0 10px}
+.hm-pack-resume button{width:100%}
+.hm-pack-options{padding-bottom:12px}
+.hm-pack-options .hm-check{margin:14px 0;min-height:44px}
+.hm-pack-notice{padding:10px 12px;background:var(--panel);border-left:3px solid var(--course-accent);border-radius:8px;font-size:12px}
+.hm-pack-session-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:6px 0 12px;border-bottom:1px solid var(--border)}
+.hm-pack-session-head>button{flex:0 1 auto;max-width:100%}
+.hm-pack-session-head>div{flex:1;min-width:150px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.hm-pack-session-head progress{display:block;width:100%;height:5px;margin-top:7px;accent-color:var(--course-accent);border:0;border-radius:8px;overflow:hidden;background:var(--border)}
+.hm-pack-session-head progress::-webkit-progress-bar{background:var(--border)}
+.hm-pack-session-head progress::-webkit-progress-value{background:var(--course-accent)}
+.hm-study-packs .hm-pack-save-status{min-height:18px;font-size:11px;margin:6px 0 12px}
+.hm-pack-item{padding-top:4px}
+.hm-study-packs .hm-pack-item h3{font-size:20px;line-height:1.5;margin:8px 0 12px;outline:none}
+.hm-pack-glyph{font-family:'Noto Serif TC','Microsoft JhengHei','PingFang TC',serif;font-size:clamp(2.4rem,10vw,3.8rem);text-align:center;padding:22px 0;line-height:2.1;word-break:normal;overflow-wrap:anywhere}
+.hm-pack-glyph ruby{display:inline-block;margin:0 .08em}
+.hm-pack-glyph rt{font-family:inherit;font-size:1rem;color:var(--muted)}
+.hm-pack-circle{max-width:320px;margin:auto}
+.hm-pack-circle svg{width:100%;display:block;user-select:none;-webkit-user-select:none;border:1px solid var(--border);border-radius:12px;font-family:'Noto Serif TC','Microsoft JhengHei','PingFang TC',serif}
+.hm-study-packs fieldset{min-width:0;border:0;padding:0;margin:16px 0}
+.hm-study-packs legend{font-size:12px;color:var(--muted);margin-bottom:8px}
+.hm-pack-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.hm-study-packs .hm-pack-choices button{padding:12px;text-align:left}
+.hm-study-packs .hm-pack-choices [aria-pressed=true]{border-color:var(--course-accent);box-shadow:inset 0 0 0 1px var(--course-accent);background:var(--panel)}
+.hm-pack-item>.hm-primary{display:block;width:100%;margin:16px 0 8px}
+.hm-pack-item>.hm-primary+button,.hm-pack-item>button:last-child{margin-top:8px}
+.hm-pack-reveal,.hm-pack-comparison{margin-top:20px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--panel);outline:none;scroll-margin-top:65px}
+.hm-pack-reveal h4,.hm-pack-comparison h4{margin:0 0 10px;font-size:16px}
+.hm-pack-reveal .hm-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:16px}
+.hm-pack-reveal>button{width:100%;margin-top:16px}
+.hm-word-order-help{padding:12px;background:var(--panel);border-radius:10px}
+.hm-word-order-help p{margin:0 0 8px}
+.hm-word-order-help dl{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0}
+.hm-word-order-help dl>div{display:flex;gap:8px;align-items:baseline}
+.hm-word-order-help dt{font-size:1.2rem}
+.hm-word-order-help dd{margin:0}
+.hm-particle-help dl>div{flex:1 1 170px;min-width:0}
+.hm-particle-help dd{display:flex;flex-direction:column;gap:3px}
+.hm-particle-pinyin{color:var(--muted);font-size:13px}
+.hm-pack-complete{text-align:center;padding:32px 12px}
+.hm-pack-complete-icon{display:grid;place-items:center;width:52px;height:52px;margin:auto;border-radius:50%;background:var(--panel);color:var(--course-accent);font-size:28px}
+.hm-pack-complete p{color:var(--muted);max-width:36ch;margin:12px auto 20px}
+.hm-study-packs .hm-review{margin-top:1rem}
+@media(max-width:420px){
+  .hm-pack-sections{grid-template-columns:1fr}
+  .hm-study-packs .hm-field-grid{grid-template-columns:1fr;gap:0}
+  .hm-pack-stats>div{padding:0 9px}
+  .hm-pack-stats strong{font-size:23px}
+  .hm-study-packs .hm-pack-heading h2{font-size:26px}
+  .hm-study-packs .hm-pack-heading{gap:10px;padding-bottom:16px}
+  .hm-pack-heading .hm-caption{max-width:none}
+  .hm-pack-session-head>button{font-size:12px}
+  .hm-pack-choices{grid-template-columns:1fr}
+  .hm-pack-reveal,.hm-pack-comparison{padding:12px}
+}
+@media(prefers-reduced-motion:reduce){.hm-study-packs button{transition:none}}
+
+.hm .hm-study-packs button{font-size:14px}
+.hm .hm-study-packs summary{min-height:44px}
+.hm-study-packs>.hm-pack-resume{margin-bottom:16px}
+
+
+.hm-pack-practice{scroll-margin-top:65px;outline:none}
+
+
+.hm-pack-resume{scroll-margin-top:65px;outline:none}
+
+
+/* Cover the popup's actual padding without creating horizontal overflow. */
+.hm-popup:has(.hm-study-packs)>header::before{content:"";position:absolute;left:calc(0px - max(var(--hm-pad),env(safe-area-inset-left,0px)));right:calc(0px - max(var(--hm-pad),env(safe-area-inset-right,0px)));bottom:100%;height:64px;background:var(--surface);pointer-events:none}
+.hm-study-packs fieldset:disabled .hm-pack-choices button{opacity:1;color:var(--muted);cursor:default}
+.hm-study-packs fieldset:disabled .hm-pack-choices [aria-pressed=true]{color:inherit}

@@ -1,0 +1,25 @@
+import {test,expect} from '@playwright/test';
+import {openSdkWidget} from './sdk-host';
+test('compiled mode reads edited native Rems without mirroring content, with queue updates disabled',async({page})=>{
+  const host=await openSdkWidget(page,'study_packs',{nativeStudy:true});
+  await expect(host.frame.getByRole('heading',{name:'Editable native study list'})).toBeVisible().catch(async e=>{console.log('Native startup',JSON.stringify({calls:host.calls.slice(-12),errors:host.errors,text:await host.frame.locator('body').innerText()}));throw e;});
+  await host.frame.getByText('Study settings and course notes',{exact:true}).click();
+  await host.frame.getByLabel('Update linked RemNote card schedules (Good / Again)',{exact:true}).uncheck();
+  await host.frame.getByRole('button',{name:/Practice selected/}).click();
+  await host.frame.getByLabel('Your answer',{exact:true}).fill('alpha');await host.frame.getByRole('button',{name:'Submit and reveal'}).click();
+  await expect(host.frame.getByText('First model.',{exact:true})).toBeVisible();
+  await host.frame.getByRole('button',{name:'Save result and next'}).click();
+  await host.frame.getByRole('button',{name:'Save and return to dashboard'}).click();
+  await page.evaluate(()=>{(window as unknown as {editNativeStudyAnswer(value:string):void}).editNativeStudyAnswer('beta Explanation: Edited model.');});
+  await host.frame.getByText('Connect a RemNote study list',{exact:true}).click();
+  await host.frame.getByRole('button',{name:'Reload Rems'}).click();
+  const progress=host.frame.getByLabel('Course progress');
+  await expect(progress.locator('div').filter({hasText:'Attempted'})).toContainText('1 / 1');
+  await expect(progress.locator('div').filter({hasText:'Need practice'})).toContainText('0');
+  await host.frame.getByRole('button',{name:/Practice selected/}).click();
+  await host.frame.getByLabel('Your answer',{exact:true}).fill('beta');await host.frame.getByRole('button',{name:'Submit and reveal'}).click();
+  await expect(host.frame.getByText('Edited model.',{exact:true})).toBeVisible();await expect(host.frame.getByText('Correct first answer.')).toBeVisible();
+  expect(host.calls.some(c=>/updateCardRepetitionStatus|rem.setBackText|rem.setText|rem.setPracticeDirection/.test(c.methodName))).toBe(false);
+  expect(host.calls.some(c=>c.methodName==='storage.setSynced' && String(c.args.key).endsWith(':pack'))).toBe(false);
+  expect(host.errors).toEqual([]);
+});

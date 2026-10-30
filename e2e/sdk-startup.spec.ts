@@ -7,9 +7,9 @@ test.setTimeout(20000);
 test('compiled index registers both review widgets without a secure context', async ({ page }) => {
   const host = await openSdkWidget(page, 'index');
   expect(host.capabilities).toEqual({ secure: false, randomUUID: 'undefined', getRandomValues: 'function' });
-  await expect.poll(() => host.calls.filter(call => call.methodName === 'registerCommand').length).toBe(2);
+  await expect.poll(() => host.calls.filter(call => call.methodName === 'registerCommand').length).toBe(3);
   expect(host.calls.filter(call => call.methodName === 'registerWidget').map(call => call.args.fileName))
-    .toEqual(['hanzi_review', 'workbench', 'recall_review']);
+    .toEqual(['hanzi_review', 'workbench', 'study_packs', 'recall_review']);
   expect(host.errors).toEqual([]);
 });
 
@@ -61,17 +61,22 @@ test('compiled workbench creates and reuses recognition cards while excluding di
   expect(host.errors).toEqual([]);
 });
 
-test('compiled dictionary import previews authoritative readings, creates both directions, and edits cards without duplication', async ({ page }) => {
+test('compiled CC-CEDICT import links matching recordings, creates both directions, and edits cards without duplication', async ({ page }) => {
   test.setTimeout(45000);
-  await page.route('https://www.moedict.tw/uni/**', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({
-    title: '學習', heteronyms: [{ pinyin: 'xué xí', bopomofo: 'ㄒㄩㄝˊ ㄒㄧˊ', definitions: [{ def: '學習知識。' }] }],
-  }), headers: { 'Access-Control-Allow-Origin': '*' } }));
+  const externalRequests: string[] = [];
+  page.on('request', request => { if (/moedict|wiktionary|wikimedia|yojik/.test(request.url())) externalRequests.push(request.url()); });
   const host = await openSdkWidget(page, 'workbench', { focusedVocabulary: false });
-  const lookup = async () => {
+  const lookup = async (expected: string | RegExp = /to study/) => {
+    const more = host.frame.getByRole('button', { name: 'Import more words', exact: true });
+    if (await more.isVisible()) {
+      await more.click();
+      await host.frame.getByText('Study skills · 8 of 8 selected', { exact: true }).click();
+      await host.frame.getByRole('button', { name: 'All skills', exact: true }).click();
+    }
     await host.frame.getByLabel('Words to look up').fill('學習');
     await host.frame.getByLabel('Review before importing').check();
     await host.frame.getByRole('button', { name: 'Look up words' }).click();
-    await expect(host.frame.getByLabel('Study meanings for 學習')).toHaveValue(/to study/);
+    await expect(host.frame.getByLabel('Study meanings for 學習')).toHaveValue(expected);
   };
   await lookup();
   const originalHeight = await page.locator('#sdk-widget').evaluate(element => {
@@ -81,32 +86,42 @@ test('compiled dictionary import previews authoritative readings, creates both d
   await page.locator('#sdk-widget').evaluate((element, height) => { (element as HTMLIFrameElement).style.height = height; }, originalHeight);
   expect(host.calls.filter(call => call.methodName === 'rem.createRem')).toHaveLength(0);
   await host.frame.getByLabel('Study meanings for 學習').fill('study');
-  await host.frame.getByRole('button', { name: 'Import selected entries and translation cards' }).click();
-  await expect(host.frame.getByRole('button', { name: 'Edit imported 學習' })).toBeVisible();
-  expect(host.calls.filter(call => call.methodName === 'rem.createRem')).toHaveLength(2);
+  await host.frame.getByRole('button', { name: 'Import selected words' }).click();
+  await expect(host.frame.getByRole('button', { name: 'Edit imported 學習' })).toBeVisible({ timeout: 20000 });
+  expect(host.calls.filter(call => call.methodName === 'rem.createRem')).toHaveLength(9); // Library, word, and seven Rems for eight study directions.
   const metadata = () => host.calls.filter(call => call.methodName === 'rem.setPowerupProperty').map(call => JSON.parse((call.args.value as string[])[0]));
-  expect(metadata().filter(value => value.skill).map(value => value.skill)).toEqual(['english-to-chinese']);
+  expect(metadata().filter(value => value.skill).map(value => value.skill)).toEqual(['writing', 'english-to-chinese', 'pinyin', 'tones', 'character-choice', 'listening', 'pronunciation']);
   await host.frame.getByRole('button', { name: 'Edit imported 學習' }).click();
   await host.frame.getByLabel('Edit study meanings').fill('learn something new');
   await host.frame.getByRole('button', { name: 'Save vocabulary and update study cards' }).click();
-  await expect(host.frame.getByText('Vocabulary and linked study cards saved and read back.')).toBeVisible();
-  await host.frame.getByRole('region', { name: 'Edit vocabulary', exact: true }).screenshot({ path: test.info().outputPath('vocabulary-editor.png') });
-  const updated = metadata().filter(value => value.skill).slice(-1);
-  expect(updated.every(value => value.meaning === 'learn something new')).toBe(true);
-  expect(metadata().filter(value => value.version === 2).at(-1).dictionary.moe.definitions).toEqual(['學習知識。']);
-  expect(host.calls.filter(call => call.methodName === 'rem.setPracticeDirection')).toHaveLength(2);
+  await expect(host.frame.getByText('Vocabulary and linked study cards saved and read back.')).toBeVisible({ timeout: 20000 });
+  await page.frames().find(child => child.url().startsWith('https://hanzi-plugin.test/'))!.evaluate(() => window.scrollTo(0, 0));
+  await page.locator('#sdk-widget').screenshot({ path: test.info().outputPath('vocabulary-editor.png') });
+  const updated = metadata().filter(value => value.skill).slice(-7);
+  expect(updated.filter(value => value.skill !== 'writing').every(value => value.meaning === 'learn something new')).toBe(true);
+  expect(updated.find(value => value.skill === 'writing').prompt).toBe('learn something new (xué xí)');
+  const importedWord = metadata().filter(value => value.version === 2 && !value.skill).at(-1);
+  expect(importedWord.dictionary.english.provider).toBe('CC-CEDICT');
+  expect(importedWord.dictionary.moe).toBeUndefined();
+  expect(importedWord.audioSource.provider).toBe('Shtooka');
+  expect(importedWord.audioSource.pinyin).toBe('xué xí');
+  expect(metadata().filter(value => value.skill === 'listening').at(-1).referenceAudio).toBe(importedWord.audio[0]);
+  await expect(host.frame.getByRole('link', { name: 'CC-CEDICT: 學習' })).toHaveAttribute('href', /wdqb=%E5%AD%B8%E7%BF%92/);
+  await expect(host.frame.getByRole('link', { name: 'CC BY-SA 3.0 US' })).toBeVisible();
+  expect(externalRequests).toEqual([]); // Import resolves metadata locally; audio is fetched only on playback.
+  const directions = host.calls.filter(call => call.methodName === 'rem.setPracticeDirection').length;
+  expect(directions).toBe(14); // Each new card is paused until its metadata is confirmed, then activated.
   await host.frame.getByRole('button', { name: 'New vocabulary / dictionary import' }).click();
-  await lookup();
-  await host.frame.getByRole('button', { name: 'Import selected entries and translation cards' }).click();
-  await expect(host.frame.getByRole('button', { name: 'Edit imported 學習' })).toBeVisible();
-  expect(host.calls.filter(call => call.methodName === 'rem.createRem')).toHaveLength(2);
+  await lookup('study');
+  await host.frame.getByRole('button', { name: 'Import selected words' }).click();
+  await expect(host.frame.getByRole('button', { name: 'Edit imported 學習' })).toBeVisible({ timeout: 20000 });
+  expect(host.calls.filter(call => call.methodName === 'rem.createRem')).toHaveLength(9);
+  expect(host.calls.filter(call => call.methodName === 'rem.setPracticeDirection')).toHaveLength(directions);
+  await expect(host.frame.getByRole('article', { name: 'Import 學習', exact: true })).toContainText('learn something new');
   expect(host.errors).toEqual([]);
 });
-test('compiled workbench uses native list bullets and moves vocabulary with its linked cards', async ({page})=>{
+test('compiled workbench shares one vocabulary entry and its cards across native list memberships', async ({page})=>{
   test.setTimeout(45000);
-  await page.route('https://www.moedict.tw/uni/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({
-    title:'學習',heteronyms:[{pinyin:'xué xí',definitions:[{def:'學習知識。'}]}],
-  }),headers:{'Access-Control-Allow-Origin':'*'}}));
   const host=await openSdkWidget(page,'workbench',{focusedRemId:'fixture-external'});
   const selector=host.frame.getByLabel('List bullet');
   await host.frame.getByText('Manage lists',{exact:true}).click();
@@ -120,17 +135,20 @@ test('compiled workbench uses native list bullets and moves vocabulary with its 
   const first=await createList('Lesson 1');
   await host.frame.getByLabel('Words to look up').fill('學習');
   await host.frame.getByRole('button',{name:'Import words'}).click();
-  await expect(host.frame.getByRole('button',{name:'Edit imported 學習'})).toBeVisible();
-  const ids=host.calls.filter(c=>c.methodName==='rem.setPowerupProperty').map(c=>String(c.args.remId));
-  expect(new Set(ids).size).toBe(2);
+  await expect(host.frame.getByRole('button',{name:'Edit imported 學習'})).toBeVisible({ timeout: 20000 });
+  const ids=[...new Set(host.calls.filter(c=>c.methodName==='rem.setPowerupProperty').map(c=>String(c.args.remId)))];
+  expect(ids).toHaveLength(8);
   const parentOf=(id:string)=>host.calls.filter(c=>c.methodName==='rem.setParent'&&c.args.remId===id).at(-1)?.args.parentId;
-  expect(parentOf(ids[0])).toBe(first); expect(ids.slice(1).every(id=>parentOf(id)===ids[0])).toBe(true);
+  const library=parentOf(ids[0]);
+  expect(library).not.toBe(first); expect(ids.slice(1).every(id=>parentOf(id)===ids[0])).toBe(true);
+  expect(host.calls.some(c=>c.methodName==='rem.addTag'&&c.args.remId===ids[0]&&c.args.tagId===first)).toBe(true);
   await host.frame.getByRole('button',{name:'Edit imported 學習'}).click();
   const second=await createList('Lesson 2');
   const directions=host.calls.filter(c=>c.methodName==='rem.setPracticeDirection').length;
-  await host.frame.getByRole('button',{name:'Move vocabulary and cards to selected list'}).click();
-  await expect(host.frame.getByText('Vocabulary and linked cards moved and confirmed. Native review history is retained.')).toBeVisible();
-  expect(parentOf(ids[0])).toBe(second); expect(ids.slice(1).every(id=>parentOf(id)===ids[0])).toBe(true);
+  await host.frame.getByRole('button',{name:'Add vocabulary to selected list'}).click();
+  await expect(host.frame.getByText('Added to list. Cards and review history are shared.')).toBeVisible();
+  expect(parentOf(ids[0])).toBe(library); expect(ids.slice(1).every(id=>parentOf(id)===ids[0])).toBe(true);
+  expect(host.calls.some(c=>c.methodName==='rem.addTag'&&c.args.remId===ids[0]&&c.args.tagId===second)).toBe(true);
   expect(host.calls.filter(c=>c.methodName==='rem.setPracticeDirection')).toHaveLength(directions);
   const vocabId=ids[0];
   await page.evaluate(id=>(window as unknown as {changeNativeRem(id:string,parent:string,text?:string):void}).changeNativeRem(id,'fixture-external'),vocabId);
@@ -139,9 +157,9 @@ test('compiled workbench uses native list bullets and moves vocabulary with its 
   await host.frame.getByRole('button',{name:'Study cards',exact:true}).click();
   await host.frame.getByRole('button',{name:'Create tone recall card'}).click();
   await expect(host.frame.getByRole('button',{name:'Open last study card'})).toBeVisible();
-  const tone=host.calls.filter(c=>c.methodName==='rem.setPowerupProperty').at(-1)!;
-  expect(JSON.parse((tone.args.value as string[])[0]).skill).toBe('tones');
+  const tone=host.calls.filter(c=>c.methodName==='rem.setPowerupProperty').find(c=>JSON.parse((c.args.value as string[])[0]).skill==='tones')!;
   expect(parentOf(String(tone.args.remId))).toBe(vocabId);
+  expect(host.calls.filter(c=>c.methodName==='rem.createRem')).toHaveLength(11); // Two lists plus the original library, word and cards.
   expect(host.calls.some(c=>c.methodName==='rem.addPowerup'&&[first,second].includes(String(c.args.remId)))).toBe(false);
   expect(host.errors).toEqual([]);
 });

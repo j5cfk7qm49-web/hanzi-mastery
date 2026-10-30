@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { RNPlugin } from '@remnote/plugin-sdk';
-import { createVocabularyList, moveVocabularyToList, readVocabularyLists, resolveListParent, vocabularyParent, type VocabularyList } from '../services/lists';
+import { createVocabularyList, readVocabularyLists, resolveListParent, vocabularyParent, type VocabularyList } from '../services/lists';
+import { addVocabularyMembership } from '../services/library';
 
 export function VocabularyLists({ plugin, selectedId, vocabularyId, disabled, onSelected, onBusy }: {
   plugin: RNPlugin; selectedId: string; vocabularyId?: string; disabled?: boolean; onSelected(id: string): void; onBusy?(busy: boolean): void;
@@ -22,10 +23,10 @@ export function VocabularyLists({ plugin, selectedId, vocabularyId, disabled, on
   };
   const selection = selectedId || lists[0]?.id || '';
   return <section className="hm-vocabulary-lists" aria-label="Vocabulary lists">
-    <label>List<select aria-label="List bullet" value={selection} disabled={disabled || busy || !lists.length} onChange={e => onSelected(e.target.value)}>
+    <label>{vocabularyId ? 'Add to list' : 'List'}<select aria-label="List bullet" value={selection} disabled={disabled || busy || !lists.length} onChange={e => onSelected(e.target.value)}>
       {lists.map(list => <option key={list.id} value={list.id}>{list.name}</option>)}
     </select></label>
-    <details><summary>Manage lists</summary><p className="hm-caption">List → character or word → study cards. Focus any ordinary RemNote bullet to use it as a list.</p>
+    <details><summary>Manage lists</summary><p className="hm-caption">Lists share vocabulary and its original cards. Focus any ordinary RemNote bullet to use it as a list.</p>
     <div className="hm-actions"><button disabled={disabled || busy} onClick={() => void run(async () => {
       const id = vocabularyId ? await vocabularyParent(plugin, vocabularyId) : selectedId;
       const found = await readVocabularyLists(plugin, id);
@@ -41,11 +42,12 @@ export function VocabularyLists({ plugin, selectedId, vocabularyId, disabled, on
       draft.current = '';
       if (live.current) { setName(''); onSelected(id); setStatus('Created and selected a list bullet in Hanzi Mastery.'); }
     })}>Create list bullet</button>
-    {vocabularyId && <><p className="hm-muted">To change this vocabulary’s list, select its destination and move the entry together with its linked cards.</p>
+    {vocabularyId && <><p className="hm-muted">Add this word to another list while keeping its cards and history.</p>
       <button disabled={disabled || busy} onClick={() => void run(async () => {
-        const id = await moveVocabularyToList(plugin, vocabularyId, selection);
-        if (live.current) { onSelected(id); setStatus('Vocabulary and linked cards moved and confirmed. Native review history is retained.'); }
-      })}>Move vocabulary and cards to selected list</button></>}
+        const id = await resolveListParent(plugin, selection);
+        await addVocabularyMembership(plugin, vocabularyId, id);
+        if (live.current) { onSelected(id); setStatus('Added to list. Cards and review history are shared.'); }
+      })}>Add vocabulary to selected list</button></>}
     </details>
     {error && <p role="alert" className="hm-error">{error}</p>}{status && <p role="status">{status}</p>}
   </section>;

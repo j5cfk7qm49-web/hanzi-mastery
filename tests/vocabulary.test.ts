@@ -1,5 +1,7 @@
 import { expect, it } from 'vitest';
-import { importDictionaryCandidate, prepareDictionaryImport, readVocabulary, updateVocabulary } from '../src/services/vocabulary';
+import { importDictionaryCandidate as importCandidate, prepareDictionaryImport, readVocabulary, updateVocabulary } from '../src/services/vocabulary';
+const importDictionaryCandidate = (...[plugin, candidate, options]: Parameters<typeof importCandidate>) =>
+  importCandidate(plugin, candidate, { skills: ['english-to-chinese', 'chinese-to-english'], ...options });
 import { memoryRemNote as api } from './helpers/remnote-memory';
 import { createVocabularyList, moveVocabularyToList } from '../src/services/lists';
 import type { DictionaryCandidate } from '../src/services/dictionary';
@@ -17,7 +19,7 @@ it('imports one vocabulary entry and one bidirectional card, reusing them on con
 });
 it('resumes a partially imported card without duplicating the vocabulary or successful card', async () => {
   const a = api(); a.fail('english-to-chinese');
-  await expect(importDictionaryCandidate(a.plugin, candidate)).rejects.toThrow('temporary');
+  expect((await importDictionaryCandidate(a.plugin, candidate)).cardErrors.join(' ')).toContain('temporary');
   await importDictionaryCandidate(a.plugin, candidate);
   expect(a.createRem).toHaveBeenCalledTimes(2);
 });
@@ -50,17 +52,29 @@ it('rejects invalid edits before writing vocabulary or changing linked schedules
   await expect(updateVocabulary(a.plugin, original.id, { ...original.vocabulary, meanings: [] })).rejects.toThrow('English study meaning');
   expect((await readVocabulary(a.plugin, original.id)).meanings).toEqual(['to study']);
 });
-it('scopes repeated imports to native list bullets and reuses an entry after a native move', async () => {
+
+it('edits linked card wording without moving cards the user placed elsewhere', async () => {
+  const a = api(), original = await importDictionaryCandidate(a.plugin, candidate);
+  const card = [...a.rems.values()].find(rem => rem.parent === original.id)!;
+  await card.setParent('collection'); card.setParent.mockClear(); card.setPracticeDirection.mockClear();
+  await updateVocabulary(a.plugin, original.id, { ...original.vocabulary, meanings: ['to learn'] });
+  expect(card.parent).toBe('collection');
+  expect(card.setParent).not.toHaveBeenCalled();
+  expect(card.setPracticeDirection).not.toHaveBeenCalled();
+  expect(JSON.parse(await card.getPowerupProperty()).meaning).toBe('to learn');
+});
+it('shares repeated imports across native list memberships and respects a native move', async () => {
   const a=api(), firstList=await createVocabularyList(a.plugin,'Lesson 1'), secondList=await createVocabularyList(a.plugin,'Lesson 2');
   const first=await importDictionaryCandidate(a.plugin,candidate,{parentId:firstList});
   await moveVocabularyToList(a.plugin,first.id,secondList);
   const afterMove=await importDictionaryCandidate(a.plugin,candidate,{parentId:secondList});
   expect(afterMove.id).toBe(first.id);
   const another=await importDictionaryCandidate(a.plugin,candidate,{parentId:firstList});
-  expect(another.id).not.toBe(first.id);
+  expect(another.id).toBe(first.id);
   expect(a.rems.get(first.id)!.parent).toBe(secondList);
-  expect(a.rems.get(another.id)!.parent).toBe(firstList);
-  expect(a.createRem).toHaveBeenCalledTimes(6);
+  expect(a.rems.get(another.id)!.parent).toBe(secondList);
+  expect((await a.rems.get(first.id)!.getTagRems()).map(tag=>tag._id)).toEqual(expect.arrayContaining([firstList,secondList]));
+  expect(a.createRem).toHaveBeenCalledTimes(4);
 });
 it('inventories a list once per batch and reuses original flat imports without overwriting edits', async () => {
   const a=api(), first=await importDictionaryCandidate(a.plugin,candidate);
@@ -72,13 +86,13 @@ it('inventories a list once per batch and reuses original flat imports without o
   const reads=a.rems.get('collection')!.getChildrenRem; reads.mockClear();
   expect((await importDictionaryCandidate(a.plugin,candidate,{session})).id).toBe(first.id);
   const other={...candidate,traditional:'習',pinyin:'xí',dictionary:{...candidate.dictionary,
-    moe:{...candidate.dictionary.moe,pinyin:'xí',url:'https://www.moedict.tw/uni/習'}}};
+    moe:{...candidate.dictionary.moe!,pinyin:'xí',url:'https://www.moedict.tw/uni/習'}}};
   await importDictionaryCandidate(a.plugin,other,{session});
   await importDictionaryCandidate(a.plugin,other,{session});
   expect(reads).not.toHaveBeenCalled(); expect(a.createRem).toHaveBeenCalledTimes(4);
 });
 
-it('keeps legacy translation cards and disabled directions when grouping a repeated import', async () => {
+it('keeps legacy translation card locations and disabled directions on repeated import', async () => {
   const a=api(), {ensureRecallCard}=await import('../src/services/recall');
   const original=await importDictionaryCandidate(a.plugin,candidate);
   const bothKey=`hm:v3:card:${original.id}:english-to-chinese`;
@@ -92,7 +106,7 @@ it('keeps legacy translation cards and disabled directions when grouping a repea
   await importDictionaryCandidate(a.plugin,candidate);
   expect(a.createRem).toHaveBeenCalledTimes(calls);
   for(const id of ids) {
-    expect(a.rems.get(id)!.parent).toBe(original.id);
+    expect(a.rems.get(id)!.parent).toBe('collection');
     expect(a.rems.get(id)!.setPracticeDirection).not.toHaveBeenCalled();
   }
 });

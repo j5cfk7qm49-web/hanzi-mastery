@@ -13,7 +13,7 @@ async function isStudyRem(rem: RemObject): Promise<boolean> {
 async function nameOf(plugin: RNPlugin, rem: RemObject): Promise<string> {
   return (await plugin.richText.toString(rem.text || [])).trim() || '(untitled bullet)';
 }
-/** Parent bullets are the list model. There is no separate list tag or membership database. */
+/** Lists are ordinary bullets; vocabulary membership uses those bullets as native tags. */
 export async function resolveListParent(plugin: RNPlugin, id?: string): Promise<string> {
   const parentId = id || await ensureCollection(plugin);
   const rem = await plugin.rem.findOne(parentId);
@@ -25,21 +25,24 @@ export async function vocabularyParent(plugin: RNPlugin, id: string): Promise<st
   const rem = await plugin.rem.findOne(id);
   if (!rem) throw new Error('The vocabulary entry is unavailable.');
   const parent = await rem.getParentRem();
+  if (parent?._id === await plugin.storage.getSynced<string>('hm:v6:library')) return ensureCollection(plugin);
   return resolveListParent(plugin, parent?._id);
 }
 export async function readVocabularyLists(plugin: RNPlugin, selectedId?: string): Promise<VocabularyList[]> {
   const rootId = await plugin.storage.getSynced<string>('hm:v2:collection');
   const root = rootId ? await plugin.rem.findOne(rootId) : undefined;
-  const lists: VocabularyList[] = [{ id: root?._id || '', name: 'Hanzi Mastery (default)' }];
+  const lists: VocabularyList[] = [{ id: root?._id || '', name: 'All words and characters' }];
+  const libraryId = await plugin.storage.getSynced<string>('hm:v6:library');
   if (root) {
     for (const reference of await root.getChildrenRem()) {
       const child = await plugin.rem.findOne(reference._id);
-      if (child && !await isStudyRem(child)) lists.push({ id: child._id, name: await nameOf(plugin, child) });
+      if (child && child._id !== libraryId && !await isStudyRem(child)) lists.push({ id: child._id, name: await nameOf(plugin, child) });
     }
   }
-  if (selectedId && !lists.some(list => list.id === selectedId)) {
-    const selected = await plugin.rem.findOne(selectedId);
-    if (selected && !await isStudyRem(selected)) lists.push({ id: selectedId, name: await nameOf(plugin, selected) });
+  for (const id of [...await plugin.storage.getSynced<string[]>('hm:v6:lists') || [], selectedId]) {
+    if (!id || id === libraryId || lists.some(list => list.id === id)) continue;
+    const selected = await plugin.rem.findOne(id);
+    if (selected && !await isStudyRem(selected)) lists.push({ id, name: await nameOf(plugin, selected) });
   }
   return lists;
 }
@@ -116,19 +119,25 @@ export async function moveVocabularyToList(plugin: RNPlugin, vocabularyId: strin
 /** Character headings come first; other list bullets retain their relative order. */
 export async function sortVocabularyList(plugin: RNPlugin, listId?: string): Promise<void> {
   const parentId = await resolveListParent(plugin, listId), parent = await plugin.rem.findOne(parentId);
-  const entries: { id: string; characters: string; reading: string }[] = [];
-  for (const child of await parent!.getChildrenRem()) {
+  if (!parent) throw new Error('The selected list bullet is unavailable.');
+  const children = await parent.getChildrenRem(), order = children.map(child => child._id);
+  const entries: { rem: RemObject; characters: string; reading: string }[] = [];
+  for (const child of children) {
     const rem = await plugin.rem.findOne(child._id);
     if (!rem || !await rem.hasPowerup(VOCAB_POWERUP)) continue;
     const value = JSON.parse(await rem.getPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT));
-    if (typeof value.traditional !== 'string') throw new Error('A vocabulary heading has invalid character metadata.');
-    entries.push({ id: rem._id, characters: value.traditional, reading: value.pinyin || '' });
+    if (!value || typeof value.traditional !== 'string' || (value.pinyin !== undefined && typeof value.pinyin !== 'string')) throw new Error('A vocabulary heading has invalid character metadata.');
+    entries.push({ rem, characters: value.traditional, reading: value.pinyin || '' });
   }
   const collator = new Intl.Collator('zh-Hant');
-  entries.sort((a, b) => collator.compare(a.characters, b.characters) || a.reading.localeCompare(b.reading) || a.id.localeCompare(b.id));
+  entries.sort((a, b) => collator.compare(a.characters, b.characters) || a.reading.localeCompare(b.reading) || a.rem._id.localeCompare(b.rem._id));
   for (let i = 0; i < entries.length; i++) {
-    const rem = await plugin.rem.findOne(entries[i].id);
-    await rem!.setText([entries[i].characters]);
-    await rem!.setParent(parentId, i);
+    const { rem, characters } = entries[i];
+    if (await nameOf(plugin, rem) !== characters) await rem.setText([characters]);
+    // Avoid host mutations (and sync churn) when a heading is already in the right place.
+    if (order[i] !== rem._id) {
+      await rem.setParent(parentId, i);
+      order.splice(order.indexOf(rem._id), 1); order.splice(i, 0, rem._id);
+    }
   }
 }

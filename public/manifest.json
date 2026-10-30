@@ -4,8 +4,20 @@
   "name": "Hanzi Mastery",
   "author": "Hanzi Mastery contributors",
   "repoUrl": "https://github.com/j5cfk7qm49-web/hanzi-mastery",
-  "version": { "major": 0, "minor": 4, "patch": 0 },
-  "theme": [], "enableOnMobile": true, "requestNative": false, "unlisted": true,
-  "description": "Traditional-first writing, translation, pinyin and audio practice. Import MOE-derived readings with CC-CEDICT English, then edit vocabulary and linked study cards. RemNote controls scheduling.",
-  "requiredScopes": [{ "type": "All", "level": "ReadCreateModify" }]
+  "version": {
+    "major": 0,
+    "minor": 4,
+    "patch": 13
+  },
+  "theme": [],
+  "enableOnMobile": true,
+  "requestNative": false,
+  "unlisted": true,
+  "description": "Traditional-first handwriting, Pinyin, translation and audio practice from editable RemNote cards. Import vocabulary or connect study lists. RemNote controls scheduling.",
+  "requiredScopes": [
+    {
+      "type": "All",
+      "level": "ReadCreateModify"
+    }
+  ]
 }

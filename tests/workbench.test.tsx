@@ -1,8 +1,9 @@
 import React from 'react';
 import { beforeEach, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DEFAULT_SETTINGS } from '../src/core/config';
+import { memoryRemNote } from './helpers/remnote-memory';
 const mocks = vi.hoisted(() => ({ load:vi.fn(), create:vi.fn(), get:vi.fn(), set:vi.fn(),
   plugin:undefined as unknown }));
 vi.mock('@remnote/plugin-sdk', () => ({ usePlugin:()=>mocks.plugin, renderWidget:()=>{}, WidgetLocation:{Popup:'popup'} }));
@@ -16,10 +17,8 @@ import { Workbench } from '../src/widgets/workbench';
 beforeEach(()=>{
   mocks.get.mockReset().mockResolvedValue(undefined);mocks.set.mockReset();mocks.load.mockReset().mockResolvedValue({});
   mocks.create.mockReset().mockResolvedValue('card');
-  mocks.plugin={storage:{getSynced:mocks.get,setSynced:mocks.set},
-    widget:{getWidgetContext:async()=>({}),closePopup:async()=>{}},
-    rem:{findOne:async(id?:string)=>id?{setParent:async()=>{},setText:async()=>{},addPowerup:async()=>{},setPowerupProperty:async()=>{}}:undefined,
-      createRem:async()=>({_id:'vocabulary'})}};
+  mocks.plugin={...memoryRemNote().plugin,storage:{getSynced:mocks.get,setSynced:mocks.set},
+    widget:{getWidgetContext:async()=>({}),closePopup:async()=>{}}};
 });
 it('locks authoring fields while async validation is pending so the saved prompt matches the form',async()=>{
   const user=userEvent.setup();render(<Workbench/>);
@@ -52,7 +51,42 @@ it('can save a vocabulary entry for other skills without creating a writing card
   fireEvent.change(target,{target:{value:'人'}});
   fireEvent.change(screen.getByLabelText('English meaning / writing prompt'),{target:{value:'person'}});
   fireEvent.change(screen.getByLabelText('Pinyin (optional; included in writing prompt)'),{target:{value:'rén'}});
+  fireEvent.click(within(target.closest('fieldset')!).getByText('Vocabulary only'));
   fireEvent.click(screen.getByRole('button',{name:'Save vocabulary for other skills'}));
   await screen.findByRole('region',{name:'Other study skills'});
   expect(mocks.load).not.toHaveBeenCalled();expect(mocks.create).not.toHaveBeenCalled();
+});
+
+it('validates manual readings before creating any notes', async () => {
+  const a = memoryRemNote();
+  mocks.plugin = { ...a.plugin, widget: { getWidgetContext: async () => ({}), closePopup: async () => {} } };
+  render(<Workbench />);
+  await waitFor(() => expect((screen.getByRole('button', { name: 'Manual entry' }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole('button', { name: 'Manual entry' }));
+  fireEvent.change(screen.getByLabelText('Traditional characters'), { target: { value: '學生' } });
+  fireEvent.change(screen.getByLabelText('English meaning / writing prompt'), { target: { value: 'student' } });
+  fireEvent.change(screen.getByLabelText('Pinyin (optional; included in writing prompt)'), { target: { value: 'xué' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save vocabulary for other skills' }));
+  expect((await screen.findByRole('alert')).textContent).toContain('one pinyin syllable per character');
+  expect(a.createRem).not.toHaveBeenCalled();
+});
+
+it('keeps manual entry retryable after an unconfirmed save and reuses its reserved Rem', async () => {
+  const a = memoryRemNote(), draft = a.add('draft');
+  a.createRem.mockResolvedValue(draft);
+  draft.setPowerupProperty.mockResolvedValueOnce(undefined);
+  mocks.plugin = { ...a.plugin, widget: { getWidgetContext: async () => ({}), closePopup: async () => {} } };
+  render(<Workbench />);
+  await waitFor(() => expect((screen.getByRole('button', { name: 'Manual entry' }) as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(screen.getByRole('button', { name: 'Manual entry' }));
+  fireEvent.change(screen.getByLabelText('Traditional characters'), { target: { value: '人' } });
+  fireEvent.change(screen.getByLabelText('English meaning / writing prompt'), { target: { value: 'person' } });
+  fireEvent.click(within(screen.getByLabelText('Traditional characters').closest('fieldset')!).getByText('Vocabulary only'));
+  fireEvent.click(screen.getByRole('button', { name: 'Save vocabulary for other skills' }));
+  expect((await screen.findByRole('alert')).textContent).toContain('save was not confirmed');
+  const retry = screen.getByRole('button', { name: 'Save vocabulary for other skills' });
+  await waitFor(() => expect((retry as HTMLButtonElement).disabled).toBe(false));
+  fireEvent.click(retry);
+  await screen.findByRole('region', { name: 'Other study skills' });
+  expect(a.createRem).toHaveBeenCalledTimes(1);
 });

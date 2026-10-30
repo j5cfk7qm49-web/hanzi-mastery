@@ -9,6 +9,7 @@ import { LayoutHost } from './layout-host';
 import { RecallExercise } from '../src/ui/RecallExercise';
 import { SkillRepository } from '../src/services/recall';
 import { RECALL_SKILLS, type RecallSchema } from '../src/core/recall';
+import { StudyPacks } from '../src/studyPacks/StudyPacks';
 const params=new URLSearchParams(location.search);
 const embedded=params.get('frame')==='review';
 const cards=[...Array.from('學國書語聽體愛'),'學國','學學','人'].map((target,i)=>({id:`demo-${i}`,target,prompt:['study','country','book','language','listen','body','love','study country','study twice','person'][i]}));
@@ -69,4 +70,5 @@ function SkillHarness() {
     <RecallExercise fitToCard={embedded} context={{ cardId: 'skill-demo', schema }} repository={repository} revealed={revealed} suspended={suspended}
       isCurrent={async (allow = true) => !suspended && (allow || !revealed)} /></>;
 }
-ReactDOM.render(params.has('skill') ? <SkillHarness/> : params.has('host')?<LayoutHost/>:<Harness/>,document.getElementById('root'));
+const courseStorage={ getSynced:async<T,>(key:string) => {const value=localStorage.getItem(key);return value ? JSON.parse(value) as T : undefined;},setSynced:async(key:string,value:unknown) => {localStorage.setItem(key,JSON.stringify(value));} };
+ReactDOM.render(params.has('course') ? <section className="hm hm-workbench"><StudyPacks storage={courseStorage}/></section> : params.has('skill') ? <SkillHarness/> : params.has('host')?<LayoutHost/>:<Harness/>,document.getElementById('root'));

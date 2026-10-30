@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { renderWidget, usePlugin, WidgetLocation } from '@remnote/plugin-sdk';
 import { DEFAULT_SETTINGS, parseSettings, type Settings } from '../core/config';
 import { characters, parseWritingSchema, SETTINGS_KEY, VOCAB_POWERUP, SCHEMA_SLOT, type Vocabulary } from '../core/schema';
-import { createWritingCard } from '../services/remnote';
-import { resolveListParent, vocabularyParent, sortVocabularyList } from '../services/lists';
+import { resolveListParent, vocabularyParent } from '../services/lists';
 import { RECALL_POWERUP } from '../core/recall';
 import { WRITING_POWERUP } from '../core/schema';
 import { loadCharacter } from '../services/characters';
@@ -13,8 +12,13 @@ import { StudySkills } from '../ui/StudySkills';
 import { DictionaryImport } from '../ui/DictionaryImport';
 import { VocabularyEditor } from '../ui/VocabularyEditor';
 import { VocabularyLists } from '../ui/VocabularyLists';
-import { readVocabulary } from '../services/vocabulary';
+import { readVocabulary, validateVocabulary, createVocabularyEntry } from '../services/vocabulary';
+import { ensureWritingCard, ensureStudyCards } from '../services/cards';
+import { STUDY_SKILLS, type StudySkill } from '../core/study';
+import { SkillSelection } from '../ui/SkillSelection';
+import { VocabularyLibrary } from '../ui/VocabularyLibrary';
 import { WidgetBoundary } from '../ui/WidgetBoundary';
+import { StudyPacks } from '../studyPacks/StudyPacks';
 import '../ui/styles.css';
 export function Workbench() {
   const plugin = usePlugin();
@@ -24,13 +28,14 @@ export function Workbench() {
   const [vocabId, setVocabId] = useState(''), [status, setStatus] = useState(''), [error, setError] = useState('');
   const [busy, setBusy] = useState(false), guard = useRef(false), created = useRef('');
   const [initializing, setInitializing] = useState(true);
-  const pendingCard = useRef(''), needsVocabularySetup = useRef(true);
+  const needsVocabularySetup = useRef(true);
   const [createdCard, setCreatedCard] = useState('');
   const [referenceAudio, setReferenceAudio] = useState<string>();
   const [editable, setEditable] = useState<Vocabulary>(), [revision, setRevision] = useState(0);
   const [childBusy, setChildBusy] = useState(false);
   const [listId, setListId] = useState('');
-  const [view, setView] = useState<'import' | 'manual' | 'word' | 'cards' | 'settings'>('import');
+  const [view, setView] = useState<'import' | 'manual' | 'word' | 'cards' | 'settings' | 'library' | 'packs'>('import');
+  const [skills, setSkills] = useState<StudySkill[]>([...STUDY_SKILLS]), [separate, setSeparate] = useState(false);
   const useVocabulary = (id: string, v: Vocabulary, parentId?: string) => {
     setVocabId(id); created.current = id; needsVocabularySetup.current = false;
     setTraditional(v.traditional); setSimplified(v.simplified || ''); setPinyin(v.pinyin); setMeaning(v.meanings.join('; '));
@@ -50,7 +55,7 @@ export function Workbench() {
         const context = await plugin.widget.getWidgetContext<WidgetLocation.Popup>();
         const rem = await plugin.rem.findOne(context.contextData?.sourceRemId);
         if (rem && await rem.hasPowerup(VOCAB_POWERUP)) {
-          const v = JSON.parse(await rem.getPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT)) as Vocabulary;
+          const v = await readVocabulary(plugin, rem._id);
           if (!live) return;
           const parent = await vocabularyParent(plugin, rem._id);
           if (!live) return;
@@ -77,6 +82,10 @@ export function Workbench() {
     finally { guard.current = false; setBusy(false); }
   };
   const prepareVocabulary = async (withWritingData: boolean) => {
+    const vocab: Vocabulary = { version: 2, traditional, ...(simplified ? { simplified } : {}), pinyin,
+      meanings: meaning.split(';').map(s => s.trim()).filter(Boolean), source,
+      categories: category.split(';').map(s => s.trim()).filter(Boolean) };
+    validateVocabulary(vocab);
     const chars = characters(traditional);
     if (simplified) characters(simplified);
     if (!meaning.trim() || /\p{Script=Han}/u.test(meaning)) throw new Error('Use an English prompt without Chinese characters.');
@@ -84,60 +93,54 @@ export function Workbench() {
       ...(simplified ? {simplified} : {}), prompt: meaning.trim() + (pinyin.trim() ? ` (${pinyin.trim()})` : '') }));
     // Validate availability before creating anything.
     if (withWritingData) await Promise.all([...chars, ...Array.from(simplified)].map(c => loadCharacter(c, plugin.rootURL)));
-    const collection = needsVocabularySetup.current ? await resolveListParent(plugin, listId) : await vocabularyParent(plugin, created.current);
+    const collection = await resolveListParent(plugin, listId);
     let id = created.current;
-    if (!id) {
-      const rem = await plugin.rem.createRem();
-      if (!rem) throw new Error('RemNote could not create the vocabulary entry.');
-      id = rem._id; created.current = id; setVocabId(id);
-    }
     if (needsVocabularySetup.current) {
-      const vocab: Vocabulary = { version: 2, traditional, ...(simplified ? { simplified } : {}), pinyin,
-        meanings: meaning.split(';').map(s => s.trim()).filter(Boolean), source,
-        categories: category.split(';').map(s => s.trim()).filter(Boolean) };
-      const rem = await plugin.rem.findOne(id);
-      if (!rem) throw new Error('The new vocabulary entry is unavailable.');
-      await rem.setParent(collection);
-      await rem.setText([traditional]);
-      await rem.addPowerup(VOCAB_POWERUP);
-      await rem.setPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT, [JSON.stringify(vocab)]);
+      const saved = await createVocabularyEntry(plugin, vocab, { parentId: collection, separate, resumeId: id || undefined,
+        onCreate: newId => { created.current = newId; } });
+      id = saved.id; created.current = id;
       needsVocabularySetup.current = false;
-      setEditable(vocab);
+      setVocabId(id); setEditable(saved.vocabulary);
+      setTraditional(saved.vocabulary.traditional); setSimplified(saved.vocabulary.simplified || ''); setPinyin(saved.vocabulary.pinyin); setMeaning(saved.vocabulary.meanings.join('; '));
       setListId(collection);
-      await sortVocabularyList(plugin, collection);
     }
     return { id, collection };
   };
   const create = () => run(async () => {
     const { id } = await prepareVocabulary(true);
-    const cardId = await createWritingCard(plugin, { version: 2, skill: 'writing', vocabularyId: id, traditional,
-      ...(simplified ? { simplified } : {}), prompt: meaning.trim() + (pinyin.trim() ? ` (${pinyin.trim()})` : '') },
-      { parentId: id, resumeId: pendingCard.current || undefined, onCreate: newId => { pendingCard.current = newId; } });
+    const current = await readVocabulary(plugin, id);
+    const cardId = await ensureWritingCard(plugin, { version: 2, skill: 'writing', vocabularyId: id, traditional: current.traditional,
+      ...(current.simplified ? { simplified: current.simplified } : {}), prompt: current.meanings.join('; ') + (current.pinyin.trim() ? ` (${current.pinyin.trim()})` : '') });
     setCreatedCard(cardId);
     setView('cards'); setStatus(`Writing card added beneath ${traditional}.`);
   });
   const saveVocabulary = () => run(async () => {
-    await prepareVocabulary(false);
-    setView('cards'); setStatus('Word saved. Choose study cards to add.');
+    const { id } = await prepareVocabulary(false);
+    const errors = await ensureStudyCards(plugin, id, await readVocabulary(plugin, id), skills);
+    setView('cards'); setStatus(errors.length ? `Word saved. ${errors.join(' ')}` : 'Word and selected study cards saved.');
   });
   const startPractice = () => run(async () => {
     const chars = characters(settings.script === 'simplified' ? simplified : traditional);
     const data = await Promise.all(chars.map(c => loadCharacter(c, plugin.rootURL))); setPractice({ chars, data }); setIndex(0);
   });
-  return <section className="hm hm-workbench">
+  return <section className="hm hm-workbench hm-popup" aria-label="Hanzi Mastery workbench window" tabIndex={0}>
     <header><div><h1>Hanzi Mastery</h1><p className="hm-caption">Build your vocabulary. Practice every skill.</p></div><button onClick={() => void plugin.widget.closePopup()}>Close</button></header>
     <fieldset className="hm-form">
     {error && <p role="alert" className="hm-error">{error}</p>}
     {status && <p role="status">{status}</p>}
     {initializing && <p role="status">Loading settings and vocabulary…</p>}
-    <VocabularyLists plugin={plugin} selectedId={listId} vocabularyId={vocabId || undefined} disabled={busy || initializing || childBusy} onSelected={setListId} onBusy={setChildBusy} />
-    <nav className="hm-tabs" aria-label="Workbench pages">{(vocabId ? [['word', 'Word'], ['cards', 'Study cards'], ['settings', 'Settings']] : [['import', 'Import'], ['manual', 'Manual entry'], ['settings', 'Settings']]).map(([id, label]) => <button key={id} aria-current={view === id ? 'page' : undefined} disabled={busy || initializing || childBusy} onClick={() => { setView(id as typeof view); setStatus(''); setError(''); }}>{label}</button>)}</nav>
-    {vocabId && view !== 'settings' && <div className="hm-word-heading"><strong lang="zh-Hant">{traditional}</strong><div><span>{pinyin}</span><p>{meaning}</p></div></div>}
+    {view !== 'packs' && <VocabularyLists plugin={plugin} selectedId={listId} vocabularyId={vocabId || undefined} disabled={busy || initializing || childBusy} onSelected={setListId} onBusy={setChildBusy} />}
+    <nav className="hm-tabs" aria-label="Workbench pages">{[['import', 'Import'], ['library', 'Vocabulary'], ...(vocabId ? [['word', 'Word'], ['cards', 'Study cards']] : [['manual', 'Manual entry']]), ['packs', 'Midterm / course study'], ['settings', 'Settings']].map(([id, label]) => <button key={id} aria-current={view === id ? 'page' : undefined} disabled={busy || initializing || childBusy} onClick={() => { setView(id as typeof view); setStatus(''); setError(''); }}>{label}</button>)}</nav>
+    {vocabId && view !== 'settings' && view !== 'packs' && <div className="hm-word-heading"><strong lang="zh-Hant">{traditional}</strong><div><span>{pinyin}</span><p>{meaning}</p></div></div>}
     <div className="hm-workbench-page">
-    {!vocabId && <div hidden={view !== 'import'}><DictionaryImport plugin={plugin} parentId={listId} disabled={busy || initializing || childBusy} onBusy={setChildBusy} onOpen={async id => {
-      const v = await readVocabulary(plugin, id), parent = await vocabularyParent(plugin, id);
-      useVocabulary(id, v, parent); setCreatedCard(''); setStatus('Editing the imported vocabulary.');
-    }} /></div>}
+    {view === 'packs' && <StudyPacks plugin={plugin} storage={plugin.storage} assetRoot={plugin.rootURL} settings={settings} />}
+    <div hidden={view !== 'import'}><DictionaryImport plugin={plugin} parentId={listId} disabled={busy || initializing || childBusy} onBusy={setChildBusy} onOpen={async id => {
+      const v = await readVocabulary(plugin, id);
+      useVocabulary(id, v); setCreatedCard(''); setStatus('Editing the imported vocabulary.');
+    }} /></div>
+    {view === 'library' && <VocabularyLibrary plugin={plugin} listId={listId} disabled={busy || initializing || childBusy} onBusy={setChildBusy}
+      onOpen={async id => { useVocabulary(id, await readVocabulary(plugin, id)); setCreatedCard(''); }} />}
+    {vocabId && (view === 'word' || view === 'cards') && <button disabled={busy || childBusy} onClick={() => setView('import')}>Back to import</button>}
     {editable && view === 'word' && <VocabularyEditor key={vocabId} plugin={plugin} id={vocabId} initial={editable} disabled={busy || initializing || childBusy} onBusy={setChildBusy} onSaved={v => useVocabulary(vocabId, v)} />}
     {view === 'manual' && <fieldset className="hm-form" disabled={busy || initializing || childBusy || !!createdCard}>
     <h2>Add a word manually</h2><div className="hm-field-grid">
@@ -146,6 +149,8 @@ export function Workbench() {
     <label>Pinyin (optional)<input aria-label="Pinyin (optional; included in writing prompt)" value={pinyin} onChange={e => setPinyin(e.target.value)} /></label>
     </div>
     <label>English meaning / writing prompt <input value={meaning} onChange={e => setMeaning(e.target.value)} /></label>
+    <SkillSelection value={skills} onChange={setSkills} disabled={busy || initializing || childBusy} />
+    <label className="hm-check"><input type="checkbox" checked={separate} onChange={event => setSeparate(event.target.checked)} />Create a separate entry instead of reusing a matching word</label>
     <details><summary>Source & categories</summary><label>Categories, separated by semicolons <input value={category} onChange={e => setCategory(e.target.value)} disabled={!!vocabId} /></label>
     <label>Source <input value={source} onChange={e => setSource(e.target.value)} disabled={!!vocabId} /></label>
     </details></fieldset>}
@@ -158,14 +163,14 @@ export function Workbench() {
       await plugin.window.openRem(rem); await plugin.widget.closePopup();
     })}>Open created writing card</button>}
     {vocabId && !needsVocabularySetup.current && !busy && <fieldset className="hm-form" disabled={childBusy}><StudySkills key={`${vocabId}:${revision}`} plugin={plugin} vocabularyId={vocabId}
-      traditional={traditional} pinyin={pinyin} meaning={meaning} audio={referenceAudio} onBusy={setChildBusy} /></fieldset>}</>}
-    {!!vocabId && view !== 'settings' && <button className="hm-add-more" disabled={busy || childBusy} onClick={() => {
-      created.current = ''; pendingCard.current = ''; needsVocabularySetup.current = true;
+      traditional={traditional} pinyin={pinyin} meaning={meaning} audio={referenceAudio} audioSource={editable?.audioSource} onBusy={setChildBusy} /></fieldset>}</>}
+    {!!vocabId && view !== 'settings' && view !== 'packs' && <button className="hm-add-more" disabled={busy || childBusy} onClick={() => {
+      created.current = ''; needsVocabularySetup.current = true;
       setVocabId(''); setEditable(undefined); setCreatedCard(''); setTraditional(''); setSimplified(''); setPinyin(''); setMeaning('');
       setCategory(''); setSource('Manual'); setReferenceAudio(undefined); setStatus(''); setError(''); setPractice(undefined);
       setView('import');
     }} aria-label="New vocabulary / dictionary import">Add more words</button>}
-    {practice && view === 'cards' && <><h2>Practice: {practice.chars[index]}</h2><WriterCanvas key={settings.animationSpeed} character={practice.chars[index]} data={practice.data[index]} mode="learn" active settings={settings} generation={index}
+    {practice && (view === 'cards' || view === 'manual') && <><h2>Practice: {practice.chars[index]}</h2><WriterCanvas key={settings.animationSpeed} character={practice.chars[index]} data={practice.data[index]} mode="learn" active settings={settings} generation={index}
       onCorrect={() => {}} onMistake={() => {}} onComplete={() => {}} onError={() => setError('Practice canvas could not start.')} />
       <button onClick={() => setIndex(i => (i+1)%practice.chars.length)}>Next character</button>
       <p><a href={`plecoapi://x-callback-url/s?q=${encodeURIComponent(practice.chars[index])}`}>Look up in Pleco</a> · <a href="https://stroke-order.learningweb.moe.edu.tw/" target="_blank" rel="noreferrer">Taiwan MOE stroke reference</a></p></>}

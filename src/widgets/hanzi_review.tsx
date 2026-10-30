@@ -7,12 +7,13 @@ import { readReviewContext, stillCurrent, subscribeReview, type ReviewContext } 
 import { ReviewExercise } from '../ui/ReviewExercise';
 import { WidgetBoundary } from '../ui/WidgetBoundary';
 import '../ui/styles.css';
+import { StudyPackRepository } from '../studyPacks/repository';
 export function HanziReview() {
   const plugin = usePlugin();
   const [state, setState] = useState<{ context: ReviewContext; settings: Settings }>();
   const [error, setError] = useState('');
   const current = useRef<ReviewContext>();
-  const repository = useMemo(() => new MasteryRepository(plugin.storage), [plugin]);
+  const repository = useMemo(() => state?.context.nativeStudyPackId ? new StudyPackRepository(plugin.storage).writing(state.context.nativeStudyPackId) : new MasteryRepository(plugin.storage), [plugin,state?.context.nativeStudyPackId]);
   useEffect(() => {
     let live = true, running = false, dirty = false;
     const refresh = async () => {

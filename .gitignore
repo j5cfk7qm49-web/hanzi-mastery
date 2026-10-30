@@ -7,7 +7,8 @@ coverage/
 test-results/
 playwright-report/
 *.log
-docs/screenshots/
 sites/
-docs/APP_ACCEPTANCE_*.md
-docs/REVIEW_UI_REFRESH_*.md
+private_assets/
+reference_pdfs/
+*Handoff*.zip
+Hanzi_Mastery_Midterm_Codex_Handoff/

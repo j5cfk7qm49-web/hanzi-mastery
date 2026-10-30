@@ -46,11 +46,26 @@ async function collect(dir) {
 }
 await collect('dist');
 assert(files['dictionary/cedict.txt.gz'] && files['dictionary/SOURCE.md'], 'Dictionary data or attribution is missing');
+assert(files['audio/shtooka-index.json.gz'] && files['audio/SOURCE.md'], 'Recording metadata or attribution is missing');
+assert(files['audio/shtooka-index.json.gz'][0].length < 160 * 1024, 'Recording index unexpectedly grew');
+assert(files['audio/moe-index.json.gz'] && files['audio/MOE-CONCISE-USAGE-NOTICE.pdf'], 'MOE routing metadata or original usage notice is missing');
+assert(files['audio/moe-index.json.gz'][0].length < 48 * 1024, 'MOE index unexpectedly grew');
+assert.equal(createHash('sha256').update(files['audio/moe-index.json.gz'][0]).digest('hex'),
+  '8e20950146110d1fa2dfda7833bac4aef15dfacac938fc2146675a6de6ac9cb8', 'Bundled MOE routing metadata changed');
 assert.equal(createHash('sha256').update(files['dictionary/cedict.txt.gz'][0]).digest('hex'),
   '2680af828c0d949b544c9399b4dc8503788c99150ab73887600fed6b4f880b26', 'Bundled CC-CEDICT source changed');
-for (const required of ['manifest.json', 'index.html', 'index.js', 'index-sandbox.js', 'hanzi_review-sandbox.js', 'recall_review-sandbox.js', 'licenses/ARPHICPL.TXT']) assert(files[required], `Missing ${required}`);
+for (const required of ['manifest.json', 'index.html', 'index.js', 'index-sandbox.js', 'hanzi_review-sandbox.js', 'recall_review-sandbox.js', 'study_packs-sandbox.js', 'licenses/ARPHICPL.TXT', 'README.md', 'CHANGELOG.md']) assert(files[required], `Missing ${required}`);
+assert(!Object.keys(files).some(name => /private_assets|reference_pdfs|handoff|\.(mp3|m4a)$/i.test(name)), 'Private classroom assets must never enter the plugin upload');
 assert(dataFiles.length > 9000);
 assert(!Object.keys(files).some(name => /preview|harness|APP_ACCEPTANCE_|REVIEW_UI_REFRESH_|node_modules|\.tsx?$/.test(name)), 'Development source or local acceptance report leaked into upload package');
+assert.deepEqual(Object.keys(files).filter(name => name.endsWith('.md') && !name.startsWith('licenses/')).sort(), ['CHANGELOG.md', 'README.md', 'audio/SOURCE.md', 'dictionary/SOURCE.md', 'docs/MIDTERM_INTEGRATION.md'], 'Only canonical documentation, the course import manual, attribution and licenses belong in the upload');
+for (const name of ['README.md', 'CHANGELOG.md']) {
+  const markdown = new TextDecoder().decode(files[name][0]);
+  for (const [, target] of markdown.matchAll(/\]\(([^)]+)\)/g)) {
+    if (/^(https?:|#)/.test(target)) continue;
+    assert(files[target.split('#')[0]], `Broken packaged documentation link in ${name}: ${target}`);
+  }
+}
 for (const [group, data] of groups) {
   const packed = JSON.parse(new TextDecoder().decode(files[`data/${group}.json`][0]));
   assert.deepEqual(packed, data, `Character group ${group} changed during packaging`);
@@ -65,6 +80,7 @@ const zip = zipSync(files, { level: 9 });
 const extracted = unzipSync(zip);
 assert.equal(Object.keys(extracted).length, Object.keys(files).length);
 const manifest = JSON.parse(new TextDecoder().decode(extracted['manifest.json']));
+assert.equal(manifest.requestNative, false, 'The upload must not request native JavaScript execution');
 assert.equal([manifest.version.major, manifest.version.minor, manifest.version.patch].join('.'), pkg.version,
   'Upload manifest and package.json versions must match');
 await mkdir('release', { recursive: true });

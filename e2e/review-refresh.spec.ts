@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 import { drawCharacter } from './draw-character';
 
-for (const width of [320, 393, 1280]) for (const skill of ['english-to-chinese', 'chinese-to-english', 'pinyin', 'tones', 'character-choice', 'listening', 'pronunciation']) {
-  test(`${skill} fills its card and keeps native controls reachable at ${width}px`, async ({ page }) => {
+for (const beautiful of [false, true]) for (const width of [320, 393, 1280]) for (const skill of ['english-to-chinese', 'chinese-to-english', 'pinyin', 'tones', 'character-choice', 'listening', 'pronunciation']) {
+  test(`${beautiful ? 'Beautiful' : 'Compact'} ${skill} fills its card and keeps native controls reachable at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: width === 1280 ? 900 : 852 });
-    await page.goto(`/?host=mobile&width=${width}&reviewSkill=${skill}&audioFixture=1`);
+    await page.goto(`/?host=mobile&width=${width}&reviewSkill=${skill}&audioFixture=1${beautiful ? '&beautiful=1' : ''}`);
     const review = page.frameLocator('iframe'), writing = skill === 'english-to-chinese';
     const begin = review.getByRole('button', { name: writing ? 'Begin test' : skill === 'pronunciation' ? 'Begin spoken practice' : 'Begin recall test', exact: true });
     await begin.click();
-    if (width === 393) await page.screenshot({ path: `docs/screenshots/review-refresh-2026-10-22/${test.info().project.name}-${skill}-active-phone.png` });
+    if (width === 393) await page.screenshot({ path: test.info().outputPath(`${skill}-active-phone.png`) });
     if (writing) {
       const canvas = review.getByLabel('Chinese handwriting canvas'); await expect(canvas).toHaveAttribute('aria-busy', 'false');
       await drawCharacter(canvas, '人'); await expect(review.getByLabel('Result saved')).toBeVisible();
@@ -30,12 +30,16 @@ for (const width of [320, 393, 1280]) for (const skill of ['english-to-chinese',
     } else if (skill === 'character-choice') await expect(review.getByRole('radio')).toHaveCount(4);
     else if (skill === 'pronunciation') {
       await expect(review.getByRole('button', { name: 'Record pronunciation' })).toBeVisible();
-      await expect(review.getByRole('button', { name: 'Play reference audio' })).toBeVisible();
+      await expect(review.getByRole('button', { name: 'Play reference audio' })).toHaveCount(0);
+      await expect(review.getByRole('button', { name: 'I pronounced it correctly' })).toHaveCount(0);
+      await review.getByRole('button', { name: 'I’ve said it — compare with reference' }).click();
+      await expect(review.getByRole('button', { name: 'Play reference audio' })).toBeEnabled();
+      await expect(review.getByRole('button', { name: 'I pronounced it correctly' })).toBeDisabled();
     }
     expect(await review.locator('html').evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
     const frame = (await page.locator('iframe').boundingBox())!, pane = (await page.getByRole('main').boundingBox())!;
     expect(frame.y + frame.height).toBeLessThanOrEqual(pane.y + pane.height + 1);
     await expect(page.getByRole('button', { name: 'Native Show Answer (simulated)' })).toBeVisible();
-    if (width === 393) await page.screenshot({ path: `docs/screenshots/review-refresh-2026-10-22/${test.info().project.name}-${skill}-phone.png` });
+    if (width === 393) await page.screenshot({ path: test.info().outputPath(`${skill}-phone.png`) });
   });
 }

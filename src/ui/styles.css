@@ -1,6 +1,10 @@
-:root { color-scheme: light dark; font-family: system-ui, -apple-system, sans-serif; }
-* { box-sizing: border-box; }
-body { margin: 0; }
+.hm { color-scheme: light dark; font-family: system-ui, -apple-system, sans-serif; }
+.hm-card-editor { margin: 12px 0; padding: 14px; border: 1px solid var(--border); border-radius: 8px; }
+.hm-card-editor > .hm-badge { margin-left: 8px; }
+.hm-card-editor > p { margin-top: 8px; }
+.hm-workbench .hm-tabs { flex-wrap: wrap; }
+.hm-skill-selection legend { font-size: 13px; }
+.hm, .hm *, .hm *::before, .hm *::after { box-sizing: border-box; }
 .hm { --muted: #52666f; --border: #d4e0e3; --panel: #f5f9f9; --hm-pad: 16px; color: #213c43; background: #fff; padding: var(--hm-pad); padding-top: max(var(--hm-pad), env(safe-area-inset-top, 0px)); padding-left: max(var(--hm-pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--hm-pad), env(safe-area-inset-right, 0px)); padding-bottom: max(var(--hm-pad), env(safe-area-inset-bottom, 0px)); width: 100%; min-width: 0; max-width: 640px; margin: auto; font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
 .hm h1,.hm h2,.hm p { margin: 0 0 10px; }
 .hm h1 { font-size: 20px; } .hm h2 { font-size: 17px; }
@@ -73,9 +77,11 @@ body { margin: 0; }
 
 /* Writing reviews fill their host card. Workbench and study forms keep their document layout. */
 .hm-review { position: relative; display: flex; flex-direction: column; gap: 8px; max-width: none; padding: 8px; }
-.hm-review-fit { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; margin: 0; }
-html:has(.hm-review-fit), body:has(.hm-review-fit) { height: 100%; margin: 0; overflow: hidden; }
-.plugin:has(.hm-review-fit) { margin: 0 !important; padding: 0 !important; height: 100vh; height: 100dvh; }
+.hm-review-fit { height: 100%; min-height: 0; overflow: hidden; margin: 0; }
+html.hm-sandbox-document:has(.hm-review-fit), html.hm-sandbox-document body:has(.hm-review-fit) { height: 100%; margin: 0; overflow: hidden; }
+html.hm-sandbox-document .hm-review-fit, html.hm-sandbox-document .plugin:has(.hm-review-fit) { height: 100vh; height: 100dvh; }
+html.hm-sandbox-document .plugin:has(.hm-review-fit) { margin: 0 !important; padding: 0 !important; }
+html:not(.hm-sandbox-document) .plugin[data-plugin-id="hanzi_mastery_handwriting_v1"]:has(> .hm-review-fit) { margin: 0 !important; padding: 0 !important; height: 100%; min-height: 0; }
 .hm-review .hm-review-heading { display: flex; flex: none; flex-wrap: nowrap; gap: 8px; margin: 0; align-items: center; }
 .hm-review-heading-text { min-width: 0; flex: 1; }
 .hm-review .hm-review-prompt { font-size: 17px; line-height: 1.25; margin: 0 0 3px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
@@ -200,6 +206,13 @@ html:has(.hm-review-fit), body:has(.hm-review-fit) { height: 100%; margin: 0; ov
 @media (prefers-color-scheme: dark) { .hm-workbench { --muted: #a2a3ae; --border: #363740; --panel: #282930; --accent: #a4aaff; --surface: #202127; color: #eeeef2; } .hm-workbench .hm-primary { background: #6773df; border-color: #6773df; color: white; } }
 @media (max-width: 480px) { .hm-workbench { padding: 16px; } .hm-workbench h1 { font-size: 20px; } .hm-workbench .hm-section-heading .hm-badge { display: none; } .hm-field-grid { grid-template-columns: 1fr; gap: 0; } .hm-import-summary { gap: 9px; } .hm-workbench .hm-import-row > details { margin-left: 0; } }
 .hm.hm-workbench { background: var(--surface); }
+/* Popup frames have a bounded height. Scroll our own surface instead of relying
+   on RemNote's modal, which clips auto-sized iframe contents on desktop. */
+.hm.hm-popup { height: 85vh; height: 85dvh; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+html.hm-sandbox-document .hm.hm-popup { height: 100vh; height: 100dvh; }
+.hm-popup > header { position: sticky; top: -1px; z-index: 2; background: var(--surface); padding-block: 4px; }
+.hm-popup > header button, .hm .hm-study-packs button { min-height: 44px; }
+.hm .hm-study-packs input, .hm .hm-study-packs textarea, .hm .hm-study-packs select { font-size: 16px; }
 
 /* Shared review surface: a centered canvas and the same outcome hierarchy in every mode. */
 .hm-review-fit { display: flex; flex-direction: column; gap: 12px; padding: 14px 20px; }
@@ -210,9 +223,11 @@ html:has(.hm-review-fit), body:has(.hm-review-fit) { height: 100%; margin: 0; ov
 .hm-review-fit .hm-review-controls { width: 100%; max-width: 640px; margin-inline: auto; flex-wrap: wrap; }
 .hm-review-fit .hm-review-controls > button { flex-basis: 40%; }
 .hm.hm-recall { max-width: none; margin: 0; padding: 20px 32px; border: 0; border-radius: 0; gap: 16px; min-height: 560px; }
-.hm.hm-recall-fit { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
-html:has(.hm-recall-fit), body:has(.hm-recall-fit) { height: 100%; margin: 0; overflow: hidden; }
-.plugin:has(.hm-recall-fit) { margin: 0 !important; padding: 0 !important; height: 100dvh; }
+.hm.hm-recall-fit { height: 100%; min-height: 0; overflow: hidden; }
+html.hm-sandbox-document:has(.hm-recall-fit), html.hm-sandbox-document body:has(.hm-recall-fit) { height: 100%; margin: 0; overflow: hidden; }
+html.hm-sandbox-document .hm.hm-recall-fit, html.hm-sandbox-document .plugin:has(.hm-recall-fit) { height: 100vh; height: 100dvh; }
+html.hm-sandbox-document .plugin:has(.hm-recall-fit) { margin: 0 !important; padding: 0 !important; }
+html:not(.hm-sandbox-document) .plugin[data-plugin-id="hanzi_mastery_handwriting_v1"]:has(> .hm-recall-fit) { margin: 0 !important; padding: 0 !important; height: 100%; min-height: 0; }
 .hm-recall-heading { width: 100%; max-width: 1000px; margin: 0 auto !important; flex: none; }
 .hm-recall-heading h1 { font-size: 15px; margin: 0; color: var(--muted); font-weight: 500; }
 .hm-recall .hm-badge { font-size: 12px; }

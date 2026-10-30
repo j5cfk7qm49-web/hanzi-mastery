@@ -13,7 +13,7 @@ import { useRevealInHost } from './useRevealInHost';
 import { createId } from '../core/ids';
 import { ReviewResult } from './ReviewResult';
 export interface WritingSummary { id: string; at: number; passed: boolean; accuracy: number; total: number; failure?: RecallFailure }
-export interface ExerciseContext { cardId: string; vocabularyId: string; chars: string[]; prompt: string }
+export interface ExerciseContext { cardId: string; vocabularyId: string; chars: string[]; prompt: string; referenceGlyph?:string }
 export interface ExerciseProps {
   context: ExerciseContext; settings: Settings; repository: MasteryRepository;
   assetRoot?: string;
@@ -22,10 +22,11 @@ export interface ExerciseProps {
   fitToCard?: boolean;
   skillLabel?: string;
   regionLabel?: string;
+  standalone?: boolean;
   onSaveResult?(summary: WritingSummary): Promise<void>;
 }
 interface Outcome { character: string; result: Result; attempt: Attempt }
-export function ReviewExercise({ context, settings, repository, revealed, isCurrent, assetRoot, suspended = false, fitToCard = false, skillLabel = 'Writing', regionLabel = 'Hanzi Mastery handwriting review', onSaveResult }: ExerciseProps) {
+export function ReviewExercise({ context, settings, repository, revealed, isCurrent, assetRoot, suspended = false, fitToCard = false, skillLabel = 'Writing', regionLabel = 'Hanzi Mastery handwriting review', standalone = false, onSaveResult }: ExerciseProps) {
   const [loaded, setLoaded] = useState<{ data: CharacterJson[]; progress: Mastery[] }>();
   const [error, setError] = useState(''), [reload, setReload] = useState(0);
   const [mode, setMode] = useState<'ready' | 'test' | 'learn' | 'result'>('ready');
@@ -185,7 +186,7 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
   const summaryScore = outcomes.length ? Math.min(...outcomes.map(outcome => outcome.result.accuracy)) : 0;
   return <section className={`hm hm-review hm-writing hm-mode-${mode}${fitToCard ? ' hm-review-fit' : ''}`} aria-label={regionLabel}>
     <header className="hm-review-heading">
-      <div className="hm-review-heading-text"><h2 className="hm-review-prompt" title={context.prompt}>{context.prompt}</h2>
+      <div className="hm-review-heading-text"><h2 className="hm-review-prompt" title={context.prompt}>{context.prompt}{context.referenceGlyph && <span lang="zh-Hant" aria-label="Reference character"> · {context.referenceGlyph}</span>}</h2>
         <div className="hm-review-meta"><span>{skillLabel}</span><span>{mode === 'learn' ? 'Guided practice' : LEVEL_NAMES[currentLevel]}</span>
           <span>{Math.round(settings.thresholds[currentLevel]*100)}% to pass</span>
           {context.chars.length > 1 && <span>Character {index+1} / {context.chars.length}</span>}</div>
@@ -223,8 +224,8 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
       </div>}
       {mode === 'test' && inputNotice && <p className="hm-contact-notice" role="status">{inputNotice}</p>}
       {mode === 'result' && <ReviewResult title={passed ? 'Passed this writing test' : 'Writing test failed'} headingRef={resultHeading}
-        passed={passed} target={context.chars.join('')} score={`${Math.round(summaryScore*100)}%`} grade={grade}
-        saveState={saveState} savedText={savedText} onRetry={() => void save()} />}
+        passed={passed} target={context.chars.join('')} score={`${Math.round(summaryScore*100)}%`} grade={standalone ? undefined : grade}
+        saveState={saveState} savedText={savedText} savedLabel={standalone ? 'Course result saved' : undefined} onRetry={() => void save()} />}
     </div>
     <footer className="hm-review-controls">
       {loaded && mode === 'ready' && <><button className="hm-primary" disabled={revealed || suspended || checking} onClick={() => void start()}>{checking ? 'Checking current card…' : 'Begin test'}</button>
@@ -247,8 +248,8 @@ export function ReviewExercise({ context, settings, repository, revealed, isCurr
         {outcomes.map((o, i) => <p key={i}>{o.character}: {o.result.firstAttempts}/{o.result.totalStrokes} first attempts · {Math.round(o.result.accuracy*100)}% / {Math.round(o.result.threshold*100)}% required
           {o.result.accidents > 0 && ` · raw ${Math.round(o.result.rawAccuracy*100)}%, ${o.result.accidents} declared accident(s)`}
           {o.result.failure && ` · ${o.result.failure.replaceAll('-', ' ')}`}</p>)}
-        <label>Your rating choice <select value={grade} onChange={e => setGrade(e.target.value as Grade)}>{(['Again','Hard','Good','Easy'] as Grade[]).map(g => <option key={g} value={g}>{g}</option>)}</select></label>
-        <p>Your choice is advisory. Use RemNote's native controls to submit a rating.</p>
+        {!standalone && <><label>Your rating choice <select value={grade} onChange={e => setGrade(e.target.value as Grade)}>{(['Again','Hard','Good','Easy'] as Grade[]).map(g => <option key={g} value={g}>{g}</option>)}</select></label>
+        <p>Your choice is advisory. Use RemNote's native controls to submit a rating.</p></>}
       </>}
       {mode === 'test' && <button onClick={() => { closeSheet(); guided(); }}>End test for guided practice</button>}
       <h3>Recall and scoring</h3>

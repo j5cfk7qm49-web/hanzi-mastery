@@ -7,7 +7,11 @@ export function playReference(options: { text: string; url?: string; voice?: Spe
   onEnded(): void; onError(): void }): () => void {
   let live = true;
   if (options.url) {
-    const audio = new Audio(options.url);
+    const audio = new Audio();
+    // Older Safari/WebKit can play the collection's original FLAC but not Ogg Vorbis.
+    const shtooka = /^https:\/\/fsi-languages\.yojik\.eu\/audiocollections\/detailled\/cmn-caen-tan\/ogg\/(cmn-[a-f0-9]+)\.ogg$/.exec(options.url);
+    audio.src = shtooka && !audio.canPlayType('audio/ogg; codecs="vorbis"') && audio.canPlayType('audio/flac')
+      ? `https://fsi-languages.yojik.eu/audiocollections/detailled/cmn-caen-tan/flac/${shtooka[1]}.flac` : options.url;
     audio.onended = () => { if (live) options.onEnded(); };
     audio.onerror = () => { if (live) options.onError(); };
     void audio.play().catch(() => { if (live) options.onError(); });

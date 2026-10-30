@@ -14,10 +14,10 @@ it('uses ordinary bullets, reads native renames and includes a focused external 
   const vocab=a.add('v'); await vocab.addPowerup(VOCAB_POWERUP); await vocab.setParent('collection');
   const card=a.add('card'); await card.addPowerup(RECALL_POWERUP); await card.setParent('collection');
   expect(await readVocabularyLists(a.plugin,'external')).toEqual([
-    {id:'collection',name:'Hanzi Mastery (default)'},{id:listId,name:'Renamed lesson'},{id:'external',name:'Elsewhere'}]);
+    {id:'collection',name:'All words and characters'},{id:listId,name:'Renamed lesson'},{id:'external',name:'Elsewhere'}]);
   await vocab.setParent('external'); expect(await vocabularyParent(a.plugin,'v')).toBe('external');
   await expect(resolveListParent(a.plugin,'card')).rejects.toThrow('ordinary parent bullet');
-  expect([...a.saved.keys()]).toEqual(['hm:v2:collection']);
+  expect([...a.saved.keys()]).toEqual(['hm:v2:collection','hm:v6:library']);
 });
 it('nests linked cards beneath their word, retries a partial move, and retains practice directions and histories', async () => {
   const a=memoryRemNote(), destination=await createVocabularyList(a.plugin,'Lesson 2');
@@ -60,4 +60,20 @@ it('sorts word headings by Traditional characters and keeps ordinary bullets in 
   expect(ids.slice(0,3)).toEqual(['ten','water','book']);
   expect(ids.slice(3)).toEqual(['ordinary-a','ordinary-b']);
   expect(a.rems.get('book')!.text).toEqual(['書']);
+});
+
+it('does not rewrite or reorder an already sorted vocabulary list', async () => {
+  const a = memoryRemNote();
+  for (const [id, traditional] of [['water', '水'], ['book', '書']]) {
+    const rem = a.add(id); await rem.setParent('collection', 99); await rem.addPowerup(VOCAB_POWERUP);
+    await rem.setText([traditional]);
+    await rem.setPowerupProperty(VOCAB_POWERUP, SCHEMA_SLOT, [JSON.stringify({ traditional, pinyin: '' })]);
+    rem.setParent.mockClear(); rem.setText.mockClear();
+  }
+  const { sortVocabularyList } = await import('../src/services/lists');
+  await sortVocabularyList(a.plugin, 'collection');
+  for (const id of ['water', 'book']) {
+    expect(a.rems.get(id)!.setText).not.toHaveBeenCalled();
+    expect(a.rems.get(id)!.setParent).not.toHaveBeenCalled();
+  }
 });

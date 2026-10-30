@@ -1,13 +1,14 @@
 {
   "name": "hanzi-mastery-remnote",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.4.13",
   "description": "Traditional-first Chinese writing, translation and audio reviews with dictionary import and editable study cards for RemNote",
   "license": "MIT",
   "engines": {
     "node": ">=22.12.0"
   },
   "dependencies": {
+    "@noble/hashes": "2.4.0",
     "@remnote/plugin-sdk": "0.0.46",
     "fflate": "0.8.3",
     "hanzi-writer": "3.7.3",

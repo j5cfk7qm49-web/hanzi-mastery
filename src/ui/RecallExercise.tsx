@@ -99,10 +99,11 @@ function RecallFormExercise({ context, repository, revealed, suspended, isCurren
   };
   useEffect(() => { if (result) void save(); }, [result]);
   const disabled = !!suspended || checking || (revealed && !awaitingAssessment.current);
-  const referenceVisible = schema.skill === 'listening' || schema.skill === 'pronunciation' || mode === 'practice';
+  const referenceVisible = schema.skill === 'listening' || (schema.skill === 'pronunciation' && (spokenAttempt || mode === 'result')) || mode === 'practice';
   return <section className={`hm hm-review hm-recall hm-mode-${mode}${fitToCard ? ' hm-recall-fit' : ''}`} aria-label="Hanzi Mastery study review">
     <header className="hm-recall-heading"><h1>Hanzi Mastery</h1><span className="hm-badge">{RECALL_NAMES[schema.skill]}</span></header>
     <main className="hm-recall-body">
+    {schema.customPrompt && !result && mode !== 'practice' && <p>{schema.customPrompt}</p>}
     {!result && (mode === 'ready' || mode === 'test') && (schema.skill !== 'listening' || mode === 'ready') && <div className="hm-recall-prompt">
       {schema.skill !== 'listening' && schema.skill !== 'character-choice' && <h2 className="hm-target" lang="zh-Hant">{schema.traditional}</h2>}
       {schema.skill === 'character-choice' && <h2 className="hm-target hm-pinyin-target" lang="zh-Latn-pinyin">{schema.pinyin}</h2>}
@@ -123,14 +124,14 @@ function RecallFormExercise({ context, repository, revealed, suspended, isCurren
       {revealed && <p className="hm-muted">The answer is already visible. Study is available; testing is disabled.</p>}
     </>}
     {mode === 'test' && schema.skill === 'pronunciation' && !spokenAttempt && <>
-      <p>Say this word aloud before listening to the reference.</p>
+      <p>{schema.phoneticOnly ? 'Say this sound aloud before listening to the reference.' : 'Say this word aloud before listening to the reference.'}</p>
       <button className="hm-primary" disabled={disabled} onClick={() => setSpokenAttempt(true)}>I’ve said it — compare with reference</button>
     </>}
     {mode !== 'ready' && schema.skill === 'pronunciation' && <div className="hm-spoken-recording">
       <PronunciationRecorder disabled={!!suspended || checking || (mode === 'test' && (revealed || (spokenAttempt && !recorded))) || mode === 'result'}
         onReady={() => { setRecorded(true); setSpokenAttempt(true); }} />
     </div>}
-    {referenceVisible && mode !== 'ready' && <ReferenceAudio text={schema.traditional} url={schema.referenceAudio}
+    {referenceVisible && mode !== 'ready' && <ReferenceAudio text={schema.traditional} url={schema.referenceAudio} source={schema.audioSource} required={schema.referenceRequired}
       disabled={!!suspended || checking || (mode === 'test' && (revealed || (schema.skill === 'pronunciation' && !spokenAttempt)))} onPlayed={() => setHeard(true)} />}
     {mode === 'test' && schema.skill !== 'pronunciation' && <form onSubmit={e => { e.preventDefault(); e.stopPropagation(); void submit(); }}>
       {translation ? <label>Your meaning<input
@@ -169,12 +170,12 @@ function RecallFormExercise({ context, repository, revealed, suspended, isCurren
       <details className="hm-outcome-details"><summary>Answer details</summary>
       {result && <>
         {translation && result.answer && <p>Your first answer: {result.answer}</p>}
-        {result.assessment === 'checked' && schema.skill !== 'character-choice' && <p>{schema.skill !== 'tones' && `${result.spellingCorrect}/${result.total} syllables spelled correctly · `}{result.tonesCorrect}/{result.total} tones correct</p>}
+        {result.assessment === 'checked' && schema.skill !== 'character-choice' && <p>{schema.phoneticOnly ? `${result.spellingCorrect}/${result.total} sound labels identified correctly` : <>{schema.skill !== 'tones' && `${result.spellingCorrect}/${result.total} syllables spelled correctly · `}{result.tonesCorrect}/{result.total} tones correct</>}</p>}
         {schema.skill === 'character-choice' && result.answer && <p>Your choice: <span lang="zh-Hant">{result.answer}</span>{result.passed ? ' — correct' : ' — incorrect'}</p>}
       </>}
       {schema.skill === 'character-choice' && <ul className="hm-choice-readings" aria-label="Choice readings">{choices.map(choice =>
         <li key={choice.traditional}><span lang="zh-Hant">{choice.traditional}</span> — {choice.pinyin}</li>)}</ul>}
-      {!!syllables.length && <p>Dictionary tones: {syllables.map(s => s.tone).join(' · ')}. Connected speech may change how tones sound.</p>}
+      {!!syllables.length && !schema.phoneticOnly && <p>Dictionary tones: {syllables.map(s => s.tone).join(' · ')}. Connected speech may change how tones sound.</p>}
       </details>
       {!result && <p>Study only. This does not save a test result.</p>}
       {result && mode !== 'practice' && <button onClick={() => setMode('practice')}>Study with the reference</button>}

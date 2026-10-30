@@ -100,7 +100,7 @@ it('fails a character-choice attempt if the native answer is revealed during its
 it('allows spoken self-assessment without a recording and requires completed reference playback for success', async () => {
   const spokenSchema: RecallSchema = { ...schema, skill: 'pronunciation', referenceAudio: 'https://example.com/reference.mp3' };
   const { view, values } = setup({ context: { cardId: 'spoken', schema: spokenSchema } }); await begin(true);
-  expect((screen.getByRole('button', { name: 'Play reference audio' }) as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.queryByRole('button', { name: 'Play reference audio' })).toBeNull();
   expect(view.container.innerHTML).not.toContain('rén');
   fireEvent.click(screen.getByRole('button', { name: 'I’ve said it — compare with reference' }));
   expect((screen.getByRole('button', { name: 'I pronounced it correctly' }) as HTMLButtonElement).disabled).toBe(true);
@@ -147,6 +147,24 @@ it('keeps the listening target out of the question DOM and blocks checking until
   act(() => audio.play.mock.calls[0][0].onEnded());
   fireEvent.click(screen.getByRole('button', { name: 'Check first answer' }));
   await screen.findByText('Skill result saved and read back.');
+});
+it('plays an attached sound-label recording without leaking its answer or requiring an invented tone',async()=>{
+  const listening:RecallSchema={...schema,skill:'listening',traditional:'eng',pinyin:'eng',phoneticOnly:true,referenceRequired:true,referenceAudio:'https://example.com/eng.mp3'};
+  const {view,values}=setup({context:{cardId:'eng',schema:listening}});await begin();
+  expect(view.container.innerHTML).not.toContain('eng');
+  fireEvent.change(screen.getByLabelText('Your pinyin'),{target:{value:'eng1'}});
+  expect((screen.getByRole('button',{name:'Check first answer'}) as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.click(screen.getByRole('button',{name:'Play reference audio'}));expect(audio.play.mock.calls[0][0].url).toBe(listening.referenceAudio);
+  act(()=>audio.play.mock.calls[0][0].onEnded());fireEvent.click(screen.getByRole('button',{name:'Check first answer'}));
+  await screen.findByText('Skill result saved and read back.');expect(values.get(skillHistoryKey(listening))).toMatchObject({passed:1});
+  expect(screen.queryByText(/Dictionary tones:/)).toBeNull();expect(screen.queryByText(/tones correct/)).toBeNull();
+});
+it('keeps missing class recordings unavailable instead of offering a substitute synthesized voice',async()=>{
+  const listening:RecallSchema={...schema,skill:'listening',traditional:'ong',pinyin:'ong',phoneticOnly:true,referenceRequired:true};
+  const {store}=setup({context:{cardId:'missing',schema:listening}});await begin();
+  expect((screen.getByRole('button',{name:'Play reference audio'}) as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.queryByLabelText('Reference voice')).toBeNull();expect(screen.getByText(/A recording is required/)).toBeTruthy();
+  expect(audio.play).not.toHaveBeenCalled();expect(store.setSynced).not.toHaveBeenCalled();
 });
 it('a native answer reveal wins over a delayed correct-answer check', async () => {
   const { props, view, values } = setup(); await begin();

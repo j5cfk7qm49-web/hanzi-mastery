@@ -42,7 +42,7 @@ it('blocks stale work when the same card is presented again after a native ratin
   expect(await readReviewContext(plugin,DEFAULT_SETTINGS)).toMatchObject({reviewAt:123});
 });
 it('creates a forward-only card with a safe front, a real back and hidden structured linkage',async()=>{
-  const rem={_id:'new',setText:vi.fn(),setBackText:vi.fn(),setPracticeDirection:vi.fn(),addPowerup:vi.fn(),setPowerupProperty:vi.fn()};
+  const rem={_id:'new',setText:vi.fn(),setBackText:vi.fn(),setPracticeDirection:vi.fn(),addPowerup:vi.fn(),setPowerupProperty:vi.fn(),getPowerupProperty:async()=>JSON.stringify(schema)};
   const plugin={rem:{createRem:async()=>rem}} as unknown as RNPlugin;
   expect(await createWritingCard(plugin,schema)).toBe('new');
   expect(rem.setText.mock.calls[0][0].join('')).not.toContain('學');expect(rem.setBackText).toHaveBeenCalledWith(['學']);
@@ -50,7 +50,7 @@ it('creates a forward-only card with a safe front, a real back and hidden struct
   expect(rem.setPowerupProperty.mock.calls[0][2]).toEqual([JSON.stringify(schema)]);
 });
 it('keeps incomplete cards out of the queue and resumes an authoring retry using the same Rem',async()=>{
-  const rem={_id:'draft',setText:vi.fn(),setBackText:vi.fn(),setParent:vi.fn(),setPracticeDirection:vi.fn(),addPowerup:vi.fn(),setPowerupProperty:vi.fn()};
+  const rem={_id:'draft',setText:vi.fn(),setBackText:vi.fn(),setParent:vi.fn(),setPracticeDirection:vi.fn(),addPowerup:vi.fn(),setPowerupProperty:vi.fn(),getPowerupProperty:async()=>JSON.stringify(schema)};
   const create=vi.fn();const plugin={rem:{findOne:async()=>rem,createRem:create}} as unknown as RNPlugin;
   await createWritingCard(plugin,schema,{resumeId:'draft',parentId:'collection'});
   expect(create).not.toHaveBeenCalled();expect(rem.setPracticeDirection.mock.calls.map(c=>c[0])).toEqual(['none','forward']);
@@ -63,4 +63,23 @@ it('reuses a real neutral collection document rather than creating orphan writin
     rem:{findOne:async()=>rem,createRem:create}} as unknown as RNPlugin;
   expect(await ensureCollection(plugin)).toBe('collection');expect(await ensureCollection(plugin)).toBe('collection');
   expect(create).toHaveBeenCalledTimes(1);expect(rem.setIsDocument).toHaveBeenCalledWith(true);
+});
+
+it('does not activate a writing draft when the host silently drops its metadata', async () => {
+  const { memoryRemNote } = await import('./helpers/remnote-memory');
+  const a = memoryRemNote(), draft = a.add('draft');
+  draft.setPowerupProperty.mockResolvedValueOnce(undefined);
+  await expect(createWritingCard(a.plugin, schema, { resumeId: 'draft' })).rejects.toThrow('not confirmed');
+  expect(draft.setPracticeDirection.mock.calls).toEqual([['none']]);
+  await createWritingCard(a.plugin, schema, { resumeId: 'draft' });
+  expect(draft.setPracticeDirection).toHaveBeenLastCalledWith('forward');
+  expect(a.createRem).not.toHaveBeenCalled();
+});
+
+it('shares one default collection across concurrent first-use requests', async () => {
+  const { memoryRemNote } = await import('./helpers/remnote-memory');
+  const a = memoryRemNote(); a.saved.delete('hm:v2:collection');
+  const ids = await Promise.all([ensureCollection(a.plugin), ensureCollection(a.plugin), ensureCollection(a.plugin)]);
+  expect(new Set(ids).size).toBe(1);
+  expect(a.createRem).toHaveBeenCalledTimes(1);
 });

@@ -3,7 +3,9 @@ import { WRITING_POWERUP, SCHEMA_SLOT, parseWritingSchema, selectScript, charact
 import type { Settings } from '../core/config';
 import type { ExerciseContext } from '../ui/ReviewExercise';
 import { createId } from '../core/ids';
-export interface ReviewContext extends ExerciseContext { key: string; revealed: boolean; reviewAt: number }
+import { serializeByKey } from './serial';
+import { resolveNativeStudySchema } from './nativeStudyReviews';
+export interface ReviewContext extends ExerciseContext { key: string; revealed: boolean; reviewAt: number; nativeStudyPackId?:string }
 export async function readReviewContext(plugin: RNPlugin, settings: Settings): Promise<ReviewContext | null> {
   let phase = 'widget context';
   try {
@@ -20,15 +22,16 @@ export async function readReviewContext(plugin: RNPlugin, settings: Settings): P
     phase = 'writing Powerup';
     if (!rem || !await rem.hasPowerup(WRITING_POWERUP)) return null;
     phase = 'writing metadata';
-    const schema = parseWritingSchema(await rem.getPowerupProperty(WRITING_POWERUP, SCHEMA_SLOT));
+    const schema = await resolveNativeStudySchema(plugin,rem,parseWritingSchema(await rem.getPowerupProperty(WRITING_POWERUP, SCHEMA_SLOT))) as WritingSchema;
     phase = 'script selection';
-    const target = selectScript(schema, settings.script);
+    const target = selectScript(schema, schema.nativeStudy ? 'traditional' : settings.script);
     phase = 'lookback state';
     if (await plugin.queue.inLookbackMode()) return null;
     phase = 'answer visibility';
     const lastReviewAt = (card.repetitionHistory || []).reduce((at, r) => Math.max(at, r.date), 0);
     return { cardId: card._id, vocabularyId: schema.vocabularyId, chars: characters(target), prompt: schema.prompt,
-      key: `${card._id}:${lastReviewAt}:${target}:${JSON.stringify(settings)}`, reviewAt: lastReviewAt,
+      referenceGlyph:schema.referenceGlyph,nativeStudyPackId:schema.nativeStudy?.studyPackId,
+      key: `${card._id}:${lastReviewAt}:${target}:${schema.prompt}:${schema.referenceGlyph||''}:${JSON.stringify(settings)}`, reviewAt: lastReviewAt,
       revealed: widget.revealed || await plugin.queue.hasRevealedAnswer() };
   } catch { throw new Error(`Hanzi Mastery could not read ${phase}. Testing is blocked; check the card configuration or host API support.`); }
 }
@@ -48,15 +51,17 @@ export function subscribeReview(plugin: RNPlugin, refresh: () => void, reveal: (
     plugin.event.removeListener(AppEvents.RevealAnswer, key);
   };
 }
-export async function ensureCollection(plugin: RNPlugin): Promise<string> {
-  const saved = await plugin.storage.getSynced<string>('hm:v2:collection');
-  if (saved && await plugin.rem.findOne(saved)) return saved;
-  const collection = await plugin.rem.createRem();
-  if (!collection) throw new Error('Could not create the Hanzi Mastery document.');
-  await collection.setText(['Hanzi Mastery']);
-  await collection.setIsDocument(true);
-  await plugin.storage.setSynced('hm:v2:collection', collection._id);
-  return collection._id;
+export function ensureCollection(plugin: RNPlugin): Promise<string> {
+  return serializeByKey(plugin.storage, 'hm:v2:collection', async () => {
+    const saved = await plugin.storage.getSynced<string>('hm:v2:collection');
+    if (saved && await plugin.rem.findOne(saved)) return saved;
+    const collection = await plugin.rem.createRem();
+    if (!collection) throw new Error('Could not create the Hanzi Mastery document.');
+    await collection.setText(['Hanzi Mastery']);
+    await collection.setIsDocument(true);
+    await plugin.storage.setSynced('hm:v2:collection', collection._id);
+    return collection._id;
+  });
 }
 export async function createWritingCard(plugin: RNPlugin, schema: WritingSchema, options: {
   parentId?: string; resumeId?: string; onCreate?(id: string): void;
@@ -71,6 +76,10 @@ export async function createWritingCard(plugin: RNPlugin, schema: WritingSchema,
   await rem.setBackText([schema.traditional + (schema.simplified ? ' / ' + schema.simplified : '')]);
   await rem.addPowerup(WRITING_POWERUP);
   await rem.setPowerupProperty(WRITING_POWERUP, SCHEMA_SLOT, [JSON.stringify(schema)]);
+  try {
+    const confirmed = parseWritingSchema(await rem.getPowerupProperty(WRITING_POWERUP, SCHEMA_SLOT));
+    if (JSON.stringify(confirmed) !== JSON.stringify(schema)) throw new Error('Mismatch');
+  } catch { throw new Error('Writing-card metadata was not confirmed. The draft remains out of the review queue; retry.'); }
   await rem.setPracticeDirection('forward');
   return rem._id;
 }

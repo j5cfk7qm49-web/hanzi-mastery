@@ -1,9 +1,13 @@
-// Scope host layout changes to this plugin's handwriting iframe in the current card.
+// Scope host layout changes to this plugin's sandbox frame or native widget.
 // The native answer/rating controls are outside rn-queue__content and remain untouched.
-const frame = ':is(iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=hanzi_review"], iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=recall_review"])';
+// Keep these free of :has(): they are themselves used inside :has(), and
+// nested :has() is invalid in WebKit and other standards-conforming engines.
+const nativeWriting = '.plugin[data-plugin-id="hanzi_mastery_handwriting_v1"] > .hm-writing.hm-review-fit';
+const nativeStudy = '.plugin[data-plugin-id="hanzi_mastery_handwriting_v1"] > .hm-recall-fit';
+const frame = `:is(iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=hanzi_review"], iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=recall_review"], ${nativeWriting}, ${nativeStudy})`;
 const content = `.rn-queue__content:has(${frame})`;
 const queue = `.rn-queue:has(${frame})`;
-const studyFrame = 'iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=recall_review"]';
+const studyFrame = `:is(iframe[data-plugin-id="hanzi_mastery_handwriting_v1"][src*="widgetName=recall_review"], ${nativeStudy})`;
 const studyContent = `.rn-queue__content:has(${studyFrame})`;
 export const REVIEW_HOST_CSS = `
 /* Character headings organize notes but must not disclose production/listening

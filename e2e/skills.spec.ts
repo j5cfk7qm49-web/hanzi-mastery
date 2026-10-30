@@ -42,9 +42,12 @@ test('listening hides the answer and gates grading on available, completed playb
 test('spoken practice preserves a local clip and clearly labels self-assessment', async ({ page, browserName }) => {
   await page.route('https://hanzi-audio.test/reference.wav', route => route.fulfill({ body: fixtureWav(), contentType: 'audio/wav', headers: { 'Access-Control-Allow-Origin': '*' } }));
   await page.goto('/?skill=pronunciation&audioFixture=1'); await page.getByRole('button', { name: 'Begin spoken practice' }).click();
+  await expect(page.getByRole('button', { name: 'Play reference audio' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'I pronounced it correctly' })).toHaveCount(0);
   await page.getByText('Use an audio file', { exact: true }).click();
   await page.getByLabel('Or choose a pronunciation recording').setInputFiles({ name: 'test.wav', mimeType: 'audio/wav', buffer: fixtureWav() });
   await expect(page.getByLabel('Your pronunciation recording')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'I’ve said it — compare with reference' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'I pronounced it correctly' })).toBeDisabled();
   await page.getByRole('button', { name: 'Play reference audio' }).click();
   if (browserName === 'webkit' && process.platform === 'win32') {
@@ -81,8 +84,11 @@ test('spoken comparison works without a microphone or recording and waits for th
   await page.route('https://hanzi-audio.test/reference.wav', route => route.fulfill({ body: fixtureWav(), contentType: 'audio/wav' }));
   await page.goto('/?skill=pronunciation&audioFixture=1');
   await page.getByRole('button', { name: 'Begin spoken practice' }).click();
-  await expect(page.getByRole('button', { name: 'Play reference audio' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Play reference audio' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'I pronounced it correctly' })).toHaveCount(0);
+  await expect(page.locator('.hm-result-reading')).toHaveCount(0);
   await page.getByRole('button', { name: 'I’ve said it — compare with reference' }).click();
+  await expect(page.getByRole('button', { name: 'Play reference audio' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'I pronounced it correctly' })).toBeDisabled();
   await page.getByRole('button', { name: 'Play reference audio' }).click();
   if (browserName === 'webkit' && process.platform === 'win32') {

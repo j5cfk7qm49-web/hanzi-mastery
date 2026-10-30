@@ -3,6 +3,8 @@ import { SCHEMA_SLOT, VOCAB_POWERUP } from '../core/schema';
 import { RECALL_POWERUP, parseRecallSchema, recallFront, recallTargetKey, type CharacterChoice, type RecallSchema, type RecallResult } from '../core/recall';
 import { buildCharacterChoices } from '../core/characterChoices';
 import type { SyncedStore } from './persistence';
+import { serializeByKey } from './serial';
+import { resolveNativeStudySchema } from './nativeStudyReviews';
 
 export interface RecallContext { cardId: string; schema: RecallSchema; revealed: boolean; reviewAt: number; key: string; direction?: 'forward' | 'backward' }
 /** Use the vocabulary Powerup, rather than guessing readings from native question/answer text. */
@@ -33,16 +35,15 @@ export async function readRecallContext(plugin: RNPlugin): Promise<RecallContext
       (widget.cardId !== undefined && card._id !== widget.cardId) || await plugin.queue.inLookbackMode()) return null;
   const rem = await plugin.rem.findOne(card.remId);
   if (!rem || !await rem.hasPowerup(RECALL_POWERUP)) return null;
-  const stored = parseRecallSchema(await rem.getPowerupProperty(RECALL_POWERUP, SCHEMA_SLOT));
+  const stored = await resolveNativeStudySchema(plugin,rem,parseRecallSchema(await rem.getPowerupProperty(RECALL_POWERUP, SCHEMA_SLOT))) as RecallSchema;
   if (card.type === 'backward' && !stored.bidirectional) return null;
-  const schema: RecallSchema = card.type === 'backward' ? { ...stored, skill: 'chinese-to-english' } : stored;
+  const schema: RecallSchema = card.type === 'backward' ? { ...stored, skill: 'chinese-to-english', customPrompt: stored.reversePrompt } : stored;
   const reviewAt = (card.repetitionHistory || []).reduce((at, r) => Math.max(at, r.date), 0);
   return { cardId: card._id, schema, reviewAt, direction: card.type as 'forward' | 'backward', revealed: widget.revealed || await plugin.queue.hasRevealedAnswer(),
     key: JSON.stringify([card._id, reviewAt, schema]) };
 }
-const authorLocks = new Map<string, Promise<unknown>>();
 /** Registry reserves drafts before activation; retries reuse the same Rem and preserve native history. */
-export function ensureRecallCard(plugin: RNPlugin, schema: RecallSchema, parentId: string): Promise<string> {
+export function ensureRecallCard(plugin: RNPlugin, schema: RecallSchema, parentId: string, options: { preserveParent?: boolean } = {}): Promise<string> {
   parseRecallSchema(JSON.stringify(schema));
   const key = `hm:v3:card:${schema.vocabularyId}:${schema.skill}`;
   const run = async () => {
@@ -55,7 +56,7 @@ export function ensureRecallCard(plugin: RNPlugin, schema: RecallSchema, parentI
       const old = parseRecallSchema(await rem.getPowerupProperty(RECALL_POWERUP, SCHEMA_SLOT));
       if (old.vocabularyId !== schema.vocabularyId || old.skill !== schema.skill) throw new Error('The linked study card belongs to a different vocabulary or skill.');
       if (old.bidirectional !== schema.bidirectional) throw new Error('Existing translation directions are preserved. Reuse the existing translation cards.');
-      if (rem.parent !== parentId) await rem.setParent(parentId);
+      if (!options.preserveParent && rem.parent !== parentId) await rem.setParent(parentId);
       if (JSON.stringify(old) === JSON.stringify(schema)) return rem._id;
       updating = true;
     }
@@ -76,10 +77,7 @@ export function ensureRecallCard(plugin: RNPlugin, schema: RecallSchema, parentI
     await plugin.storage.setSynced(key, { id: rem._id, complete: true, ...(schema.bidirectional ? { bidirectional: true } : {}) });
     return rem._id;
   };
-  const pending = (authorLocks.get(key) || Promise.resolve()).catch(() => {}).then(run);
-  authorLocks.set(key, pending);
-  void pending.finally(() => { if (authorLocks.get(key) === pending) authorLocks.delete(key); }).catch(() => {});
-  return pending;
+  return serializeByKey(plugin.storage, key, run);
 }
 /** Preserve legacy Rems and histories; use one bidirectional Rem for new translations. */
 export async function ensureTranslationCards(plugin: RNPlugin, schema: Omit<RecallSchema, 'skill'>): Promise<string[]> {
@@ -95,7 +93,6 @@ export async function ensureTranslationCards(plugin: RNPlugin, schema: Omit<Reca
 export interface SkillRecord { id: string; at: number; cardId: string; result: RecallResult }
 export interface SkillHistory { version: 1; attempts: number; passed: number; history: SkillRecord[] }
 export const skillHistoryKey = (schema: RecallSchema) => `hm:v3:results:${schema.vocabularyId}:${schema.skill}:${encodeURIComponent(recallTargetKey(schema))}`;
-const saveLocks = new Map<string, Promise<unknown>>();
 export class SkillRepository {
   constructor(readonly storage: SyncedStore) {}
   async load(schema: RecallSchema): Promise<SkillHistory> {
@@ -121,9 +118,6 @@ export class SkillRepository {
       if (!confirmed.history.some(r => r.id === record.id)) throw new Error('Skill-result save was not confirmed. Keep this result open and retry.');
       return confirmed;
     };
-    const pending = (saveLocks.get(key) || Promise.resolve()).catch(() => {}).then(run);
-    saveLocks.set(key, pending);
-    void pending.finally(() => { if (saveLocks.get(key) === pending) saveLocks.delete(key); }).catch(() => {});
-    return pending;
+    return serializeByKey(this.storage, key, run);
   }
 }

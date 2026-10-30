@@ -22,9 +22,12 @@ module.exports = (_, argv = {}) => {
       new HtmlWebpackPlugin({ filename: 'index.html', inject: false, template: 'public/sandbox.html' }),
       new webpack.BannerPlugin({ banner: f => f.chunk.name.endsWith('-sandbox') ? '' : 'const IMPORT_META=import.meta;', raw: true }),
       new CopyPlugin({ patterns: [
-        { from: 'public/manifest.json', to: 'manifest.json' }, { from: 'README.md' },
-        { from: 'LICENSE' }, { from: 'docs', to: 'docs', globOptions: { ignore: ['**/screenshots/**', '**/APP_ACCEPTANCE_*.md', '**/REVIEW_UI_REFRESH_*.md'] } },
-        { from: 'public/dictionary', to: 'dictionary' }
+        { from: 'public/manifest.json', to: 'manifest.json' },
+        { from: 'README.md', transform: content => content.toString().replaceAll('](public/dictionary/SOURCE.md)', '](dictionary/SOURCE.md)').replaceAll('](public/audio/SOURCE.md)', '](audio/SOURCE.md)') },
+        { from: 'LICENSE' }, { from: 'CHANGELOG.md' },
+        { from: 'docs/MIDTERM_INTEGRATION.md', to: 'docs/MIDTERM_INTEGRATION.md' },
+        { from: 'public/dictionary', to: 'dictionary' },
+        { from: 'public/audio', to: 'audio' }
       ] })
     ],
     performance: { hints: false }, devtool: production ? false : 'source-map'

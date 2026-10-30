@@ -1,9 +1,9 @@
 import React from 'react';
 
 /** The same outcome hierarchy for writing, recall and audio exercises. */
-export function ReviewResult({ title, passed, target, reading, meaning, score, grade, saveState, savedText, onRetry, children, headingRef }: {
+export function ReviewResult({ title, passed, target, reading, meaning, score, grade, saveState, savedText, savedLabel = 'Saved · Rate in RemNote', onRetry, children, headingRef }: {
   title: string; passed?: boolean; target: string; reading?: string; meaning?: string; score?: string; grade?: string;
-  saveState?: 'idle'|'saving'|'saved'|'failed'; savedText?: string; onRetry?(): void; children?: React.ReactNode;
+  saveState?: 'idle'|'saving'|'saved'|'failed'; savedText?: string; savedLabel?: string; onRetry?(): void; children?: React.ReactNode;
   headingRef?: React.RefObject<HTMLHeadingElement>;
 }) {
   return <div className={`hm-result hm-outcome ${passed === undefined ? '' : passed ? 'hm-pass' : 'hm-fail'}`} role="status">
@@ -15,7 +15,7 @@ export function ReviewResult({ title, passed, target, reading, meaning, score, g
     {meaning && <p className="hm-result-meaning">{meaning}</p>}
     {grade && <p className="hm-grade">Suggested RemNote rating: <b>{grade}</b></p>}
     {saveState && <p className="hm-save-status" aria-label={saveState === 'saved' ? 'Result saved' : undefined}>
-      {saveState === 'saved' ? 'Saved' : saveState === 'saving' ? 'Saving…' : saveState === 'failed' ? 'Could not save' : 'Not saved'}
+      {saveState === 'saved' ? savedLabel : saveState === 'saving' ? 'Saving…' : saveState === 'failed' ? 'Could not save' : 'Not saved'}
     </p>}
     {saveState === 'failed' && <button onClick={onRetry}>Retry result save</button>}
     {savedText && <span className="hm-a11y">{savedText}</span>}

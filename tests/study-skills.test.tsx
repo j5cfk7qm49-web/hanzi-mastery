@@ -11,7 +11,7 @@ beforeEach(() => {
   mocks.ensure.mockReset().mockResolvedValue('card');
   mocks.collection.mockReset().mockResolvedValue('collection');
 });
-const plugin = {} as RNPlugin;
+const plugin = { storage: { getSynced: async () => undefined } } as unknown as RNPlugin;
 it('creates recognition from verified vocabulary choices and preserves the shared vocabulary link', async () => {
   render(<StudySkills plugin={plugin} vocabularyId="v" traditional="人" pinyin="rén" meaning="person" />);
   fireEvent.click(screen.getByRole('button', { name: 'Create character recognition card' }));

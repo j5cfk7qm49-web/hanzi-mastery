@@ -31,12 +31,13 @@ export function PronunciationRecorder({ disabled, onReady }: { disabled?: boolea
       const chunks: Blob[] = [];
       capture.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
       capture.onerror = () => {
+        if (!live.current || token !== generation.current) return;
         generation.current++; stopTracks();
         if (live.current) { setState('idle'); setError('Recording stopped unexpectedly. Try again or choose an audio file.'); }
       };
       capture.onstop = () => {
-        stopTracks();
         if (!live.current || token !== generation.current) return;
+        stopTracks();
         const blob = new Blob(chunks, { type: capture.mimeType || chunks[0]?.type || 'audio/webm' });
         if (blob.size) keep(blob);
         else { setState('idle'); setError('The recording was empty. Try again or choose an audio file.'); }
@@ -44,6 +45,7 @@ export function PronunciationRecorder({ disabled, onReady }: { disabled?: boolea
       capture.start(); setState('recording');
       timer.current = window.setTimeout(stopCapture, 20000);
     } catch {
+      if (!live.current || token !== generation.current) return;
       stopTracks();
       if (live.current && token === generation.current) { setState('idle'); setError('Microphone access is unavailable here. You can choose a recording from your device instead.'); }
     }

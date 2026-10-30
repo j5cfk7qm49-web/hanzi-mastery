@@ -2,6 +2,8 @@ import { gunzipSync, strFromU8 } from 'fflate';
 import { convert } from 'pinyin-pro';
 import { characters, type DictionaryProvenance } from '../core/schema';
 import { parsePinyin, pinyinKey, validateReading } from '../core/recall';
+import { dictionaryWordUrl } from '../core/dictionaryLinks';
+import { fetchWithTimeout } from './http';
 
 export const CEDICT_SNAPSHOT = '2026-10-17T16:45:37Z / sha256:2680af828c0d949b544c9399b4dc8503788c99150ab73887600fed6b4f880b26';
 export interface EnglishEntry { traditional: string; simplified: string; pinyin: string; definitions: string[] }
@@ -26,52 +28,36 @@ export function findEnglishEntries(text: string, words: string[]): Map<string, E
   }
   return result;
 }
-function readingKey(text: string): string | undefined { try { return pinyinKey(parsePinyin(text)); } catch { return undefined; } }
-function matchesReading(entry: EnglishEntry, key: string): boolean {
-  if (readingKey(entry.pinyin) === key) return true;
-  return entry.definitions.some(definition => [...definition.matchAll(/Taiwan pr\.\s*\[([^\]]+)\]/g)].some(match => readingKey(match[1]) === key));
-}
 /** Editable study glosses are separate from the complete, unchanged source definitions. */
 export function studyMeanings(definitions: string[]): string[] {
   return definitions.filter(text => !/^(CL:|variant of |old variant of |see |also written |Taiwan pr\.)/i.test(text))
     .map(text => text.replace(/\p{Script=Han}+/gu, '').replace(/\s+/g, ' ').trim()).filter(Boolean);
 }
-export function dictionaryCandidates(word: string, raw: unknown, english: EnglishEntry[], at = new Date().toISOString()): DictionaryCandidate[] {
-  if (!raw || typeof raw !== 'object') throw new Error('The dictionary returned invalid data.');
-  const entry = raw as { title?: unknown; heteronyms?: unknown };
-  if (entry.title !== word || !Array.isArray(entry.heteronyms)) throw new Error('No exact MOE dictionary entry was returned. Use a Traditional headword or add it manually.');
-  const candidates: DictionaryCandidate[] = [], seen = new Set<string>();
-  for (const heteronym of entry.heteronyms) {
-    if (!heteronym || typeof heteronym.pinyin !== 'string' || !Array.isArray(heteronym.definitions)) continue;
-    try { validateReading({ traditional: word, pinyin: heteronym.pinyin }); } catch { continue; }
-    const key = readingKey(heteronym.pinyin)!;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const matches = english.filter(item => matchesReading(item, key));
+export function dictionaryCandidates(word: string, english: EnglishEntry[], at = new Date().toISOString()): DictionaryCandidate[] {
+  characters(word);
+  const groups = new Map<string, EnglishEntry[]>();
+  for (const entry of english) {
+    if (entry.traditional !== word) continue;
+    try {
+      validateReading(entry);
+      const key = pinyinKey(parsePinyin(entry.pinyin));
+      groups.set(key, [...groups.get(key) || [], entry]);
+    } catch { /* An unsupported source reading cannot become a study answer. */ }
+  }
+  const candidates: DictionaryCandidate[] = [];
+  for (const [key, matches] of groups) {
     const originals = [...new Set(matches.flatMap(item => item.definitions))];
-    const definitions = heteronym.definitions.flatMap((definition: { def?: unknown }) => typeof definition?.def === 'string' ? [definition.def] : []);
-    const pinyin = convert(pinyinKey(parsePinyin(heteronym.pinyin)));
-    const dictionary: DictionaryProvenance = { importedAt: at, moe: { provider: 'MOE Revised via Moedict',
-      url: `https://www.moedict.tw/uni/${encodeURIComponent(word)}`, pinyin: heteronym.pinyin,
-      bopomofo: typeof heteronym.bopomofo === 'string' ? heteronym.bopomofo : '', definitions,
-      license: 'CC BY-ND 3.0 TW', edition: 'Live Moedict mirror; source edition not reported by API' },
-      ...(matches.length ? { english: { provider: 'CC-CEDICT' as const, url: 'https://www.mdbg.net/chinese/dictionary?page=cedict',
-        snapshot: CEDICT_SNAPSHOT, pinyin: matches.map(item => item.pinyin).join(' / '), definitions: originals, license: 'CC BY-SA 4.0' as const } } : {}) };
+    const pinyin = convert(key);
+    const dictionary: DictionaryProvenance = { importedAt: at, english: { provider: 'CC-CEDICT', url: dictionaryWordUrl(word),
+      snapshot: CEDICT_SNAPSHOT, pinyin: matches.map(item => item.pinyin).join(' / '), definitions: originals, license: 'CC BY-SA 4.0' } };
     const simplified = [...new Set(matches.map(item => item.simplified))];
     candidates.push({ traditional: word, pinyin, ...(simplified.length === 1 ? { simplified: simplified[0] } : {}),
       meanings: studyMeanings(originals), dictionary });
   }
-  if (!candidates.length) throw new Error('The MOE entry has no supported reading with one pinyin syllable per character. Add this item manually.');
+  if (!candidates.length) throw new Error('No supported CC-CEDICT entry was found for this Traditional form. Add this word manually.');
   return candidates;
 }
 const englishLoads = new Map<string, Promise<string>>();
-async function fetchWithTimeout<T>(url: string, consume: (response: Response) => Promise<T>, signal?: AbortSignal): Promise<T> {
-  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 15000);
-  const cancel = () => controller.abort();
-  if (signal?.aborted) controller.abort(); else signal?.addEventListener('abort', cancel, { once: true });
-  try { return await consume(await fetch(url, { signal: controller.signal, credentials: 'omit' })); }
-  finally { clearTimeout(timer); signal?.removeEventListener('abort', cancel); }
-}
 async function englishSource(rootURL: string): Promise<string> {
   let pending = englishLoads.get(rootURL);
   if (!pending) {
@@ -110,11 +96,7 @@ export async function lookupDictionary(words: string[], rootURL: string, options
       if (options.signal?.aborted) return results;
       let result: DictionaryLookup;
       try {
-        const raw = await fetchWithTimeout(`https://www.moedict.tw/uni/${encodeURIComponent(word)}`, async response => {
-          if (!response.ok) throw new Error(`MOE lookup unavailable (${response.status}). Retry or add this entry manually.`);
-          return response.json() as Promise<unknown>;
-        }, options.signal);
-        result = { word, candidates: dictionaryCandidates(word, raw, english.get(word) || []) };
+        result = { word, candidates: dictionaryCandidates(word, english.get(word) || []) };
       } catch (error) {
         if (options.signal?.aborted) return results;
         result = { word, candidates: [], error: error instanceof Error ? error.message : 'Dictionary lookup failed.' };

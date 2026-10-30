@@ -11,7 +11,7 @@ export function MeaningWritingExercise({ context, repository, settings = DEFAULT
   const schema = context.schema;
   const stable = useRef({ cardId: context.cardId,
     vocabularyId: `meaning:${schema.vocabularyId}:${recallTargetKey(schema)}`,
-    chars: characters(schema.traditional), prompt: schema.meaning });
+    chars: characters(schema.traditional), prompt: schema.customPrompt || schema.meaning });
   const mastery = useMemo(() => new MasteryRepository(repository.storage), [repository]);
   const writingSettings = useMemo(() => ({ ...settings, script: 'traditional' as const }), [settings]);
   const save = async (summary: WritingSummary) => {
