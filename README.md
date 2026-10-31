@@ -6,7 +6,7 @@ This README is the single source of truth for current behavior, architecture, de
 
 ## Version and installation
 
-The current source package is **0.4.13**. This release removes the request for RemNote's native JavaScript execution while retaining the existing study features. The [unlisted plugin page](https://www.remnote.com/plugins/hanzi_mastery_handwriting_v1) shows the hosted version; source builds, publication and device acceptance are separate checks. A hosted RemNote 0.4.13 upload has not been verified.
+The current source package is **0.4.13**. This release removes the request for RemNote's native JavaScript execution while retaining the existing study features. The [unlisted plugin page](https://www.remnote.com/plugins/hanzi_mastery_handwriting_v1) shows the hosted version; source builds, publication and device acceptance are separate checks. The published [0.4.13 release ZIP](https://github.com/j5cfk7qm49-web/hanzi-mastery/releases/tag/v0.4.13) was uploaded successfully to RemNote on October 31, 2026. RemNote confirmed receipt and reported that marketplace approval is pending; availability and installation have not yet been verified.
 
 Install the approved hosted version from the [unlisted plugin page](https://www.remnote.com/plugins/hanzi_mastery_handwriting_v1). Existing compatible cards retain their IDs and need no recreation after an update. GitHub releases, local developer registrations and hosted RemNote uploads are separate records. Publishing a GitHub release does not deploy this plugin to RemNote.
 
@@ -325,6 +325,8 @@ npm run test:browser
 ```
 
 Browser tests rebuild production/preview bundles. Fixtures simulate SDK RPC/queue flags and draw real Hanzi Writer medians: engine/data/UI coverage, not human penmanship or physical stylus validation. Preview serves loopback port 8081; developer loading uses 8080. Harnesses, logs, screenshots and local evidence are excluded from the upload.
+
+**0.4.13 release verification:** The [full GitHub CI run for the release tag](https://github.com/j5cfk7qm49-web/hanzi-mastery/actions/runs/41015634982) passed TypeScript checks, **256 unit/component tests** (one skipped) and **327 Chromium/WebKit browser tests** (11 skipped). An earlier main-branch run of the same commit had one browser timeout; the later full release-tag run passed. The uploaded plugin ZIP's SHA-256 matches the published release checksum, and its contents match the successful CI build except for documentation line endings. RemNote confirmed a successful upload; marketplace approval and physical-device acceptance remain separate checks.
 
 The recorded audio-fallback validation passed TypeScript, **174 unit/component tests** and **20 targeted desktop Chromium/phone WebKit import/editing cases**. These counts describe that earlier feature check, not the current full release suite; current release results belong in [CHANGELOG.md](CHANGELOG.md). All 72 distinct primary URLs in the selected-list/default-reading audit passed audio HEAD checks. Live playback through the actual playback function completed for the MOE MP3 sample in both engines and Shtooka Ogg/FLAC samples in Chromium. Windows WebKit rejects Ogg and stalls on the FLAC sample despite reporting FLAC support; this remains unresolved in that runner. [Playwright documents platform-specific codec differences](https://playwright.dev/docs/browsers#webkit), so physical Safari/RemNote playback acceptance is still required. Local structured results remain under ignored `audit/` paths.
 
